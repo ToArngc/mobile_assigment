@@ -9,8 +9,8 @@ class SupabaseService {
 
   static Future<void> initialize() async {
     await Supabase.initialize(
-      url: 'YOUR_SUPABASE_URL',
-      anonKey: 'YOUR_SUPABASE_ANON_KEY',
+      url: 'https://pnibgdjxopmvesyklcjt.supabase.co',
+      anonKey: 'sb_publishable_-FfWQTblsFvucpl2uVdYgw_vf-W9y1e',
     );
     client = Supabase.instance.client;
   }
