@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/supabase_client.dart';
 import 'core/auth_service.dart';
-
+import 'shared/notification_service.dart';
 import 'modules/module1_explorer/repositories/station_repository.dart';
 import 'modules/module4_alerts/screens/alerts_home_screen.dart';
 
