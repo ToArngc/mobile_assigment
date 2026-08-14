@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'core/supabase_client.dart';
 import 'core/auth_service.dart';
+
 import 'modules/module1_explorer/repositories/station_repository.dart';
+import 'modules/module4_alerts/screens/alerts_home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseService.initialize();
   await AuthService.ensureSignedIn();
+  await NotificationService.initialize();
   runApp(const MyApp());
 }
 
@@ -22,8 +25,9 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Separate widget so its `context` is a descendant of MaterialApp —
-/// required for ScaffoldMessenger.of(context) / Scaffold.of(context) to work.
+/// Temporary landing page — will be replaced by the real bottom-nav /
+/// module hub once Modules 1-3 have screens too. For now it's just a
+/// launcher into whichever module you're actively working on.
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -36,43 +40,27 @@ class HomePage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Signed in as: ${AuthService.currentUserId ?? "not signed in"}'),
-            const SizedBox(height: 16),
-            ElevatedButton(
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.notifications_active),
+              label: const Text('Open Alerts (Module 4)'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AlertsHomeScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            TextButton(
               onPressed: () async {
                 final stations = await StationRepository().getAllStations();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Read OK: got ${stations.length} stations')),
+                    SnackBar(content: Text('Debug: got ${stations.length} stations')),
                   );
                 }
               },
-              child: const Text('Test read (stations)'),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () async {
-                final userId = AuthService.currentUserId;
-                if (userId == null) return;
-                try {
-                  await SupabaseService.client.from('mute_settings').upsert({
-                    'user_id': userId,
-                    'muted_until': null,
-                    'updated_at': DateTime.now().toIso8601String(),
-                  });
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Write OK: mute_settings upserted')),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Write failed: $e')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Test write (mute_settings)'),
+              child: const Text('Debug: test Supabase read'),
             ),
           ],
         ),

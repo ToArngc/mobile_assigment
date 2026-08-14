@@ -22,11 +22,18 @@ class AlertsRepository {
   }
 
   /// Creates or updates an alert rule for a station.
+  /// If station.id is empty, this is a new row — omit 'id' entirely so
+  /// Postgres generates the uuid itself (an empty string is not a valid
+  /// uuid and would be rejected).
   Future<SavedStation> upsertSavedStation(SavedStation station) async {
     try {
+      final json = station.toJson();
+      if (station.id.isEmpty) {
+        json.remove('id');
+      }
       final data = await _client
           .from('saved_stations')
-          .upsert(station.toJson())
+          .upsert(json)
           .select()
           .single();
       return SavedStation.fromJson(data);
