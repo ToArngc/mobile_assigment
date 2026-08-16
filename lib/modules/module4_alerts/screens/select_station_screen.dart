@@ -22,6 +22,7 @@ class _SelectStationScreenState extends State<SelectStationScreen> {
     super.initState();
     _stationsFuture = _repository.getAllStations();
   }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -82,7 +83,10 @@ class _SelectStationScreenState extends State<SelectStationScreen> {
                 onTap: () async {
                   final saved = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
-                      builder: (_) => AlertRuleEditScreen(station: station),
+                      builder: (_) => AlertRuleEditScreen(
+                        stationId: station.id,
+                        stationName: station.name,
+                      ),
                     ),
                   );
                   // Forward the result up to SelectStationScreen's own

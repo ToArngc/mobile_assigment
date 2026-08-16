@@ -9,15 +9,29 @@ class AlertsRepository {
 
   Future<List<SavedStation>> getSavedStations(String userId) async {
     try {
+      // Join stations(name, line) so callers get real names instead of
+      // just a station_id — the "My alerts" screen shows the station
+      // name directly, not a uuid.
       final data = await _client
           .from('saved_stations')
-          .select()
+          .select('*, stations(name, line)')
           .eq('user_id', userId);
       return (data as List)
           .map((row) => SavedStation.fromJson(row))
           .toList();
     } catch (e) {
       throw Exception('Failed to load saved stations: $e');
+    }
+  }
+
+  /// Quick on/off toggle for the switch in the "My alerts" list — pauses
+  /// the alert without discarding the threshold/quiet-hours/active-days
+  /// settings underneath (those still need the full editor to change).
+  Future<void> setEnabled(String id, bool enabled) async {
+    try {
+      await _client.from('saved_stations').update({'enabled': enabled}).eq('id', id);
+    } catch (e) {
+      throw Exception('Failed to update alert rule: $e');
     }
   }
 

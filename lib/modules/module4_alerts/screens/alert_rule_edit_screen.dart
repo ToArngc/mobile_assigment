@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/station.dart';
 import '../../../core/models/saved_station.dart';
 import '../../../core/auth_service.dart';
 import '../repositories/alerts_repository.dart';
@@ -15,10 +14,16 @@ import '../repositories/alerts_repository.dart';
 /// Pops `true` on success; the caller (AlertsHomeScreen) is responsible
 /// for calling provider.loadAll() to refresh the list.
 class AlertRuleEditScreen extends StatefulWidget {
-  final Station station;
+  final String stationId;
+  final String stationName;
   final SavedStation? existing; // non-null when editing an existing rule
 
-  const AlertRuleEditScreen({super.key, required this.station, this.existing});
+  const AlertRuleEditScreen({
+    super.key,
+    required this.stationId,
+    required this.stationName,
+    this.existing,
+  });
 
   @override
   State<AlertRuleEditScreen> createState() => _AlertRuleEditScreenState();
@@ -81,7 +86,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
       final saved = SavedStation(
         id: widget.existing?.id ?? '', // empty id -> upsert treats as insert
         userId: userId,
-        stationId: widget.station.id,
+        stationId: widget.stationId,
         alertDelayThreshold: _thresholdMinutes.round(),
         quietHoursStart: _quietStart != null ? _formatTimeOfDay(_quietStart!) : null,
         quietHoursEnd: _quietEnd != null ? _formatTimeOfDay(_quietEnd!) : null,
@@ -104,7 +109,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Alert rule · ${widget.station.name}')),
+      appBar: AppBar(title: Text('Alert rule · ${widget.stationName}')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
