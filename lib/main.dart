@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'core/supabase_client.dart';
 import 'core/auth_service.dart';
 import 'modules/module1_explorer/repositories/station_repository.dart';
+import 'modules/module3_fault/screens/report_issue_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,17 @@ class HomePage extends StatelessWidget {
           children: [
             Text('Signed in as: ${AuthService.currentUserId ?? "not signed in"}'),
             const SizedBox(height: 16),
+
+            ElevatedButton.icon(
+              icon: const Icon(Icons.flag_outlined),
+              label: const Text('Report an issue'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => ReportIssueScreen()),
+                );
+              },
+            ),
+
             ElevatedButton(
               onPressed: () async {
                 final stations = await StationRepository().getAllStations();
