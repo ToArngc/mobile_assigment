@@ -1,6 +1,6 @@
-import '../../../core/supabase_client.dart';
-import '../../../core/models/saved_station.dart';
-import '../../../core/models/mute_settings.dart';
+import '../../../services/supabase_service.dart';
+import '../../../models/saved_station.dart';
+import '../../../models/mute_settings.dart';
 
 class AlertsRepository {
   final _client = SupabaseService.client;

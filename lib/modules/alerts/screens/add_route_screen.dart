@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/station.dart';
-import '../../../core/models/saved_route.dart';
-import '../../../core/auth_service.dart';
+import '../../../models/station.dart';
+import '../../../models/saved_route.dart';
+import '../../../services/auth_service.dart';
 import '../repositories/leave_by_repository.dart';
 import 'pick_station_screen.dart';
 

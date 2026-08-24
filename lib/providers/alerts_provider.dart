@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import '../repositories/alerts_repository.dart';
-import '../repositories/weekly_summary_repository.dart';
-import '../../../core/models/saved_station.dart';
-import '../../../core/models/mute_settings.dart';
-import '../../../core/models/ride_log.dart';
+import '../modules/alerts/repositories/alerts_repository.dart';
+import '../modules/alerts/repositories/weekly_summary_repository.dart';
+import '../models/saved_station.dart';
+import '../models/mute_settings.dart';
+import '../models/ride_log.dart';
 
 enum LoadStatus { initial, loading, loaded, error }
 
@@ -50,9 +50,7 @@ class AlertsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- Quick Mute ----
 
-  /// "No Commute Today" — mutes until end of today.
   Future<void> muteToday() async {
     final endOfToday = DateTime.now();
     await _setMute(DateTime(endOfToday.year, endOfToday.month, endOfToday.day));
@@ -76,7 +74,7 @@ class AlertsProvider extends ChangeNotifier {
     }
   }
 
-  // ---- Alert Rules ----
+
 
   Future<void> saveAlertRule(SavedStation station) async {
     try {
@@ -105,8 +103,7 @@ class AlertsProvider extends ChangeNotifier {
     }
   }
 
-  /// Optimistic update — flips the switch immediately, reverts if the
-  /// write fails, rather than making the user wait on every tap.
+
   Future<void> toggleStationEnabled(String savedStationId, bool enabled) async {
     final index = savedStations.indexWhere((s) => s.id == savedStationId);
     if (index < 0) return;

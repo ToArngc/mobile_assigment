@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/saved_station.dart';
-import '../../../core/auth_service.dart';
+import '../../../models/saved_station.dart';
+import '../../../services/auth_service.dart';
 import '../repositories/alerts_repository.dart';
 
 /// Step 2 of adding an Alert Rule: set the threshold, quiet hours, and

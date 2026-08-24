@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import '../repositories/leave_by_repository.dart';
-import '../../../core/models/saved_route.dart';
-import '../../../shared/notification_service.dart';
+import '../modules/alerts/repositories/leave_by_repository.dart';
+import '../models/saved_route.dart';
+import '../services/notification_service.dart';
 
 enum LoadStatus { initial, loading, loaded, error }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../modules/module4_alerts/screens/alerts_home_screen.dart';
+import '../modules/alerts/screens/alerts_home_screen.dart';
 
 /// Shared bottom-navigation shell — matches the 4-tab layout (Explore /
 /// Reliability / Reports / Alerts) shown across all four modules' mockups.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/weekly_summary_provider.dart';
+import '../../../providers/weekly_summary_provider.dart';
 import '../repositories/weekly_summary_repository.dart';
-import '../../../core/auth_service.dart';
+import '../../../services/auth_service.dart';
 
 class WeeklySummaryScreen extends StatelessWidget {
   const WeeklySummaryScreen({super.key});

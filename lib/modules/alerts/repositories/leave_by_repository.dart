@@ -1,5 +1,5 @@
-import '../../../core/supabase_client.dart';
-import '../../../core/models/saved_route.dart';
+import '../../../services/supabase_service.dart';
+import '../../../models/saved_route.dart';
 
 /// Result of computing when the user needs to leave for a saved route.
 class LeaveByResult {
@@ -52,13 +52,7 @@ class LeaveByRepository {
     }
   }
 
-  /// Combines the next scheduled departure from the origin station,
-  /// the historical average delay at that station, and the user's
-  /// walking time, into a single "leave by" time.
-  ///
-  /// Returns null if there's no upcoming scheduled departure today for
-  /// this station (e.g. timetable_entries hasn't been imported yet, or
-  /// the last train for today has already gone).
+
   Future<LeaveByResult?> computeLeaveByTime(SavedRoute route) async {
     final now = DateTime.now();
     final nowTimeString =

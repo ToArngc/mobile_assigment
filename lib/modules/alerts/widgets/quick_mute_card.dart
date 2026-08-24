@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/alerts_provider.dart';
+import '../../../providers/alerts_provider.dart';
 
-/// Quick Mute UI — meant to sit at the top of the Alerts Home screen,
-/// not as its own full screen. Two interactions:
-///  1. Tap the switch → mute for today only ("No Commute Today")
-///  2. Tap "Mute until a date..." → pick a longer mute window (leave/WFH)
+
 class QuickMuteCard extends StatelessWidget {
   const QuickMuteCard({super.key});
 

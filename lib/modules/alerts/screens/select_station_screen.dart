@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
-import '../../module1_explorer/repositories/station_repository.dart';
-import '../../../core/models/station.dart';
+import '../../explore/repositories/station_repository.dart';
+import '../../../models/station.dart';
+import 'alert_rule_edit_screen.dart';
 
-/// Generic station picker — pops the selected Station back to the caller.
-/// Used by AddRouteScreen for picking origin and destination separately.
-class PickStationScreen extends StatefulWidget {
-  final String title;
-
-  const PickStationScreen({super.key, required this.title});
+/// Step 1 of adding an Alert Rule: pick which station it's for.
+/// Reuses Module 1's StationRepository — Module 4 doesn't own station data.
+class SelectStationScreen extends StatefulWidget {
+  const SelectStationScreen({super.key});
 
   @override
-  State<PickStationScreen> createState() => _PickStationScreenState();
+  State<SelectStationScreen> createState() => _SelectStationScreenState();
 }
 
-class _PickStationScreenState extends State<PickStationScreen> {
+class _SelectStationScreenState extends State<SelectStationScreen> {
   final _repository = StationRepository();
   late Future<List<Station>> _stationsFuture;
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _stationsFuture = _repository.getAllStations();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _search(String query) {
@@ -35,12 +41,13 @@ class _PickStationScreenState extends State<PickStationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text('Choose a station'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
+              controller: _searchController,
               onChanged: _search,
               decoration: const InputDecoration(
                 hintText: 'Search stations...',
@@ -58,6 +65,9 @@ class _PickStationScreenState extends State<PickStationScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return Center(child: Text('Failed to load stations: ${snapshot.error}'));
+          }
           final stations = snapshot.data ?? [];
           if (stations.isEmpty) {
             return const Center(child: Text('No stations found'));
@@ -70,7 +80,22 @@ class _PickStationScreenState extends State<PickStationScreen> {
                 leading: const Icon(Icons.train),
                 title: Text(station.name),
                 subtitle: Text(station.line),
-                onTap: () => Navigator.of(context).pop(station),
+                onTap: () async {
+                  final saved = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => AlertRuleEditScreen(
+                        stationId: station.id,
+                        stationName: station.name,
+                      ),
+                    ),
+                  );
+                  // Forward the result up to SelectStationScreen's own
+                  // caller (AlertsHomeScreen), which decides whether to
+                  // refresh its list.
+                  if (saved == true && context.mounted) {
+                    Navigator.of(context).pop(true);
+                  }
+                },
               );
             },
           );

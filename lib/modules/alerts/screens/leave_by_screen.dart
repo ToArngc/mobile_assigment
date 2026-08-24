@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/leave_by_provider.dart';
+import '../../../providers/leave_by_provider.dart';
 import '../repositories/leave_by_repository.dart';
-import '../../../core/auth_service.dart';
+import '../../../services/auth_service.dart';
 import 'add_route_screen.dart';
 
 class LeaveByScreen extends StatelessWidget {

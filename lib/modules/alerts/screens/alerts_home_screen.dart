@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/alerts_provider.dart';
+import '../../../providers/alerts_provider.dart';
 import '../repositories/alerts_repository.dart';
 import '../widgets/quick_mute_card.dart';
-import '../../../core/auth_service.dart';
+import '../../../services/auth_service.dart';
 import 'select_station_screen.dart';
 import 'weekly_summary_screen.dart';
 import 'leave_by_screen.dart';
