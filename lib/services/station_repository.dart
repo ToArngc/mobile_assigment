@@ -1,5 +1,5 @@
-import '../../../core/supabase_client.dart';
-import '../../../core/models/station.dart';
+import 'supabase_service.dart';
+import '../models/station.dart';
 
 //just dome
 class StationRepository {

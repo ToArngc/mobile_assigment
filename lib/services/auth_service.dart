@@ -1,11 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'supabase_client.dart';
+import 'supabase_service.dart';
 
 /// Handles anonymous authentication.
 ///
 /// OnJejak doesn't need real accounts (no login screen, no email/password) —
 /// every device just needs a stable user_id so RLS policies on
-/// saved_stations / saved_routes / mute_settings / device_tokens / ride_logs
+/// saved_stations / saved_routes / mute_settings / ride_logs
 /// know which rows belong to which user.
 ///
 /// Call [AuthService.ensureSignedIn] once in main(), after
