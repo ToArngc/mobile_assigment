@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../modules/alerts/repositories/leave_by_repository.dart';
+import '../services/leave_by_repository.dart';
 import '../models/saved_route.dart';
 import '../services/notification_service.dart';
 

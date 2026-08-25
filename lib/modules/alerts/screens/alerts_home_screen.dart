@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/alerts_provider.dart';
-import '../repositories/alerts_repository.dart';
+import '../../../services/alerts_repository.dart';
 import '../widgets/quick_mute_card.dart';
 import '../../../services/auth_service.dart';
 import 'select_station_screen.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/saved_station.dart';
 import '../../../services/auth_service.dart';
-import '../repositories/alerts_repository.dart';
+import '../../../services/alerts_repository.dart';
 
 /// Step 2 of adding an Alert Rule: set the threshold, quiet hours, and
 /// active days for the station chosen in SelectStationScreen.

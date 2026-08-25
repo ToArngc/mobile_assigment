@@ -36,7 +36,7 @@ class RideLog {
   factory RideLog.fromJson(Map<String, dynamic> json) {
     final joinedStation = json['stations'] as Map<String, dynamic>?;
     final joinedDestination =
-    json['destination_station'] as Map<String, dynamic>?;
+        json['destination_station'] as Map<String, dynamic>?;
     return RideLog(
       id: json['id'] as String,
       userId: json['user_id'] as String,

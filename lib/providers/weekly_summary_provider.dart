@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../modules/alerts/repositories/weekly_summary_repository.dart';
+import '../services/weekly_summary_repository.dart';
 import '../models/ride_log.dart';
 
 enum LoadStatus { initial, loading, loaded, error }

@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:location/location.dart';
 
-import '../../../services/auth_service.dart';
-import '../../../models/station.dart';
-import '../../explore/repositories/station_repository.dart';
-import '../repositories/weekly_summary_repository.dart';
-import '../../../services/location_service.dart';
+import 'auth_service.dart';
+import '../models/station.dart';
+import 'station_repository.dart';
+import 'weekly_summary_repository.dart';
+import 'location_service.dart';
+
 
 class RideDetectionService {
   RideDetectionService({
@@ -21,6 +22,7 @@ class RideDetectionService {
 
 
   static const double _proximityThresholdMeters = 150;
+
 
   static const Duration _maxOpenRideAge = Duration(hours: 3);
 
@@ -65,10 +67,7 @@ class RideDetectionService {
     );
 
     if (nearest == null) {
-      // Left the vicinity of whatever station we were at -- clear the
-      // "currently at" marker so arriving back at the *same* station
-      // later can trigger detection again instead of being ignored as a
-      // no-op.
+
       _currentStationId = null;
       return;
     }
@@ -83,10 +82,7 @@ class RideDetectionService {
     final open = _openRide;
 
     if (open == null || DateTime.now().difference(open.startedAt) > _maxOpenRideAge) {
-      // First station seen this session, or the previous open ride is
-      // too stale to sensibly pair with this arrival -- start fresh.
-      // (The stale one is simply dropped -- nothing was ever written
-      // for it, since we only write on completion.)
+
       _openRide = _OpenRide(
         originStationId: station.id,
         startedAt: DateTime.now(),
@@ -95,8 +91,7 @@ class RideDetectionService {
     }
 
     if (station.id == open.originStationId) {
-      // Arrived back at the same station -- not a distinct destination,
-      // ignore rather than logging a zero-distance "trip".
+
       return;
     }
 
@@ -130,9 +125,6 @@ class RideDetectionService {
     return (best != null && bestDistance <= thresholdMeters) ? best : null;
   }
 
-  /// Haversine great-circle distance in meters. The `location` package
-  /// doesn't ship a distance helper the way geolocator did, so this is
-  /// spelled out explicitly.
   double _distanceMeters(
     double lat1,
     double lng1,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../explore/repositories/station_repository.dart';
+import '../../../services/station_repository.dart';
 import '../../../models/station.dart';
 import 'alert_rule_edit_screen.dart';
 

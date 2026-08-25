@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../explore/repositories/station_repository.dart';
+import '../../../services/station_repository.dart';
 import '../../../models/station.dart';
 
 /// Generic station picker — pops the selected Station back to the caller.
