@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/supabase_client.dart';
 import 'core/auth_service.dart';
-import 'modules/module1_explorer/repositories/station_repository.dart';
+import 'modules/module1_explorer/screens/explorer_home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +17,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'OnJejak',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff00695c)),
+        useMaterial3: true,
+      ),
       home: const HomePage(),
     );
   }
@@ -24,59 +29,52 @@ class MyApp extends StatelessWidget {
 
 /// Separate widget so its `context` is a descendant of MaterialApp —
 /// required for ScaffoldMessenger.of(context) / Scaffold.of(context) to work.
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
+  static const _titles = ['Explore', 'Reliability', 'Reports', 'Alerts'];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('OnJejak')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Signed in as: ${AuthService.currentUserId ?? "not signed in"}'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                final stations = await StationRepository().getAllStations();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Read OK: got ${stations.length} stations')),
-                  );
-                }
-              },
-              child: const Text('Test read (stations)'),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () async {
-                final userId = AuthService.currentUserId;
-                if (userId == null) return;
-                try {
-                  await SupabaseService.client.from('mute_settings').upsert({
-                    'user_id': userId,
-                    'muted_until': null,
-                    'updated_at': DateTime.now().toIso8601String(),
-                  });
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Write OK: mute_settings upserted')),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Write failed: $e')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Test write (mute_settings)'),
-            ),
-          ],
-        ),
+      appBar: AppBar(title: Text('OnJejak · ${_titles[_selectedIndex]}')),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: const [
+          ExplorerHomePage(),
+          _ComingSoonPage(moduleName: 'Reliability'),
+          _ComingSoonPage(moduleName: 'Reports'),
+          _ComingSoonPage(moduleName: 'Alerts'),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.explore_outlined), selectedIcon: Icon(Icons.explore), label: 'Explore'),
+          NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights), label: 'Reliability'),
+          NavigationDestination(icon: Icon(Icons.report_outlined), selectedIcon: Icon(Icons.report), label: 'Reports'),
+          NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications), label: 'Alerts'),
+        ],
       ),
     );
+  }
+}
+
+class _ComingSoonPage extends StatelessWidget {
+  const _ComingSoonPage({required this.moduleName});
+
+  final String moduleName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('$moduleName module is being prepared.'));
   }
 }

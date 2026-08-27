@@ -39,4 +39,12 @@ class Station {
   }
 
   bool hasFeature(String key) => accessibilityFeatures?[key] == true;
+
+  /// The database stores lines as one string. Supporting separators keeps it
+  /// compatible while allowing interchange stations to show multiple badges.
+  List<String> get lines => line
+      .split(RegExp(r'\s*(?:,|/|\||&| and )\s*', caseSensitive: false))
+      .where((value) => value.trim().isNotEmpty)
+      .map((value) => value.trim())
+      .toList();
 }
