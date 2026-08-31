@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../modules/alerts/screens/alerts_home_screen.dart';
+import '../modules/reports/screens/reports_home_screen.dart';
 
 /// Shared bottom-navigation shell — matches the 4-tab layout (Explore /
 /// Reliability / Reports / Alerts) shown across all four modules' mockups.
 ///
-/// Only the Alerts tab has a real screen wired in right now (Module 4).
-/// The other three are placeholders — swap `_PlaceholderTab(...)` for
-/// each teammate's actual screen widget once it exists. This file lives
-/// in `shared/` so any of the four of you can edit it to plug your
-/// module in without touching each other's module folders.
+/// Module 3 (Reports) and Module 4 (Alerts) have real screens wired in.
+/// Explore and Reliability are still placeholders — swap
+/// `_PlaceholderTab(...)` for each teammate's actual screen widget once it
+/// exists. This file lives in `shared_widgets/` so any of the four of you
+/// can edit it to plug your module in without touching each other's
+/// module folders.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -34,7 +36,7 @@ class _AppShellState extends State<AppShell> {
         children: const [
           _PlaceholderTab(moduleName: 'Module 1 — Station & Route Explorer'),
           _PlaceholderTab(moduleName: 'Module 2 — Reliability Engine'),
-          _PlaceholderTab(moduleName: 'Module 3 — Community Fault & Accessibility Reports'),
+          ReportsHomeScreen(),
           AlertsHomeScreen(),
         ],
       ),
