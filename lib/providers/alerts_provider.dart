@@ -1,22 +1,30 @@
 import 'package:flutter/foundation.dart';
-import '../repositories/alerts_repository.dart';
-import '../../../core/models/saved_station.dart';
-import '../../../core/models/mute_settings.dart';
+import '../services/alerts_repository.dart';
+import '../services/weekly_summary_repository.dart';
+import '../models/saved_station.dart';
+import '../models/mute_settings.dart';
+import '../models/ride_log.dart';
 
 enum LoadStatus { initial, loading, loaded, error }
 
 class AlertsProvider extends ChangeNotifier {
   final AlertsRepository _repository;
+  final WeeklySummaryRepository _ridesRepository;
   final String userId;
 
-  AlertsProvider({required AlertsRepository repository, required this.userId})
-      : _repository = repository;
+  AlertsProvider({
+    required AlertsRepository repository,
+    required this.userId,
+    WeeklySummaryRepository? ridesRepository,
+  })  : _repository = repository,
+        _ridesRepository = ridesRepository ?? WeeklySummaryRepository();
 
   LoadStatus status = LoadStatus.initial;
   String? errorMessage;
 
   List<SavedStation> savedStations = [];
   MuteSettings? muteSettings;
+  List<RideLog> recentRides = [];
 
   bool get isMutedNow => muteSettings?.isMutedNow ?? false;
 
@@ -29,9 +37,11 @@ class AlertsProvider extends ChangeNotifier {
       final results = await Future.wait([
         _repository.getSavedStations(userId),
         _repository.getMuteSettings(userId),
+        _ridesRepository.getRecentRides(userId),
       ]);
       savedStations = results[0] as List<SavedStation>;
       muteSettings = results[1] as MuteSettings?;
+      recentRides = results[2] as List<RideLog>;
       status = LoadStatus.loaded;
     } catch (e) {
       errorMessage = e.toString();
@@ -90,6 +100,25 @@ class AlertsProvider extends ChangeNotifier {
       savedStations.removeWhere((s) => s.id == savedStationId);
       notifyListeners();
     } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+    }
+  }
+
+  /// Optimistic update — flips the switch immediately, reverts if the
+  /// write fails, rather than making the user wait on every tap.
+  Future<void> toggleStationEnabled(String savedStationId, bool enabled) async {
+    final index = savedStations.indexWhere((s) => s.id == savedStationId);
+    if (index < 0) return;
+
+    final previous = savedStations[index];
+    savedStations[index] = previous.copyWith(enabled: enabled);
+    notifyListeners();
+
+    try {
+      await _repository.setEnabled(savedStationId, enabled);
+    } catch (e) {
+      savedStations[index] = previous; // revert
       errorMessage = e.toString();
       notifyListeners();
     }

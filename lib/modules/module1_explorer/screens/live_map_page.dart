@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/models/station.dart';
+import '../../../models/station.dart';
 import 'live_route_map.dart';
 import 'station_detail_page.dart';
 

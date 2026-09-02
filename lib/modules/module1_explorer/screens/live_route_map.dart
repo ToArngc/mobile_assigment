@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../core/models/station.dart';
+import '../../../models/station.dart';
 
 /// Route overview for Explore. Supply stations in their GTFS stop sequence.
 class LiveRouteMap extends StatefulWidget {

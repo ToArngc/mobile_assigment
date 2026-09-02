@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/models/station.dart';
-import '../../../core/models/timetable_entry.dart';
-import '../repositories/station_repository.dart';
+import '../../../models/station.dart';
+import '../../../models/timetable_entry.dart';
+import '../../../services/station_repository.dart';
 
 class StationDetailPage extends StatelessWidget {
   const StationDetailPage({required this.station, super.key});

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/models/station.dart';
-import '../repositories/station_repository.dart';
+import '../../../models/station.dart';
+import '../../../services/station_repository.dart';
+import '../../../shared_widgets/line_badge.dart';
 import 'live_map_page.dart';
 import 'live_route_map.dart';
 import 'station_detail_page.dart';
@@ -227,7 +228,7 @@ class _StationCard extends StatelessWidget {
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: station.lines.map(_LineBadge.new).toList(),
+                    children: station.lines.map(LineBadge.new).toList(),
                   ),
                 ],
               ),
@@ -238,33 +239,6 @@ class _StationCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _LineBadge extends StatelessWidget {
-  const _LineBadge(this.line);
-  final String line;
-
-  Color get _color {
-    final value = line.toLowerCase();
-    if (value.contains('seremban')) return const Color(0xff247a3d);
-    if (value.contains('ets')) return const Color(0xffc65100);
-    return const Color(0xff1267a9);
-  }
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: BoxDecoration(
-          color: _color.withOpacity(.12),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-          child: Text(
-            line,
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _color),
-          ),
-        ),
-      );
 }
 
 class _LoadError extends StatelessWidget {
