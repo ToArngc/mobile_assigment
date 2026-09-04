@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../modules/alerts/screens/alerts_home_screen.dart';
+import '../modules/module1_explorer/screens/explorer_home_page.dart';
 import '../modules/reports/screens/reports_home_screen.dart';
 
 /// Shared bottom-navigation shell — matches the 4-tab layout (Explore /
@@ -34,7 +35,7 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(
         index: _index,
         children: const [
-          _PlaceholderTab(moduleName: 'Module 1 — Station & Route Explorer'),
+          ExplorerHomePage(),
           _PlaceholderTab(moduleName: 'Module 2 — Reliability Engine'),
           ReportsHomeScreen(),
           AlertsHomeScreen(),

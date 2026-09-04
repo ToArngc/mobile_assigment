@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'services/supabase_service.dart';
-import 'services/auth_service.dart';
+
 import 'core/theme.dart';
+import 'services/auth_service.dart';
 import 'services/notification_service.dart';
+import 'services/supabase_service.dart';
 import 'shared_widgets/app_shell.dart';
 
 Future<void> main() async {
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'OnJejak',
+      debugShowCheckedModeBanner: false,
       theme: appTheme,
       home: const AppShell(),
     );
