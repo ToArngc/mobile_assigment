@@ -1,4 +1,5 @@
 import 'supabase_service.dart';
+import 'auth_service.dart';
 import '../models/saved_station.dart';
 import '../models/mute_settings.dart';
 import '../models/train_status.dart';
@@ -30,7 +31,11 @@ class AlertsRepository {
   /// settings underneath (those still need the full editor to change).
   Future<void> setEnabled(String id, bool enabled) async {
     try {
-      await _client.from('saved_stations').update({'enabled': enabled}).eq('id', id);
+      await _client
+          .from('saved_stations')
+          .update({'enabled': enabled})
+          .eq('id', id)
+          .eq('user_id', AuthService.currentUserId!);
     } catch (e) {
       throw Exception('Failed to update alert rule: $e');
     }
@@ -59,7 +64,11 @@ class AlertsRepository {
 
   Future<void> deleteSavedStation(String id) async {
     try {
-      await _client.from('saved_stations').delete().eq('id', id);
+      await _client
+          .from('saved_stations')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', AuthService.currentUserId!);
     } catch (e) {
       throw Exception('Failed to remove saved station: $e');
     }

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'supabase_service.dart';
+import 'auth_service.dart';
 import '../models/fault_report.dart';
 
 /// The category chips shown on the Report an Issue screen, mapped to the
@@ -103,12 +104,16 @@ class ReportsRepository {
     }
   }
 
-  /// Lets a rider mark their own report resolved. RLS restricts this to
-  /// rows they own — affects zero rows silently otherwise, same caveat
-  /// as AlertsRepository.setEnabled.
+  /// Lets a rider mark their own report resolved. Filtered to rows they
+  /// own — affects zero rows silently otherwise, same caveat as
+  /// AlertsRepository.setEnabled.
   Future<void> markResolved(String reportId) async {
     try {
-      await _client.from('fault_reports').update({'status': 'resolved'}).eq('id', reportId);
+      await _client
+          .from('fault_reports')
+          .update({'status': 'resolved'})
+          .eq('id', reportId)
+          .eq('user_id', AuthService.currentUserId!);
     } catch (e) {
       throw Exception('Failed to update report status: $e');
     }

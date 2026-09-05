@@ -1,4 +1,5 @@
 import 'supabase_service.dart';
+import 'auth_service.dart';
 import '../models/saved_route.dart';
 
 /// Result of computing when the user needs to leave for a saved route.
@@ -46,7 +47,11 @@ class LeaveByRepository {
 
   Future<void> deleteSavedRoute(String id) async {
     try {
-      await _client.from('saved_routes').delete().eq('id', id);
+      await _client
+          .from('saved_routes')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', AuthService.currentUserId!);
     } catch (e) {
       throw Exception('Failed to remove route: $e');
     }
