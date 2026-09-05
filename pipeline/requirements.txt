@@ -1,0 +1,5 @@
+# Direct Supabase REST calls via `requests` are used instead of the `supabase`
+# python client — one fewer dependency, and both scripts already need
+# `requests` for the GTFS HTTP fetches.
+gtfs-realtime-bindings
+requests

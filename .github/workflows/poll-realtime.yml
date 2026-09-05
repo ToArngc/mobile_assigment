@@ -1,0 +1,28 @@
+name: Poll GTFS realtime
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # All times UTC. Design doc §8: 7-10am MYT and 5-8pm MYT, MYT = UTC+8.
+    - cron: '*/15 23 * * *'    # 7:00-7:45am MYT
+    - cron: '*/15 0-1 * * *'   # 8:00-9:45am MYT
+    - cron: '0 2 * * *'        # 10:00am MYT (closes the morning window)
+    - cron: '*/15 9-11 * * *'  # 5:00-6:45pm MYT
+    - cron: '0 12 * * *'       # 8:00pm MYT (closes the evening window)
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install -r pipeline/requirements.txt
+
+      - run: python pipeline/poll_realtime.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
