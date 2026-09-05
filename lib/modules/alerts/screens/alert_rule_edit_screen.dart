@@ -36,6 +36,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
   late double _thresholdMinutes;
   TimeOfDay? _quietStart;
   TimeOfDay? _quietEnd;
+  late bool _enabled;
   final Set<String> _activeDays = {};
 
   static const _allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -45,6 +46,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
     super.initState();
     final existing = widget.existing;
     _thresholdMinutes = (existing?.alertDelayThreshold ?? 5).toDouble();
+    _enabled = existing?.enabled ?? true;
     if (existing?.quietHoursStart != null) {
       _quietStart = _parseTimeOfDay(existing!.quietHoursStart!);
     }
@@ -91,6 +93,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
         quietHoursStart: _quietStart != null ? _formatTimeOfDay(_quietStart!) : null,
         quietHoursEnd: _quietEnd != null ? _formatTimeOfDay(_quietEnd!) : null,
         activeDays: _activeDays.toList(),
+        enabled: _enabled,
         createdAt: widget.existing?.createdAt ?? DateTime.now(),
       );
       await _repository.upsertSavedStation(saved);
@@ -113,6 +116,14 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Enable delay alerts'),
+            subtitle: const Text('Turn this off to keep the rule without notifications.'),
+            value: _enabled,
+            onChanged: (value) => setState(() => _enabled = value),
+          ),
+          const Divider(height: 32),
           Text('Delay threshold', style: Theme.of(context).textTheme.titleMedium),
           const Text(
             'Notify me when this station\'s trains are delayed by more than:',

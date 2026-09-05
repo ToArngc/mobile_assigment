@@ -88,4 +88,29 @@ class NotificationService {
   static Future<void> cancelReminder(int id) async {
     await _plugin.cancel(id);
   }
+
+  /// Displays an immediate, foreground-checked Module 4 train-delay alert.
+  static Future<void> showDelayAlert({
+    required int id,
+    required String stationName,
+    required String line,
+    required int delayMinutes,
+  }) async {
+    final lineLabel = line.isEmpty ? '' : ' ($line)';
+    await _plugin.show(
+      id,
+      'Train delay alert',
+      '$stationName$lineLabel is delayed by $delayMinutes minutes.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'train_delay_channel',
+          'Train Delay Alerts',
+          channelDescription: 'Personalised alerts for train delays',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
 }

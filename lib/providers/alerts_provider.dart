@@ -54,8 +54,8 @@ class AlertsProvider extends ChangeNotifier {
 
   /// "No Commute Today" — mutes until end of today.
   Future<void> muteToday() async {
-    final endOfToday = DateTime.now();
-    await _setMute(DateTime(endOfToday.year, endOfToday.month, endOfToday.day));
+    final today = DateTime.now();
+    await _setMute(DateTime(today.year, today.month, today.day));
   }
 
   Future<void> muteUntilDate(DateTime date) async {
