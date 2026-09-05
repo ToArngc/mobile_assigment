@@ -1,35 +1,46 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
-/// Handles anonymous authentication.
+/// Email + password authentication, per design doc §7.
 ///
-/// OnJejak doesn't need real accounts (no login screen, no email/password) —
-/// every device just needs a stable user_id so RLS policies on
-/// saved_stations / saved_routes / mute_settings / ride_logs
-/// know which rows belong to which user.
-///
-/// Call [AuthService.ensureSignedIn] once in main(), after
-/// SupabaseService.initialize() and before runApp().
+/// Sign up also creates the matching `profiles` row (id + username).
+/// `profiles.username` has a UNIQUE constraint in the schema, so a taken
+/// username surfaces as a Postgrest unique-violation (code 23505) rather
+/// than needing a separate existence check.
 class AuthService {
-  static Future<void> ensureSignedIn() async {
-    final client = SupabaseService.client;
+  static SupabaseClient get _client => SupabaseService.client;
 
-    // Supabase persists the session locally, so on most app launches
-    // there's already a signed-in anonymous user from last time.
-    if (client.auth.currentUser != null) return;
+  static Session? get currentSession => _client.auth.currentSession;
+  static String? get currentUserId => _client.auth.currentUser?.id;
+  static Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
+
+  static Future<void> signIn({required String email, required String password}) {
+    return _client.auth.signInWithPassword(email: email, password: password);
+  }
+
+  static Future<void> signUp({
+    required String email,
+    required String password,
+    required String username,
+  }) async {
+    final response = await _client.auth.signUp(email: email, password: password);
+    final user = response.user;
+    if (user == null) {
+      throw Exception('Sign up failed — please try again.');
+    }
 
     try {
-      await client.auth.signInAnonymously();
-    } catch (e) {
-      // If this fails (e.g. anonymous sign-ins disabled in the Supabase
-      // dashboard under Authentication > Providers), every saved_*
-      // write will fail too — surface it loudly during development.
-      // ignore: avoid_print
-      print('Anonymous sign-in failed: $e');
+      await _client.from('profiles').insert({
+        'id': user.id,
+        'username': username.trim(),
+      });
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw Exception('That username is already taken.');
+      }
       rethrow;
     }
   }
 
-  /// Convenience getter — most repositories/providers need this.
-  static String? get currentUserId => SupabaseService.client.auth.currentUser?.id;
+  static Future<void> signOut() => _client.auth.signOut();
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../modules/alerts/screens/alerts_home_screen.dart';
+import '../modules/auth/screens/profile_screen.dart';
 import '../modules/module1_explorer/screens/explorer_home_page.dart';
 import '../modules/reports/screens/reports_home_screen.dart';
 
@@ -12,6 +13,11 @@ import '../modules/reports/screens/reports_home_screen.dart';
 /// exists. This file lives in `shared_widgets/` so any of the four of you
 /// can edit it to plug your module in without touching each other's
 /// module folders.
+///
+/// Profile (§7) is reached via the floating icon at top-right, not a tab —
+/// implemented as an overlay rather than a Scaffold-level AppBar because
+/// Reports and Alerts already have their own per-tab AppBars; a shell-level
+/// AppBar would double up on those two tabs.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -32,13 +38,37 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          ExplorerHomePage(),
-          _PlaceholderTab(moduleName: 'Module 2 — Reliability Engine'),
-          ReportsHomeScreen(),
-          AlertsHomeScreen(),
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _index,
+            children: const [
+              ExplorerHomePage(),
+              _PlaceholderTab(moduleName: 'Module 2 — Reliability Engine'),
+              ReportsHomeScreen(),
+              AlertsHomeScreen(),
+            ],
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Material(
+                  color: Theme.of(context).colorScheme.surface,
+                  shape: const CircleBorder(),
+                  elevation: 2,
+                  child: IconButton(
+                    icon: const Icon(Icons.person_outline),
+                    tooltip: 'Profile',
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
