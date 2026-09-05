@@ -1,6 +1,7 @@
 import 'supabase_service.dart';
 import '../models/saved_station.dart';
 import '../models/mute_settings.dart';
+import '../models/train_status.dart';
 
 class AlertsRepository {
   final _client = SupabaseService.client;
@@ -61,6 +62,23 @@ class AlertsRepository {
       await _client.from('saved_stations').delete().eq('id', id);
     } catch (e) {
       throw Exception('Failed to remove saved station: $e');
+    }
+  }
+
+  /// Most recent status reported for one saved station. A null delay is a
+  /// valid status record but cannot produce a delay alert.
+  Future<TrainStatus?> getLatestTrainStatus(String stationId) async {
+    try {
+      final data = await _client
+          .from('train_status')
+          .select()
+          .eq('station_id', stationId)
+          .order('recorded_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      return data == null ? null : TrainStatus.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to load latest train status: $e');
     }
   }
 

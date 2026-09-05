@@ -28,6 +28,16 @@ class MuteSettings {
     };
   }
 
-  bool get isMutedNow =>
-      mutedUntil != null && mutedUntil!.isAfter(DateTime.now());
+  /// `muted_until` is stored as a database DATE. Treat that date as
+  /// inclusive, so "mute until Sep 10" remains active through Sep 10.
+  bool get isMutedNow {
+    if (mutedUntil == null) return false;
+    final now = DateTime.now();
+    final endOfMutedDay = DateTime(
+      mutedUntil!.year,
+      mutedUntil!.month,
+      mutedUntil!.day + 1,
+    );
+    return now.isBefore(endOfMutedDay);
+  }
 }

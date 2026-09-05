@@ -20,11 +20,12 @@ class WeeklySummaryProvider extends ChangeNotifier {
   int get tripCount => rides.length;
 
   double? get onTimePercent {
-    if (rides.isEmpty) return null;
-    final onTime = rides.where(
-          (r) => (r.delayMinutes ?? 0) <= kOnTimeDelayThresholdMinutes,
+    final withDelay = rides.where((r) => r.delayMinutes != null).toList();
+    if (withDelay.isEmpty) return null;
+    final onTime = withDelay.where(
+      (r) => r.delayMinutes! <= kOnTimeDelayThresholdMinutes,
     ).length;
-    return onTime / rides.length * 100;
+    return onTime / withDelay.length * 100;
   }
 
   double? get averageDelayMinutes {

@@ -5,6 +5,7 @@ import '../../../services/alerts_repository.dart';
 import '../widgets/quick_mute_card.dart';
 import '../../../services/auth_service.dart';
 import 'select_station_screen.dart';
+import 'alert_rule_edit_screen.dart';
 import 'weekly_summary_screen.dart';
 import 'leave_by_screen.dart';
 
@@ -138,19 +139,72 @@ class _AlertsHomeBody extends StatelessWidget {
               else
                 ...provider.savedStations.map(
                       (station) => ListTile(
-                    leading: const Icon(Icons.notifications_none),
-                    title: Text('Station ${station.stationId}'),
-                    subtitle: Text(
-                      station.alertDelayThreshold != null
-                          ? 'Alert if delay > ${station.alertDelayThreshold} min'
-                          : 'No threshold set',
+                    leading: Icon(
+                      station.enabled
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_off_outlined,
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => provider.removeAlertRule(station.id),
+                    title: Text(station.stationName ?? 'Saved station'),
+                    subtitle: Text(
+                      '${station.stationLine ?? 'Line unavailable'}\n'
+                      '${station.alertDelayThreshold != null ? 'Alert if delay > ${station.alertDelayThreshold} min' : 'No threshold set'}',
+                    ),
+                    isThreeLine: true,
+                    onTap: () async {
+                      final saved = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => AlertRuleEditScreen(
+                            stationId: station.stationId,
+                            stationName: station.stationName ?? 'Saved station',
+                            existing: station,
+                          ),
+                        ),
+                      );
+                      if (saved == true && context.mounted) {
+                        provider.loadAll();
+                      }
+                    },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Switch(
+                          value: station.enabled,
+                          onChanged: (enabled) => provider.toggleStationEnabled(
+                            station.id,
+                            enabled,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: 'Remove alert',
+                          onPressed: () => provider.removeAlertRule(station.id),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              if (provider.recentRides.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+                  child: Text(
+                    'Recent rides',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                ...provider.recentRides.map(
+                  (ride) => ListTile(
+                    leading: const Icon(Icons.train_outlined),
+                    title: Text(
+                      ride.destinationStationName == null
+                          ? (ride.stationName ?? 'Saved station')
+                          : '${ride.stationName ?? 'Saved station'} → ${ride.destinationStationName}',
+                    ),
+                    subtitle: Text(
+                      '${ride.detectedAt.toLocal()}${ride.durationMinutes == null ? '' : ' · ${ride.durationMinutes} min'}${ride.delayMinutes == null ? '' : ' · ${ride.delayMinutes} min delay'}',
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

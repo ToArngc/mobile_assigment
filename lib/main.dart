@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'services/supabase_service.dart';
-import 'services/auth_service.dart';
+
 import 'core/theme.dart';
+import 'services/auth_service.dart';
+import 'services/delay_alert_service.dart';
 import 'services/notification_service.dart';
+import 'services/ride_detection_service.dart';
+import 'services/supabase_service.dart';
 import 'shared_widgets/app_shell.dart';
 
 Future<void> main() async {
@@ -10,6 +13,8 @@ Future<void> main() async {
   await SupabaseService.initialize();
   await AuthService.ensureSignedIn();
   await NotificationService.initialize();
+  await DelayAlertService.instance.start();
+  await RideDetectionService().start();
   runApp(const MyApp());
 }
 
