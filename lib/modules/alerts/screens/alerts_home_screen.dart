@@ -22,16 +22,13 @@ class AlertsHomeScreen extends StatelessWidget {
     final userId = AuthService.currentUserId;
 
     if (userId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Not signed in')),
-      );
+      return const Scaffold(body: Center(child: Text('Not signed in')));
     }
 
     return ChangeNotifierProvider(
-      create: (_) => AlertsProvider(
-        repository: AlertsRepository(),
-        userId: userId,
-      )..loadAll(),
+      create: (_) =>
+          AlertsProvider(repository: AlertsRepository(), userId: userId)
+            ..loadAll(),
       child: Builder(
         builder: (context) => Scaffold(
           appBar: AppBar(title: const Text('Alerts')),
@@ -110,7 +107,9 @@ class _AlertsHomeBody extends StatelessWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const WeeklySummaryScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const WeeklySummaryScreen(),
+                      ),
                     );
                   },
                 ),
@@ -141,13 +140,13 @@ class _AlertsHomeBody extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                   child: Text(
                     'No saved stations yet. Add one from a station\'s page '
-                        'to get delay alerts for your commute.',
+                    'to get delay alerts for your commute.',
                     style: TextStyle(color: Colors.grey),
                   ),
                 )
               else
                 ...provider.savedStations.map(
-                      (station) => ListTile(
+                  (station) => ListTile(
                     leading: Icon(
                       station.enabled
                           ? Icons.notifications_active_outlined
@@ -211,7 +210,11 @@ class _AlertsHomeBody extends StatelessWidget {
                     padding: EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        Icon(Icons.route_outlined, size: 32, color: Colors.grey),
+                        Icon(
+                          Icons.route_outlined,
+                          size: 32,
+                          color: Colors.grey,
+                        ),
                         SizedBox(height: 8),
                         Text('No rides logged yet'),
                         SizedBox(height: 4),
@@ -238,7 +241,6 @@ class _AlertsHomeBody extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
               ],
             ],
           ),
