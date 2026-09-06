@@ -2,17 +2,13 @@ import 'package:flutter/material.dart';
 import '../modules/alerts/screens/alerts_home_screen.dart';
 import '../modules/auth/screens/profile_screen.dart';
 import '../modules/module1_explorer/screens/explorer_home_page.dart';
+import '../modules/reliability/screens/reliability_dashboard_screen.dart';
 import '../modules/reports/screens/reports_home_screen.dart';
 
 /// Shared bottom-navigation shell — matches the 4-tab layout (Explore /
 /// Reliability / Reports / Alerts) shown across all four modules' mockups.
-///
-/// Module 3 (Reports) and Module 4 (Alerts) have real screens wired in.
-/// Explore and Reliability are still placeholders — swap
-/// `_PlaceholderTab(...)` for each teammate's actual screen widget once it
-/// exists. This file lives in `shared_widgets/` so any of the four of you
-/// can edit it to plug your module in without touching each other's
-/// module folders.
+/// This file lives in `shared_widgets/` so any of the four of you can edit
+/// it to plug your module in without touching each other's module folders.
 ///
 /// Profile (§7) is reached via the floating icon at top-right, not a tab —
 /// implemented as an overlay rather than a Scaffold-level AppBar because
@@ -44,7 +40,7 @@ class _AppShellState extends State<AppShell> {
             index: _index,
             children: const [
               ExplorerHomePage(),
-              _PlaceholderTab(moduleName: 'Module 2 — Reliability Engine'),
+              ReliabilityDashboardScreen(),
               ReportsHomeScreen(),
               AlertsHomeScreen(),
             ],
@@ -91,27 +87,4 @@ class _TabSpec {
   final IconData icon;
   final IconData activeIcon;
   const _TabSpec({required this.label, required this.icon, required this.activeIcon});
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  final String moduleName;
-  const _PlaceholderTab({required this.moduleName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(moduleName)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'Not built yet — swap this placeholder for the real screen '
-                'in app_shell.dart once it exists.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.outline),
-          ),
-        ),
-      ),
-    );
-  }
 }

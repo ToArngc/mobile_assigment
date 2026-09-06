@@ -1,14 +1,9 @@
 name: Poll GTFS realtime
 
 on:
-  workflow_dispatch: {}
   schedule:
-    # All times UTC. Design doc §8: 7-10am MYT and 5-8pm MYT, MYT = UTC+8.
-    - cron: '*/15 23 * * *'    # 7:00-7:45am MYT
-    - cron: '*/15 0-1 * * *'   # 8:00-9:45am MYT
-    - cron: '0 2 * * *'        # 10:00am MYT (closes the morning window)
-    - cron: '*/15 9-11 * * *'  # 5:00-6:45pm MYT
-    - cron: '0 12 * * *'       # 8:00pm MYT (closes the evening window)
+    - cron: '*/15 0-15,22-23 * * *'
+  workflow_dispatch:
 
 jobs:
   poll:
