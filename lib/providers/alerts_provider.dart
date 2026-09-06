@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/alerts_repository.dart';
+import '../services/delay_alert_service.dart';
 import '../services/weekly_summary_repository.dart';
 import '../models/saved_station.dart';
 import '../models/mute_settings.dart';
@@ -10,6 +11,7 @@ enum LoadStatus { initial, loading, loaded, error }
 class AlertsProvider extends ChangeNotifier {
   final AlertsRepository _repository;
   final WeeklySummaryRepository _ridesRepository;
+  final DelayAlertService _delayAlertService;
   final String userId;
 
   AlertsProvider({
@@ -17,7 +19,10 @@ class AlertsProvider extends ChangeNotifier {
     required this.userId,
     WeeklySummaryRepository? ridesRepository,
   })  : _repository = repository,
-        _ridesRepository = ridesRepository ?? WeeklySummaryRepository();
+        _ridesRepository = ridesRepository ?? WeeklySummaryRepository(),
+        _delayAlertService = DelayAlertService.instance {
+    _delayAlertService.lastCheckedAt.addListener(notifyListeners);
+  }
 
   LoadStatus status = LoadStatus.initial;
   String? errorMessage;
@@ -27,6 +32,13 @@ class AlertsProvider extends ChangeNotifier {
   List<RideLog> recentRides = [];
 
   bool get isMutedNow => muteSettings?.isMutedNow ?? false;
+  DateTime? get lastAlertCheckedAt => _delayAlertService.lastCheckedAt.value;
+
+  @override
+  void dispose() {
+    _delayAlertService.lastCheckedAt.removeListener(notifyListeners);
+    super.dispose();
+  }
 
   Future<void> loadAll() async {
     status = LoadStatus.loading;

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../models/saved_station.dart';
 import '../models/train_status.dart';
 import 'alerts_repository.dart';
@@ -22,6 +24,7 @@ class DelayAlertService {
   final AlertsRepository _repository = AlertsRepository();
   final ReliabilityRepository _reliabilityRepository = ReliabilityRepository();
   final Set<String> _notifiedStatusKeys = <String>{};
+  final ValueNotifier<DateTime?> lastCheckedAt = ValueNotifier<DateTime?>(null);
   Timer? _timer;
   bool _checking = false;
 
@@ -70,6 +73,7 @@ class DelayAlertService {
         );
       }
     } finally {
+      lastCheckedAt.value = DateTime.now();
       _checking = false;
     }
   }

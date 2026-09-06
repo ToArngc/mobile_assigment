@@ -92,6 +92,15 @@ class _AlertsHomeBody extends StatelessWidget {
           child: ListView(
             children: [
               const QuickMuteCard(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  provider.lastAlertCheckedAt == null
+                      ? 'Alert check has not run yet'
+                      : 'Last checked: ${_formatCheckedTime(provider.lastAlertCheckedAt!)}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ),
               Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
@@ -177,20 +186,45 @@ class _AlertsHomeBody extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.delete_outline),
                           tooltip: 'Remove alert',
-                          onPressed: () => provider.removeAlertRule(station.id),
+                          onPressed: () => _confirmRemoveAlert(
+                            context,
+                            provider,
+                            station.id,
+                            station.stationName ?? 'this station',
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              if (provider.recentRides.isNotEmpty) ...[
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-                  child: Text(
-                    'Recent rides',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+                child: Text(
+                  'Recent rides',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
+              ),
+              if (provider.recentRides.isEmpty)
+                const Card(
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Icon(Icons.route_outlined, size: 32, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text('No rides logged yet'),
+                        SizedBox(height: 4),
+                        Text(
+                          'When the app is open during commute hours, rides near known stations can appear here.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else ...[
                 ...provider.recentRides.map(
                   (ride) => ListTile(
                     leading: const Icon(Icons.train_outlined),
@@ -205,10 +239,47 @@ class _AlertsHomeBody extends StatelessWidget {
                   ),
                 ),
               ],
+              ],
             ],
           ),
         );
       },
     );
+  }
+
+  String _formatCheckedTime(DateTime time) {
+    final local = time.toLocal();
+    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final minute = local.minute.toString().padLeft(2, '0');
+    final period = local.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  Future<void> _confirmRemoveAlert(
+    BuildContext context,
+    AlertsProvider provider,
+    String savedStationId,
+    String stationName,
+  ) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove alert?'),
+        content: Text('Remove the delay alert for $stationName?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (shouldRemove == true && context.mounted) {
+      await provider.removeAlertRule(savedStationId);
+    }
   }
 }
