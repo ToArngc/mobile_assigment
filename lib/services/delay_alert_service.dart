@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../models/saved_station.dart';
 import '../models/train_status.dart';
 import 'alerts_repository.dart';
 import 'auth_service.dart';
 import 'notification_service.dart';
+import 'reliability_repository.dart';
 
 /// Checks personal saved-station rules while the app is running.
 ///
@@ -19,7 +22,9 @@ class DelayAlertService {
   static const _maxStatusAge = Duration(minutes: 15);
 
   final AlertsRepository _repository = AlertsRepository();
+  final ReliabilityRepository _reliabilityRepository = ReliabilityRepository();
   final Set<String> _notifiedStatusKeys = <String>{};
+  final ValueNotifier<DateTime?> lastCheckedAt = ValueNotifier<DateTime?>(null);
   Timer? _timer;
   bool _checking = false;
 
@@ -49,7 +54,12 @@ class DelayAlertService {
       final savedStations = await _repository.getSavedStations(userId);
       for (final rule in savedStations) {
         if (!_isRuleActiveNow(rule)) continue;
-        final status = await _repository.getLatestTrainStatus(rule.stationId);
+        // Module 2 owns the shared train-status query used by the
+        // Reliability dashboard. Reuse it so both modules assess the same
+        // latest live delay for a station.
+        final recentStatuses = await _reliabilityRepository
+            .fetchRecentTrainDelays(stationId: rule.stationId, limit: 1);
+        final status = recentStatuses.isEmpty ? null : recentStatuses.first;
         if (status == null || !_isEligibleDelay(rule, status)) continue;
 
         final key = '${rule.id}:${status.id}:${status.recordedAt.toUtc().toIso8601String()}';
@@ -63,6 +73,7 @@ class DelayAlertService {
         );
       }
     } finally {
+      lastCheckedAt.value = DateTime.now();
       _checking = false;
     }
   }
