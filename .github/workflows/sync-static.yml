@@ -1,0 +1,29 @@
+name: Sync GTFS static
+
+on:
+  schedule:
+    # Design doc §8 calls for once-daily (KTMB publishes at 00:01 MYT), but
+    # running every 15 min for now to get real stations/timetable_entries
+    # into Supabase ASAP — poll-realtime.yml can't log anything real until
+    # this has synced at least once. Safe to run this often: sync_static.py
+    # upserts stations by name and does a full delete+reinsert of
+    # timetable_entries, so repeat runs are idempotent, just redundant.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install -r pipeline/requirements.txt
+
+      - run: python pipeline/sync_static.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
