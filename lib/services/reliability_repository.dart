@@ -100,15 +100,18 @@ class ReliabilityRepository {
     required int days,
   }) async {
     try {
-      final since = DateTime.now().toUtc().subtract(Duration(days: days));
       var query = _client
           .from('train_status')
           .select()
-          .not('delay_minutes', 'is', null)
-          .gte('recorded_at', since.toIso8601String());
+          .not('delay_minutes', 'is', null);
       if (lineId != null) query = query.eq('line', lineId);
       if (stationId != null) query = query.eq('station_id', stationId);
-      final data = await query.order('recorded_at');
+      // Ordered/limited rather than date-bounded by wall-clock "now": if
+      // the pipeline has gaps (or hasn't run in a while), the trend should
+      // still show the most recent days that actually have data instead of
+      // silently going empty just because "now minus N days" landed after
+      // the last real row.
+      final data = await query.order('recorded_at', ascending: false).limit(2000);
 
       final rows = (data as List)
           .map((row) => TrainStatus.fromJson(row as Map<String, dynamic>))
@@ -122,7 +125,10 @@ class ReliabilityRepository {
       }
 
       final sortedDays = byDay.keys.toList()..sort();
-      return sortedDays.map((day) {
+      final recentDays =
+          sortedDays.length > days ? sortedDays.sublist(sortedDays.length - days) : sortedDays;
+
+      return recentDays.map((day) {
         final dayRows = byDay[day]!;
         final onTime = dayRows
             .where((r) => (r.delayMinutes ?? 0) <= onTimeThresholdMinutes)
