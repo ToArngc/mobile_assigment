@@ -6,11 +6,6 @@ import '../../../services/auth_service.dart';
 import '../widgets/report_card.dart';
 import 'report_issue_screen.dart';
 
-/// Entry screen for Module 3 — Community Fault & Accessibility Reports.
-/// The body shows the rider's own submitted reports (design doc §7's
-/// "My Reports" requirement), mirroring how AlertsHomeScreen shows saved
-/// stations directly instead of a separate screen. The FAB opens
-/// ReportIssueScreen to submit a new one.
 class ReportsHomeScreen extends StatelessWidget {
   const ReportsHomeScreen({super.key});
 
@@ -91,8 +86,8 @@ class _ReportsHomeBody extends StatelessWidget {
                   padding: EdgeInsets.all(24),
                   child: Text(
                     "You haven't reported anything yet. Tap \"Report an "
-                    "issue\" to flag a broken lift, escalator, overcrowding, "
-                    "or other station issue for other riders.",
+                        "issue\" to flag a broken lift, escalator, overcrowding, "
+                        "or other station issue for other riders.",
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey),
                   ),
@@ -107,7 +102,13 @@ class _ReportsHomeBody extends StatelessWidget {
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: provider.myReports.length,
-            itemBuilder: (context, index) => ReportCard(report: provider.myReports[index]),
+            itemBuilder: (context, index) {
+              final report = provider.myReports[index];
+              return ReportCard(
+                report: report,
+                onMarkResolved: () => provider.markResolved(report.id),
+              );
+            },
           ),
         );
       },

@@ -3,15 +3,18 @@ import '../../../core/theme.dart';
 import '../../../models/fault_report.dart';
 import '../../../services/reports_repository.dart' show ReportCategory;
 
-/// List tile for a single fault report. Used on ReportsHomeScreen ("My
-/// reports", spans multiple stations — pass [stationName]) and inline on
-/// ReportIssueScreen ("Recent reports for this station" — omit it, since
-/// every card there is already scoped to the one station shown).
+
 class ReportCard extends StatelessWidget {
   final FaultReport report;
   final String? stationName;
+  final VoidCallback? onMarkResolved;
 
-  const ReportCard({super.key, required this.report, this.stationName});
+  const ReportCard({
+    super.key,
+    required this.report,
+    this.stationName,
+    this.onMarkResolved,
+  });
 
   String get _title => ReportCategory.fromIssueType(report.issueType).label;
 
@@ -23,6 +26,21 @@ class ReportCard extends StatelessWidget {
     return '${diff.inDays}d ago';
   }
 
+  Future<void> _confirmResolve(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark as resolved?'),
+        content: Text('This marks "$_title" as fixed. Other riders will see it as resolved.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Mark resolved')),
+        ],
+      ),
+    );
+    if (confirmed == true) onMarkResolved?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     final open = report.status == FaultStatus.open;
@@ -32,6 +50,9 @@ class ReportCard extends StatelessWidget {
       _relativeTime,
     ];
 
+
+    final actionable = open && onMarkResolved != null;
+
     return Card(
       child: ListTile(
         leading: Icon(
@@ -40,7 +61,17 @@ class ReportCard extends StatelessWidget {
         ),
         title: Text(_title),
         subtitle: Text(subtitleParts.join(' · ')),
-        trailing: Chip(
+        trailing: actionable
+            ? ActionChip(
+          label: const Text('Open'),
+          labelStyle: TextStyle(fontSize: 12, color: Colors.red.shade700),
+          backgroundColor: Colors.red.shade50,
+          side: BorderSide.none,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onPressed: () => _confirmResolve(context),
+        )
+            : Chip(
           label: Text(open ? 'Open' : 'Resolved'),
           labelStyle: TextStyle(
             fontSize: 12,

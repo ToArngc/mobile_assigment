@@ -31,4 +31,21 @@ class ReportsProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> markResolved(String reportId) async {
+    final index = myReports.indexWhere((r) => r.id == reportId);
+    if (index < 0) return;
+
+    final previous = myReports[index];
+    myReports[index] = previous.copyWith(status: FaultStatus.resolved);
+    notifyListeners();
+
+    try {
+      await _repository.markResolved(reportId);
+    } catch (e) {
+      myReports[index] = previous; // revert on failure
+      errorMessage = e.toString();
+      notifyListeners();
+    }
+  }
 }

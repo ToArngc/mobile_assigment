@@ -56,4 +56,21 @@ class FaultReport {
       'created_at': createdAt.toIso8601String(),
     };
   }
+
+  /// Used for the optimistic update in ReportsProvider.markResolved —
+  /// same pattern as SavedStation.copyWith in Module 4.
+  FaultReport copyWith({FaultStatus? status}) {
+    return FaultReport(
+      id: id,
+      userId: userId,
+      stationId: stationId,
+      issueType: issueType,
+      description: description,
+      photoUrl: photoUrl,
+      lat: lat,
+      lng: lng,
+      status: status ?? this.status,
+      createdAt: createdAt,
+    );
+  }
 }
