@@ -1,0 +1,90 @@
+import 'package:flutter/material.dart';
+import '../modules/alerts/screens/alerts_home_screen.dart';
+import '../modules/auth/screens/profile_screen.dart';
+import '../modules/module1_explorer/screens/explorer_home_page.dart';
+import '../modules/reliability/screens/reliability_dashboard_screen.dart';
+import '../modules/reports/screens/reports_home_screen.dart';
+
+/// Shared bottom-navigation shell — matches the 4-tab layout (Explore /
+/// Reliability / Reports / Alerts) shown across all four modules' mockups.
+/// This file lives in `shared_widgets/` so any of the four of you can edit
+/// it to plug your module in without touching each other's module folders.
+///
+/// Profile (§7) is reached via the floating icon at top-right, not a tab —
+/// implemented as an overlay rather than a Scaffold-level AppBar because
+/// Reports and Alerts already have their own per-tab AppBars; a shell-level
+/// AppBar would double up on those two tabs.
+class AppShell extends StatefulWidget {
+  const AppShell({super.key});
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  int _index = 0;
+
+  static const _tabs = [
+    _TabSpec(label: 'Explore', icon: Icons.train_outlined, activeIcon: Icons.train),
+    _TabSpec(label: 'Reliability', icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart),
+    _TabSpec(label: 'Reports', icon: Icons.flag_outlined, activeIcon: Icons.flag),
+    _TabSpec(label: 'Alerts', icon: Icons.notifications_outlined, activeIcon: Icons.notifications),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _index,
+            children: const [
+              ExplorerHomePage(),
+              ReliabilityDashboardScreen(),
+              ReportsHomeScreen(),
+              AlertsHomeScreen(),
+            ],
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Material(
+                  color: Theme.of(context).colorScheme.surface,
+                  shape: const CircleBorder(),
+                  elevation: 2,
+                  child: IconButton(
+                    icon: const Icon(Icons.person_outline),
+                    tooltip: 'Profile',
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _index,
+        onTap: (i) => setState(() => _index = i),
+        items: _tabs
+            .map((t) => BottomNavigationBarItem(
+          icon: Icon(t.icon),
+          activeIcon: Icon(t.activeIcon),
+          label: t.label,
+        ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _TabSpec {
+  final String label;
+  final IconData icon;
+  final IconData activeIcon;
+  const _TabSpec({required this.label, required this.icon, required this.activeIcon});
+}

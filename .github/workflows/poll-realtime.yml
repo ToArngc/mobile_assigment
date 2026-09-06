@@ -1,0 +1,23 @@
+name: Poll GTFS realtime
+
+on:
+  schedule:
+    - cron: '*/15 0-15,22-23 * * *'
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install -r pipeline/requirements.txt
+
+      - run: python pipeline/poll_realtime.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
