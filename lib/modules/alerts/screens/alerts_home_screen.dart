@@ -191,38 +191,43 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'My alerts',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 3),
-              const Text(
-                'Manage station notifications',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-              if (provider.lastAlertCheckedAt != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Last checked: ${_formatCheckedTime(provider.lastAlertCheckedAt!)}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ],
-          ),
+        const Text(
+          'My alerts',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
         ),
+        const SizedBox(height: 3),
+        const Text(
+          'Manage station notifications',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        if (provider.lastAlertCheckedAt != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Last checked: ${_formatCheckedTime(provider.lastAlertCheckedAt!)}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+        const SizedBox(height: 4),
         PopupMenuButton<_HeaderAction>(
           tooltip: 'Alert options',
           onSelected: (action) => _handleAction(context, action),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.tune, size: 18),
+                SizedBox(width: 6),
+                Text('Alert options'),
+              ],
+            ),
+          ),
           itemBuilder: (_) => const [
             PopupMenuItem(
               value: _HeaderAction.mute,
