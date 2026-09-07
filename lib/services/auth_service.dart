@@ -1,11 +1,13 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'edge_function_client.dart';
 import 'supabase_service.dart';
 
 /// Email + password authentication, per design doc §7.
 ///
-/// Sign up also creates the matching `profiles` row (id + username).
-/// `profiles.username` has a UNIQUE constraint in the schema, so a taken
-/// username surfaces as a Postgrest unique-violation (code 23505) rather
+/// Sign up also creates the matching `profiles` row (id + username) via
+/// create-profile. `profiles.username` has a UNIQUE constraint in the
+/// schema, so a taken username surfaces as a 409 from the function rather
 /// than needing a separate existence check.
 class AuthService {
   static SupabaseClient get _client => SupabaseService.client;
@@ -48,19 +50,28 @@ class AuthService {
       );
     }
 
-    try {
-      await _client.from('profiles').insert({
-        'id': user.id,
-        'username': username.trim(),
-      });
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') {
-        throw Exception('That username is already taken.');
-      }
-      rethrow;
+    final needsEmailConfirmation = response.session == null;
+
+    // Reconciliation with get-profile's own lazy auto-create: create-profile
+    // is JWT-scoped and needs an active session to authenticate as this
+    // user, which only exists immediately when email confirmation is off.
+    // When it's on, there's no session yet and this call would 401, so it's
+    // skipped — get-profile's auto-create (fallback username "Rider <id>")
+    // becomes the fallback path the first time the user opens the Profile
+    // screen after confirming. That means a confirmed-email sign-up loses
+    // the username typed here in favor of the generic fallback — a known
+    // gap worth a team call on whether it's acceptable, or whether
+    // create-profile should instead be called right after the user's first
+    // post-confirmation sign-in.
+    if (!needsEmailConfirmation) {
+      await invokeFunction(
+        'create-profile',
+        method: HttpMethod.post,
+        body: {'username': username.trim()},
+      );
     }
 
-    return response.session == null;
+    return needsEmailConfirmation;
   }
 
   static Future<void> signOut() => _client.auth.signOut();
