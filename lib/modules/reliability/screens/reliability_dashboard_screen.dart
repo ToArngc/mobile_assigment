@@ -188,32 +188,49 @@ class _FilterRow extends StatelessWidget {
     final stationIds = stations.map((s) => s.id).toSet();
     final stationValue = stationIds.contains(filter.stationId) ? filter.stationId : null;
 
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButtonFormField<String?>(
-            initialValue: lineValue,
-            decoration: const InputDecoration(labelText: 'Line', isDense: true),
-            items: [
-              const DropdownMenuItem(value: null, child: Text('All lines')),
-              ...lines.map((line) => DropdownMenuItem(value: line, child: Text(line))),
-            ],
-            onChanged: (value) => onChanged(ReliabilityFilter(lineId: value, stationId: filter.stationId)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: DropdownButtonFormField<String?>(
-            initialValue: stationValue,
-            decoration: const InputDecoration(labelText: 'Station', isDense: true),
-            items: [
-              const DropdownMenuItem(value: null, child: Text('All stations')),
-              ...stations.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))),
-            ],
-            onChanged: (value) => onChanged(ReliabilityFilter(lineId: filter.lineId, stationId: value)),
-          ),
-        ),
+    final linePicker = DropdownButtonFormField<String?>(
+      initialValue: lineValue,
+      decoration: const InputDecoration(labelText: 'Line', isDense: true),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('All lines')),
+        ...lines.map((line) => DropdownMenuItem(value: line, child: Text(line))),
       ],
+      onChanged: (value) => onChanged(
+        ReliabilityFilter(lineId: value, stationId: filter.stationId),
+      ),
+    );
+    final stationPicker = DropdownButtonFormField<String?>(
+      initialValue: stationValue,
+      decoration: const InputDecoration(labelText: 'Station', isDense: true),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('All stations')),
+        ...stations.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))),
+      ],
+      onChanged: (value) => onChanged(
+        ReliabilityFilter(lineId: filter.lineId, stationId: value),
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 420) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              linePicker,
+              const SizedBox(height: 12),
+              stationPicker,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: linePicker),
+            const SizedBox(width: 12),
+            Expanded(child: stationPicker),
+          ],
+        );
+      },
     );
   }
 }
