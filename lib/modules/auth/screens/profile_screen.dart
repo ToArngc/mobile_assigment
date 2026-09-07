@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme.dart';
 import '../../../models/profile.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/profile_repository.dart';
@@ -18,6 +19,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isSaving = false;
   String? _error;
 
+  String get _userId => AuthService.currentUserId!;
+  String get _email =>
+      AuthService.currentSession?.user.email ?? 'Email unavailable';
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<Profile> _load() async {
-    final profile = await _repository.getProfile(AuthService.currentUserId!);
+    final profile = await _repository.getOrCreateProfile(
+      userId: _userId,
+      fallbackUsername: 'Rider ${_userId.substring(0, 6)}',
+    );
     _usernameController.text = profile.username;
     return profile;
   }
@@ -37,16 +45,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _save() async {
+    if (_usernameController.text.trim().isEmpty) {
+      setState(() => _error = 'Username is required.');
+      return;
+    }
     setState(() {
       _isSaving = true;
       _error = null;
     });
     try {
-      await _repository.updateUsername(AuthService.currentUserId!, _usernameController.text);
+      await _repository.updateUsername(_userId, _usernameController.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Username updated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Profile updated')));
       }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
@@ -71,44 +83,171 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Could not load profile: ${snapshot.error}'));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('Could not load profile: ${snapshot.error}'),
+              ),
+            );
           }
+
+          final username = snapshot.data!.username;
           return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(labelText: 'Username'),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+              children: [
+                _ProfileHeader(username: username, email: _email),
+                const SizedBox(height: 24),
+                const _SectionLabel('Account details'),
+                const SizedBox(height: 8),
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.email_outlined,
+                              color: AppColors.accent,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Email',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(_email),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 28),
+                        TextField(
+                          controller: _usernameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Username',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                  ],
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: _isSaving ? null : _save,
-                    child: _isSaving
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Save'),
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton(
-                    onPressed: _logout,
-                    child: const Text('Log out'),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ],
-              ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: _isSaving ? null : _save,
+                  icon: const Icon(Icons.save_outlined),
+                  label: _isSaving
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Save changes'),
+                ),
+                const SizedBox(height: 28),
+                const _SectionLabel('Account'),
+                const SizedBox(height: 8),
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: ListTile(
+                    leading: const Icon(Icons.notifications_outlined),
+                    title: const Text('Personal alerts'),
+                    subtitle: const Text(
+                      'Manage your saved station notifications',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Log out'),
+                ),
+              ],
             ),
           );
         },
       ),
     );
   }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({required this.username, required this.email});
+
+  final String username;
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = username.trim().isEmpty
+        ? '?'
+        : username.trim()[0].toUpperCase();
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 34,
+          backgroundColor: AppColors.accent.withValues(alpha: .22),
+          foregroundColor: const Color(0xFF3E7050),
+          child: Text(
+            initial,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(username, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text(
+                email,
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text.toUpperCase(),
+    style: const TextStyle(
+      color: AppColors.textSecondary,
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      letterSpacing: .6,
+    ),
+  );
 }
