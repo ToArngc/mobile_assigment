@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -64,13 +62,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
           const SnackBar(content: Text('Account created successfully.')),
         );
       }
-    } on AuthException catch (e) {
-      setState(() => _error = e.message);
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      setState(() => _error = _friendlyError(e));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString();
+    final normalized = message.toLowerCase();
+
+    if (normalized.contains('socketexception') ||
+        normalized.contains('failed host lookup') ||
+        normalized.contains('network') ||
+        normalized.contains('timed out')) {
+      return 'Unable to connect. Check your internet connection and try again.';
+    }
+    if (normalized.contains('already exists') ||
+        normalized.contains('already registered')) {
+      return 'An account with this email already exists. Please log in.';
+    }
+    if (normalized.contains('username is already taken')) {
+      return 'That username is already taken. Please choose another one.';
+    }
+    return 'Unable to create your account. Please check your details and try again.';
   }
 
   @override
