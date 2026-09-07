@@ -33,12 +33,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _error = null;
     });
     try {
-      await AuthService.signUp(
+      final requiresEmailConfirmation = await AuthService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         username: _usernameController.text,
       );
-      // AuthGate's stream listener swaps to the app shell automatically.
+      if (!mounted) return;
+      if (requiresEmailConfirmation) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            icon: const Icon(Icons.mark_email_read_outlined, size: 36),
+            title: const Text('Confirm your email'),
+            content: Text(
+              'Your account was created. We sent a confirmation link to '
+              '${_emailController.text.trim()}. Open the link, then log in.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Go to log in'),
+              ),
+            ],
+          ),
+        );
+        if (mounted) Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created successfully.')),
+        );
+      }
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
@@ -66,7 +91,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: 'Username'),
                     validator: (value) =>
-                        (value == null || value.trim().isEmpty) ? 'Username is required' : null,
+                        (value == null || value.trim().isEmpty)
+                        ? 'Username is required'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -74,7 +101,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(labelText: 'Email'),
                     validator: (value) =>
-                        (value == null || value.trim().isEmpty) ? 'Email is required' : null,
+                        (value == null || value.trim().isEmpty)
+                        ? 'Email is required'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -87,7 +116,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 20),
                   FilledButton(

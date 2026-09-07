@@ -12,21 +12,40 @@ class AuthService {
 
   static Session? get currentSession => _client.auth.currentSession;
   static String? get currentUserId => _client.auth.currentUser?.id;
-  static Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
+  static Stream<AuthState> get authStateChanges =>
+      _client.auth.onAuthStateChange;
 
-  static Future<void> signIn({required String email, required String password}) {
+  static Future<void> signIn({
+    required String email,
+    required String password,
+  }) {
     return _client.auth.signInWithPassword(email: email, password: password);
   }
 
-  static Future<void> signUp({
+  /// Returns true when Supabase requires the user to confirm their email
+  /// before a session can be created.
+  static Future<bool> signUp({
     required String email,
     required String password,
     required String username,
   }) async {
-    final response = await _client.auth.signUp(email: email, password: password);
+    final response = await _client.auth.signUp(
+      email: email,
+      password: password,
+    );
     final user = response.user;
     if (user == null) {
       throw Exception('Sign up failed — please try again.');
+    }
+
+    // With email enumeration protection enabled, Supabase returns a user
+    // object with no identities for an existing email. Trying to create a
+    // profile from that synthetic id causes the foreign-key error shown in
+    // the sign-up screen, so turn it into a useful instruction instead.
+    if (user.identities?.isEmpty ?? false) {
+      throw Exception(
+        'An account with this email already exists. Please log in.',
+      );
     }
 
     try {
@@ -40,6 +59,8 @@ class AuthService {
       }
       rethrow;
     }
+
+    return response.session == null;
   }
 
   static Future<void> signOut() => _client.auth.signOut();
