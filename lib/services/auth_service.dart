@@ -5,10 +5,13 @@ import 'supabase_service.dart';
 
 /// Email + password authentication, per design doc §7.
 ///
-/// Sign up also creates the matching `profiles` row (id + username) via
-/// create-profile. `profiles.username` has a UNIQUE constraint in the
-/// schema, so a taken username surfaces as a 409 from the function rather
-/// than needing a separate existence check.
+/// Sign up attaches the chosen username as auth user_metadata so it
+/// survives regardless of whether email confirmation delays the session,
+/// and also creates the matching `profiles` row (id + username) via
+/// create-profile when a session already exists. `profiles.username` has a
+/// UNIQUE constraint in the schema, so a taken username surfaces as a 409
+/// from create-profile (or a silent fallback from get-profile's
+/// auto-create) rather than needing a separate existence check.
 class AuthService {
   static SupabaseClient get _client => SupabaseService.client;
 
@@ -34,6 +37,7 @@ class AuthService {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
+      data: {'username': username.trim()},
     );
     final user = response.user;
     if (user == null) {
@@ -52,17 +56,12 @@ class AuthService {
 
     final needsEmailConfirmation = response.session == null;
 
-    // Reconciliation with get-profile's own lazy auto-create: create-profile
-    // is JWT-scoped and needs an active session to authenticate as this
-    // user, which only exists immediately when email confirmation is off.
-    // When it's on, there's no session yet and this call would 401, so it's
-    // skipped — get-profile's auto-create (fallback username "Rider <id>")
-    // becomes the fallback path the first time the user opens the Profile
-    // screen after confirming. That means a confirmed-email sign-up loses
-    // the username typed here in favor of the generic fallback — a known
-    // gap worth a team call on whether it's acceptable, or whether
-    // create-profile should instead be called right after the user's first
-    // post-confirmation sign-in.
+    // The username is already attached as auth user_metadata above, so it
+    // survives even when there's no session yet (email confirmation on) —
+    // get-profile's auto-create reads it from there. When a session exists
+    // immediately (confirmation off), this call is just a defensive
+    // backstop that creates the row eagerly instead of waiting for the
+    // user's first Profile screen visit.
     if (!needsEmailConfirmation) {
       await invokeFunction(
         'create-profile',
