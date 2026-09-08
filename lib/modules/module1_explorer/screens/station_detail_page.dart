@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme.dart';
 import '../../../models/station.dart';
+import '../../../models/station_accessibility.dart';
 import '../../../models/timetable_entry.dart';
 import '../../../services/station_repository.dart';
 
@@ -43,7 +45,7 @@ class StationDetailPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text('Accessibility', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          _AccessibilityCard(features: station.accessibilityFeatures),
+          _AccessibilityCard(stationId: station.id),
           const SizedBox(height: 20),
           Text('Scheduled departures', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
@@ -55,37 +57,87 @@ class StationDetailPage extends StatelessWidget {
 }
 
 class _AccessibilityCard extends StatelessWidget {
-  const _AccessibilityCard({required this.features});
+  const _AccessibilityCard({required this.stationId});
 
-  final Map<String, dynamic>? features;
+  final String stationId;
 
   @override
   Widget build(BuildContext context) {
-    if (features == null || features!.isEmpty) {
-      return const Card(
-        child: ListTile(
-          leading: Icon(Icons.info_outline),
-          title: Text('Accessibility information is not available yet.'),
-        ),
-      );
-    }
+    return FutureBuilder<List<StationAccessibility>>(
+      future: StationRepository().getStationAccessibility(stationId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
 
-    final enabled = features!.entries
-        .where((entry) => entry.value == true)
-        .map((entry) => entry.key.replaceAll('_', ' '))
-        .toList();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: enabled.isEmpty
-            ? const Text('No accessibility facilities have been confirmed.')
-            : Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: enabled.map((feature) => Chip(label: Text(feature))).toList(),
-              ),
-      ),
+        // An error means we could not reach the view, which is not the
+        // same as "nothing is broken" — say so rather than implying the
+        // station is fine.
+        if (snapshot.hasError) {
+          return Card(
+            child: ListTile(
+              leading: Icon(Icons.cloud_off_outlined, color: Colors.orange.shade700),
+              title: const Text('Accessibility status could not be loaded.'),
+              subtitle: const Text('Pull down or reopen this page to retry.'),
+            ),
+          );
+        }
+
+        final issues = (snapshot.data ?? const <StationAccessibility>[])
+            .where((issue) => issue.isOpen)
+            .toList();
+
+        if (issues.isEmpty) {
+          return Card(
+            child: ListTile(
+              leading: Icon(Icons.check_circle_outline, color: AppColors.accent),
+              title: const Text('No accessibility issues reported'),
+              subtitle: const Text('Riders have not flagged anything here.'),
+            ),
+          );
+        }
+
+        return Card(
+          child: Column(
+            children: issues
+                .map((issue) => ListTile(
+                      leading: Icon(
+                        Icons.report_problem_outlined,
+                        color: Colors.red.shade400,
+                      ),
+                      title: Text(_issueLabel(issue.issueType)),
+                      subtitle: Text('Reported ${issue.relativeAge}'),
+                    ))
+                .toList(),
+          ),
+        );
+      },
     );
+  }
+
+  /// fault_reports.issue_type has no check constraint, so an unknown
+  /// value is possible — fall back to a readable form of whatever the
+  /// reporter sent instead of dropping the row.
+  String _issueLabel(String issueType) {
+    switch (issueType) {
+      case 'lift_broken':
+        return 'Lift out of service';
+      case 'escalator_broken':
+        return 'Escalator out of service';
+      case 'overcrowding':
+        return 'Overcrowding';
+      case 'cleanliness':
+        return 'Cleanliness';
+      case 'safety_hazard':
+        return 'Safety hazard';
+      default:
+        return issueType.replaceAll('_', ' ');
+    }
   }
 }
 

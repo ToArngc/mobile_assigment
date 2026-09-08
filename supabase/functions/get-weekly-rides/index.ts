@@ -1,10 +1,29 @@
 // GET /get-weekly-rides
-// Returns the caller's ride_logs from the last 7 days, oldest first
-// (matches WeeklySummaryRepository.getRidesForLastWeek's default ordering).
+//
+// The caller's own rides from the last 7 days, with the week's aggregates
+// already computed. Response shape:
+//
+//   {
+//     ride_count: int,
+//     on_time_count: int,
+//     on_time_percentage: number | null,
+//     avg_delay_minutes: number | null,
+//     rides: [{ station_name, detected_at, delay_minutes }]
+//   }
+//
+// ride_logs.delay_minutes is never populated (design doc §4), so delay is
+// resolved at read time by matching each ride to the nearest train_status
+// reading at the same station. Both the join and the aggregation happen
+// inside the weekly_ride_summary RPC — deliberately not here and not in
+// Dart, so the on-time rule is applied in exactly one place.
+//
+// Null percentage/average mean "no ride could be matched to a reading",
+// which is a different thing from 0% and must stay distinguishable.
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { ON_TIME_THRESHOLD_MINUTES } from "../_shared/reliability.ts";
 
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
@@ -19,13 +38,26 @@ Deno.serve(async (req) => {
 
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from("ride_logs")
-    .select()
-    .eq("user_id", user.id)
-    .gte("detected_at", since)
-    .order("detected_at");
+  const { data, error } = await supabase.rpc("weekly_ride_summary", {
+    p_user_id: user.id,
+    p_since: since,
+    p_threshold: ON_TIME_THRESHOLD_MINUTES,
+  });
 
   if (error) return errorResponse(error.message, 500);
-  return jsonResponse(data);
+
+  // The RPC returns a single row. A user with no rides still gets one,
+  // with ride_count 0 and null aggregates, so the empty case needs no
+  // special handling on the client.
+  const summary = Array.isArray(data) ? data[0] : data;
+
+  return jsonResponse(
+    summary ?? {
+      ride_count: 0,
+      on_time_count: 0,
+      on_time_percentage: null,
+      avg_delay_minutes: null,
+      rides: [],
+    },
+  );
 });

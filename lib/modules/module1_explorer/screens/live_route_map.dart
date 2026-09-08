@@ -3,11 +3,26 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../models/station.dart';
+import '../../../models/train_status.dart';
+import '../../../services/station_repository.dart';
 
-/// Route overview for Explore. Supply stations in their GTFS stop sequence.
+/// Route overview for Explore. Supply stations in their GTFS stop
+/// sequence.
+///
+/// The rendering is a schematic — evenly spaced dots on a straight line,
+/// not a geographic map — but the train positions on it are real, read
+/// from train_status via get-latest-train-status?line=. Each vehicle's
+/// lat/lng is projected onto the 1-D track by finding its nearest station
+/// and interpolating toward whichever neighbour it is closer to. That is
+/// deliberately crude: it is a schematic, not map-matching.
+///
+/// When no train has been seen on the line recently the map says so.
+/// There is no fallback animation — a moving icon with no data behind it
+/// misrepresents the feed as working.
 class LiveRouteMap extends StatefulWidget {
   const LiveRouteMap({
     required this.stations,
+    required this.line,
     required this.onStationTap,
     this.compact = false,
     this.onExpand,
@@ -15,6 +30,7 @@ class LiveRouteMap extends StatefulWidget {
   });
 
   final List<Station> stations;
+  final String line;
   final ValueChanged<Station> onStationTap;
   final bool compact;
   final VoidCallback? onExpand;
@@ -23,29 +39,34 @@ class LiveRouteMap extends StatefulWidget {
   State<LiveRouteMap> createState() => _LiveRouteMapState();
 }
 
-class _LiveRouteMapState extends State<LiveRouteMap>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+class _LiveRouteMapState extends State<LiveRouteMap> {
+  final StationRepository _repository = StationRepository();
+  late Future<List<TrainStatus>> _liveStatuses;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 9),
-    )..repeat();
+    _liveStatuses = _load();
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void didUpdateWidget(covariant LiveRouteMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.line != widget.line) {
+      setState(() => _liveStatuses = _load());
+    }
+  }
+
+  Future<List<TrainStatus>> _load() {
+    if (widget.line.trim().isEmpty) return Future.value(const <TrainStatus>[]);
+    return _repository.getLiveTrainStatusForLine(widget.line);
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.stations.length < 2) return const _MapUnavailable();
     final height = widget.compact ? 176.0 : 310.0;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: ColoredBox(
@@ -58,93 +79,124 @@ class _LiveRouteMapState extends State<LiveRouteMap>
               constraints.biggest,
               widget.compact,
             );
-            return Stack(children: [
-              Positioned.fill(child: CustomPaint(painter: _RoutePainter(points))),
-              ...List.generate(widget.stations.length, (index) => Positioned(
-                left: points[index].dx - 8,
-                top: points[index].dy - 8,
-                child: GestureDetector(
-                  onTap: () => widget.onStationTap(widget.stations[index]),
-                  child: Tooltip(
-                    message: widget.stations[index].name,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xff1267a9),
-                          width: 3,
+
+            return FutureBuilder<List<TrainStatus>>(
+              future: _liveStatuses,
+              builder: (context, snapshot) {
+                final loading =
+                    snapshot.connectionState == ConnectionState.waiting;
+
+                // Rows written before lat/lng existed, and any row the
+                // pipeline could not place, are skipped rather than
+                // guessed at.
+                final positions = <double>[];
+                if (snapshot.hasData) {
+                  for (final status in snapshot.data!) {
+                    final index = _trackIndex(status, widget.stations);
+                    if (index != null) positions.add(index);
+                  }
+                }
+
+                return Stack(children: [
+                  Positioned.fill(
+                    child: CustomPaint(painter: _RoutePainter(points)),
+                  ),
+                  ...List.generate(
+                    widget.stations.length,
+                    (index) => Positioned(
+                      left: points[index].dx - 8,
+                      top: points[index].dy - 8,
+                      child: GestureDetector(
+                        onTap: () =>
+                            widget.onStationTap(widget.stations[index]),
+                        child: Tooltip(
+                          message: widget.stations[index].name,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xff1267a9),
+                                width: 3,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              )),
-              ...List.generate(widget.stations.length, (index) => Positioned(
-                left: math.max(6, points[index].dx - 35),
-                top: points[index].dy + 14,
-                width: 70,
-                child: Text(
-                  widget.stations[index].name,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xff36565d),
-                  ),
-                ),
-              )),
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (_, __) => _TrainMarker(
-                  point: _pointAt(points, _controller.value),
-                ),
-              ),
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (_, __) => _TrainMarker(
-                  point: _pointAt(points.reversed.toList(), _controller.value),
-                  reverse: true,
-                ),
-              ),
-              Positioned(
-                top: 10,
-                left: 12,
-                child: Text(
-                  'Port Klang Line',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xff1a4f78),
+                  ...List.generate(
+                    widget.stations.length,
+                    (index) => Positioned(
+                      left: math.max(6, points[index].dx - 35),
+                      top: points[index].dy + 14,
+                      width: 70,
+                      child: Text(
+                        widget.stations[index].name,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xff36565d),
+                        ),
                       ),
-                ),
-              ),
-              if (widget.onExpand != null)
-                Positioned(
-                  top: 2,
-                  right: 2,
-                  child: IconButton(
-                    onPressed: widget.onExpand,
-                    tooltip: 'Open full route map',
-                    icon: const Icon(Icons.open_in_full, size: 19),
+                    ),
                   ),
-                ),
-              const Positioned(
-                left: 12,
-                bottom: 8,
-                child: Text(
-                  'Preview route · connect GTFS-Realtime for live positions',
-                  style: TextStyle(fontSize: 9, color: Color(0xff36565d)),
-                ),
-              ),
-            ]);
+                  for (final position in positions)
+                    _TrainMarker(point: _pointAt(points, position)),
+                  Positioned(
+                    top: 10,
+                    left: 12,
+                    child: Text(
+                      widget.line.isEmpty ? 'Route' : widget.line,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xff1a4f78),
+                          ),
+                    ),
+                  ),
+                  if (widget.onExpand != null)
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: IconButton(
+                        onPressed: widget.onExpand,
+                        tooltip: 'Open full route map',
+                        icon: const Icon(Icons.open_in_full, size: 19),
+                      ),
+                    ),
+                  Positioned(
+                    left: 12,
+                    bottom: 8,
+                    right: 12,
+                    child: Text(
+                      _caption(loading, snapshot.hasError, positions.length),
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Color(0xff36565d),
+                      ),
+                    ),
+                  ),
+                ]);
+              },
+            );
           }),
         ),
       ),
     );
+  }
+
+  String _caption(bool loading, bool hasError, int trainCount) {
+    if (loading) return 'Loading live train positions…';
+    if (hasError) return 'Live positions unavailable right now.';
+    if (trainCount == 0) return 'No live trains on this line right now';
+    return trainCount == 1
+        ? '1 train currently on this line'
+        : '$trainCount trains currently on this line';
   }
 
   List<Offset> _routePoints(int count, Size size, bool compact) {
@@ -157,36 +209,90 @@ class _LiveRouteMapState extends State<LiveRouteMap>
     );
   }
 
-  Offset _pointAt(List<Offset> points, double progress) {
-    final segment = progress * (points.length - 1);
-    final before = segment.floor().clamp(0, points.length - 2) as int;
-    final after = before + 1;
-    return Offset.lerp(points[before], points[after], segment - before)!;
+  /// Projects a vehicle's 2-D coordinate onto the 1-D schematic, returning
+  /// a fractional station index (2.4 = 40% of the way from stop 2 to stop
+  /// 3). Null when the row carries no usable position.
+  double? _trackIndex(TrainStatus status, List<Station> stations) {
+    final lat = status.lat;
+    final lng = status.lng;
+    if (lat == null || lng == null) return null;
+    if (stations.length < 2) return null;
+
+    var nearest = 0;
+    var nearestDistance = double.infinity;
+    for (var i = 0; i < stations.length; i++) {
+      final distance =
+          _distanceMeters(lat, lng, stations[i].lat, stations[i].lng);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = i;
+      }
+    }
+
+    int? neighbour;
+    var neighbourDistance = double.infinity;
+    for (final candidate in [nearest - 1, nearest + 1]) {
+      if (candidate < 0 || candidate >= stations.length) continue;
+      final distance = _distanceMeters(
+        lat,
+        lng,
+        stations[candidate].lat,
+        stations[candidate].lng,
+      );
+      if (distance < neighbourDistance) {
+        neighbourDistance = distance;
+        neighbour = candidate;
+      }
+    }
+    if (neighbour == null) return nearest.toDouble();
+
+    final total = nearestDistance + neighbourDistance;
+    if (total <= 0) return nearest.toDouble();
+    final fraction = (nearestDistance / total).clamp(0.0, 1.0);
+    return nearest + (neighbour - nearest) * fraction;
+  }
+
+  double _distanceMeters(double lat1, double lng1, double lat2, double lng2) {
+    const earthRadius = 6371000.0;
+    final dLat = _toRadians(lat2 - lat1);
+    final dLng = _toRadians(lng2 - lng1);
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRadians(lat1)) *
+            math.cos(_toRadians(lat2)) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    return earthRadius * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  }
+
+  double _toRadians(double degrees) => degrees * (math.pi / 180);
+
+  Offset _pointAt(List<Offset> points, double index) {
+    final clamped = index.clamp(0.0, (points.length - 1).toDouble());
+    final before = clamped.floor().clamp(0, points.length - 2);
+    return Offset.lerp(points[before], points[before + 1], clamped - before)!;
   }
 }
 
 class _TrainMarker extends StatelessWidget {
-  const _TrainMarker({required this.point, this.reverse = false});
+  const _TrainMarker({required this.point});
+
   final Offset point;
-  final bool reverse;
 
   @override
   Widget build(BuildContext context) => Positioned(
         left: point.dx - 13,
         top: point.dy - 34,
-        child: Transform.rotate(
-          angle: reverse ? math.pi : 0,
-          child: const CircleAvatar(
-            radius: 13,
-            backgroundColor: Color(0xff006874),
-            child: Icon(Icons.train, color: Colors.white, size: 16),
-          ),
+        child: const CircleAvatar(
+          radius: 13,
+          backgroundColor: Color(0xff006874),
+          child: Icon(Icons.train, color: Colors.white, size: 16),
         ),
       );
 }
 
 class _RoutePainter extends CustomPainter {
   const _RoutePainter(this.points);
+
   final List<Offset> points;
 
   @override
@@ -206,7 +312,8 @@ class _RoutePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RoutePainter oldDelegate) => oldDelegate.points != points;
+  bool shouldRepaint(covariant _RoutePainter oldDelegate) =>
+      oldDelegate.points != points;
 }
 
 class _MapUnavailable extends StatelessWidget {

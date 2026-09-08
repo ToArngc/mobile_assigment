@@ -9,7 +9,7 @@
 
 import { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
-export const ON_TIME_THRESHOLD_MINUTES = 5; // must match reliability_repository.dart
+export const ON_TIME_THRESHOLD_MINUTES = 5; // must match onTimeThresholdMinutes in lib/core/constants.dart
 
 export interface ReliabilityStats {
   totalTrips: number;

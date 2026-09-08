@@ -20,6 +20,10 @@ class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
+  // Fixed id so a re-shown digest replaces the previous one instead of
+  // stacking a second copy in the tray.
+  static const int _weeklySummaryNotificationId = 90001;
+
   static Future<void> initialize() async {
     if (_initialized) return;
 
@@ -87,6 +91,40 @@ class NotificationService {
 
   static Future<void> cancelReminder(int id) async {
     await _plugin.cancel(id);
+  }
+
+  /// Displays the weekly commute digest on-device. Design doc §7 and §9
+  /// both specify a local notification here, not just a screen — there is
+  /// no push server and no FCM anywhere in this project.
+  ///
+  /// A null percentage/average means no ride could be matched to a train
+  /// arrival record, so the message says so rather than printing 0%.
+  static Future<void> showWeeklySummary({
+    required int rideCount,
+    double? onTimePercentage,
+    double? averageDelayMinutes,
+  }) async {
+    final rideLabel = rideCount == 1 ? '1 ride' : '$rideCount rides';
+    final body = onTimePercentage == null || averageDelayMinutes == null
+        ? '$rideLabel this week. Not enough matching arrival data for on-time stats yet.'
+        : '$rideLabel this week, ${onTimePercentage.round()}% on-time, '
+            'avg ${averageDelayMinutes.round()} min delay.';
+
+    await _plugin.show(
+      _weeklySummaryNotificationId,
+      'Your week on the rails',
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'weekly_summary_channel',
+          'Weekly Commute Summary',
+          channelDescription: 'A weekly digest of your logged rides',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
   }
 
   /// Displays an immediate, foreground-checked Module 4 train-delay alert.

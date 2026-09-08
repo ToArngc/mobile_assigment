@@ -106,11 +106,6 @@ class RouteSuggestion {
 }
 
 class ReliabilityRepository {
-  /// A train is "on time" if it arrived within this many minutes of its
-  /// scheduled time. Matches ON_TIME_THRESHOLD_MINUTES in
-  /// supabase/functions/_shared/reliability.ts — change both together.
-  static const int onTimeThresholdMinutes = 5;
-
   /// Aggregate stats for this filter (or network-wide if both are
   /// omitted) over the trailing [days] days — total_trips,
   /// on_time_percentage, average_delay_minutes, days_of_data,

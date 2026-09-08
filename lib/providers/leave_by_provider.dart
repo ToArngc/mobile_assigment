@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/leave_by_repository.dart';
+import '../services/mute_service.dart';
 import '../models/saved_route.dart';
 import '../services/notification_service.dart';
 
@@ -27,10 +28,23 @@ class LeaveByProvider extends ChangeNotifier {
     try {
       routes = await _repository.getSavedRoutes(userId);
       results.clear();
+
+      // Quick Mute covers every local reminder, Leave-By included
+      // (design doc §9). Checked once per load rather than per route.
+      final muted = await MuteService.isMutedNow(userId);
+
       for (final route in routes) {
         try {
           final result = await _repository.computeLeaveByTime(route);
           results[route.id] = result;
+
+          if (muted) {
+            // Cancel as well as skip: a reminder scheduled before the
+            // mute was set still lives in the OS alarm queue and would
+            // otherwise fire anyway.
+            await NotificationService.cancelReminder(route.id.hashCode);
+            continue;
+          }
 
           // Re-schedule the reminder every time we recompute — this
           // naturally replaces yesterday's (now-past) notification with

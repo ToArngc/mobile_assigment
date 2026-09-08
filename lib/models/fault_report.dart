@@ -42,6 +42,21 @@ class FaultReport {
     );
   }
 
+  /// Same report, flipped to resolved — used to reflect a successful
+  /// resolve-fault-report call without refetching the list.
+  FaultReport copyWithResolved() => FaultReport(
+        id: id,
+        userId: userId,
+        stationId: stationId,
+        issueType: issueType,
+        description: description,
+        photoUrl: photoUrl,
+        lat: lat,
+        lng: lng,
+        status: FaultStatus.resolved,
+        createdAt: createdAt,
+      );
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

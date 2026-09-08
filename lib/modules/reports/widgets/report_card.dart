@@ -11,7 +11,17 @@ class ReportCard extends StatelessWidget {
   final FaultReport report;
   final String? stationName;
 
-  const ReportCard({super.key, required this.report, this.stationName});
+  /// Supplied only where every card is known to belong to the signed-in
+  /// rider (the "My reports" list). Left null on the station feed, so the
+  /// resolve action never appears on someone else's report.
+  final VoidCallback? onResolve;
+
+  const ReportCard({
+    super.key,
+    required this.report,
+    this.stationName,
+    this.onResolve,
+  });
 
   String get _title => ReportCategory.fromIssueType(report.issueType).label;
 
@@ -40,16 +50,27 @@ class ReportCard extends StatelessWidget {
         ),
         title: Text(_title),
         subtitle: Text(subtitleParts.join(' · ')),
-        trailing: Chip(
-          label: Text(open ? 'Open' : 'Resolved'),
-          labelStyle: TextStyle(
-            fontSize: 12,
-            color: open ? Colors.red.shade700 : AppColors.accent,
-          ),
-          backgroundColor: open ? Colors.red.shade50 : AppColors.accent.withValues(alpha: 0.12),
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          side: BorderSide.none,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Chip(
+              label: Text(open ? 'Open' : 'Resolved'),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                color: open ? Colors.red.shade700 : AppColors.accent,
+              ),
+              backgroundColor: open ? Colors.red.shade50 : AppColors.accent.withValues(alpha: 0.12),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              side: BorderSide.none,
+            ),
+            if (open && onResolve != null)
+              IconButton(
+                icon: const Icon(Icons.check_circle_outline),
+                tooltip: 'Mark resolved',
+                onPressed: onResolve,
+              ),
+          ],
         ),
       ),
     );
