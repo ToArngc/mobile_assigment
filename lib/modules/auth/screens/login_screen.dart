@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants.dart';
 import '../../../services/auth_service.dart';
 import 'sign_up_screen.dart';
 
@@ -108,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 12),
                     Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ],
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.lg),
                   FilledButton(
                     onPressed: _isSubmitting ? null : _submit,
                     child: _isSubmitting

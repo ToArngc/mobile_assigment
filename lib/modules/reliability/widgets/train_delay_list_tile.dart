@@ -21,13 +21,23 @@ class TrainDelayListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final delay = status.delayMinutes;
-    final onTime = (delay ?? 0) <= onTimeThresholdMinutes;
+    final noData = delay == null;
+    final onTime = !noData && delay <= onTimeThresholdMinutes;
+    final color = noData
+        ? AppColors.neutral
+        : onTime
+            ? AppColors.success
+            : AppColors.danger;
 
     return Card(
       child: ListTile(
         leading: Icon(
-          onTime ? Icons.check_circle_outline : Icons.error_outline,
-          color: onTime ? AppColors.accent : Colors.red.shade400,
+          noData
+              ? Icons.help_outline
+              : onTime
+                  ? Icons.check_circle_outline
+                  : Icons.error_outline,
+          color: color,
         ),
         title: Text(_label),
         subtitle: Text('${status.line} · $_timeLabel'),
@@ -35,11 +45,9 @@ class TrainDelayListTile extends StatelessWidget {
           label: Text(delay == null ? 'No data' : '${delay > 0 ? '+' : ''}$delay min'),
           labelStyle: TextStyle(
             fontSize: 12,
-            color: onTime ? AppColors.accent : Colors.red.shade700,
+            color: color,
           ),
-          backgroundColor: onTime
-              ? AppColors.accent.withValues(alpha: 0.12)
-              : Colors.red.shade50,
+          backgroundColor: color.withValues(alpha: 0.12),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           side: BorderSide.none,

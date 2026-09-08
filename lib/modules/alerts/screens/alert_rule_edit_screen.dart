@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme.dart';
 import '../../../models/saved_station.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/alerts_repository.dart';
@@ -127,7 +129,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
           Text('Delay threshold', style: Theme.of(context).textTheme.titleMedium),
           const Text(
             'Notify me when this station\'s trains are delayed by more than:',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           Row(
             children: [
@@ -151,7 +153,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
           Text('Quiet hours (optional)', style: Theme.of(context).textTheme.titleMedium),
           const Text(
             'No alerts will be sent during this window.',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           Row(

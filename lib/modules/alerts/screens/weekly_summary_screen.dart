@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants.dart';
+import '../../../core/theme.dart';
 import '../../../providers/weekly_summary_provider.dart';
 import '../../../models/weekly_ride_summary.dart';
 import '../../../services/weekly_summary_repository.dart';
@@ -65,7 +66,7 @@ class _WeeklySummaryBody extends StatelessWidget {
                 'No commute records yet this week. Rides are logged when '
                     'the app is open near a saved station during commute hours.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
           );
@@ -127,7 +128,7 @@ class _WeeklySummaryBody extends StatelessWidget {
               if (provider.summary.rides.isEmpty)
                 const Card(
                   child: ListTile(
-                    leading: Icon(Icons.directions_train_outlined),
+                    leading: Icon(Icons.train_outlined),
                     title: Text('Ride details are not available yet'),
                   ),
                 )
@@ -176,8 +177,8 @@ class _RideHistoryTile extends StatelessWidget {
         color: delay == null
             ? null
             : isOnTime
-                ? Colors.green
-                : Colors.orange,
+                ? AppColors.success
+                : AppColors.warning,
       ),
       title: Text(ride.stationName ?? 'Station'),
       subtitle: Text('$dateLabel · $time'),
@@ -186,10 +187,10 @@ class _RideHistoryTile extends StatelessWidget {
         textAlign: TextAlign.end,
         style: TextStyle(
           color: delay == null
-              ? Colors.grey
+              ? AppColors.neutral
               : isOnTime
-                  ? Colors.green
-                  : Colors.orange,
+                  ? AppColors.success
+                  : AppColors.warning,
         ),
       ),
     );
@@ -206,12 +207,12 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         child: Column(
           children: [
-            Text(value, style: Theme.of(context).textTheme.headlineMedium),
+            Text(value, style: Theme.of(context).textTheme.displaySmall),
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(color: Colors.grey)),
+            Text(label, style: const TextStyle(color: AppColors.textSecondary)),
           ],
         ),
       ),

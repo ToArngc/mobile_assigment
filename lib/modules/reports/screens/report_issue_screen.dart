@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/theme.dart';
 import '../../../models/fault_report.dart';
 import '../../../models/station.dart';
 import '../../../services/auth_service.dart';
@@ -249,7 +250,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           Text('Category', style: Theme.of(context).textTheme.titleMedium),
           const Text(
             "What's wrong?",
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -319,11 +320,17 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   );
                 }
                 if (snapshot.hasError) {
-                  return Text('Failed to load: ${snapshot.error}', style: const TextStyle(color: Colors.red));
+                  return Text(
+                    'Failed to load: ${snapshot.error}',
+                    style: const TextStyle(color: AppColors.danger),
+                  );
                 }
                 final reports = snapshot.data ?? [];
                 if (reports.isEmpty) {
-                  return const Text('No reports yet for this station.', style: TextStyle(color: Colors.grey));
+                  return const Text(
+                    'No reports yet for this station.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  );
                 }
                 return Column(children: reports.map((r) => ReportCard(report: r)).toList());
               },

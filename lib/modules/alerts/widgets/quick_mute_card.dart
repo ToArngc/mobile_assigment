@@ -23,7 +23,9 @@ class QuickMuteCard extends StatelessWidget {
             children: [
               SwitchListTile(
                 secondary: Icon(
-                  isMuted ? Icons.notifications_off : Icons.notifications_active,
+                  isMuted
+                      ? Icons.notifications_off_outlined
+                      : Icons.notifications_active_outlined,
                 ),
                 title: Text(isMuted ? 'Alerts muted' : 'Alerts active'),
                 subtitle: Text(_subtitleText(isMuted, mutedUntil)),
