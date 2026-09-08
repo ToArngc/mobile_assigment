@@ -187,6 +187,13 @@ class _FilterRow extends StatelessWidget {
     final lineValue = lines.contains(filter.lineId) ? filter.lineId : null;
     final stationIds = stations.map((s) => s.id).toSet();
     final stationValue = stationIds.contains(filter.stationId) ? filter.stationId : null;
+    String? stationName;
+    for (final station in stations) {
+      if (station.id == stationValue) {
+        stationName = station.name;
+        break;
+      }
+    }
 
     final linePicker = DropdownButtonFormField<String?>(
       initialValue: lineValue,
@@ -211,26 +218,39 @@ class _FilterRow extends StatelessWidget {
       ),
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 420) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              linePicker,
-              const SizedBox(height: 12),
-              stationPicker,
-            ],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(child: linePicker),
-            const SizedBox(width: 12),
-            Expanded(child: stationPicker),
-          ],
-        );
-      },
+    final summary = '${lineValue ?? 'All lines'} · ${stationName ?? 'All stations'}';
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ExpansionTile(
+        leading: const Icon(Icons.tune),
+        title: const Text('Filters'),
+        subtitle: Text(summary, maxLines: 1, overflow: TextOverflow.ellipsis),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 420) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    linePicker,
+                    const SizedBox(height: 12),
+                    stationPicker,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: linePicker),
+                  const SizedBox(width: 12),
+                  Expanded(child: stationPicker),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

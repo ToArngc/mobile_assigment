@@ -11,19 +11,27 @@ class ReportCard extends StatelessWidget {
   final FaultReport report;
   final String? stationName;
 
-
-
-
   final VoidCallback? onResolve;
+  final VoidCallback? onTap;
 
   const ReportCard({
     super.key,
     required this.report,
     this.stationName,
     this.onResolve,
+    this.onTap,
   });
 
   String get _title => ReportCategory.fromIssueType(report.issueType).label;
+
+  IconData get _categoryIcon => switch (report.issueType) {
+        'lift_broken' => Icons.elevator_outlined,
+        'escalator_broken' => Icons.escalator_warning,
+        'overcrowding' => Icons.groups_outlined,
+        'cleanliness' => Icons.cleaning_services_outlined,
+        'safety_hazard' => Icons.health_and_safety_outlined,
+        _ => Icons.report_problem_outlined,
+      };
 
   String get _relativeTime {
     final diff = DateTime.now().difference(report.createdAt);
@@ -44,9 +52,13 @@ class ReportCard extends StatelessWidget {
 
     return Card(
       child: ListTile(
-        leading: Icon(
-          open ? Icons.error_outline : Icons.check_circle_outline,
-          color: open ? Colors.red.shade400 : AppColors.accent,
+        onTap: onTap,
+        leading: CircleAvatar(
+          backgroundColor: (open ? Colors.orange : AppColors.accent).withValues(alpha: 0.12),
+          child: Icon(
+            _categoryIcon,
+            color: open ? Colors.orange.shade800 : AppColors.accent,
+          ),
         ),
         title: Text(_title),
         subtitle: Text(subtitleParts.join(' · ')),
@@ -70,6 +82,12 @@ class ReportCard extends StatelessWidget {
                 tooltip: 'Mark resolved',
                 onPressed: onResolve,
               ),
+            if (report.photoUrl != null)
+              const Padding(
+                padding: EdgeInsets.only(left: 2),
+                child: Icon(Icons.photo_outlined, size: 19),
+              ),
+            if (onTap != null) const Icon(Icons.chevron_right),
           ],
         ),
       ),

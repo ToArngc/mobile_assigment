@@ -1,23 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../models/station.dart';
 import '../../../models/train_status.dart';
 import '../../../services/station_repository.dart';
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class LiveRouteMap extends StatefulWidget {
   const LiveRouteMap({
@@ -52,7 +37,7 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
   @override
   void didUpdateWidget(covariant LiveRouteMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.line != widget.line) {
+    if (oldWidget.line != widget.line || oldWidget.stations != widget.stations) {
       setState(() => _liveStatuses = _load());
     }
   }
@@ -65,255 +50,210 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
   @override
   Widget build(BuildContext context) {
     if (widget.stations.length < 2) return const _MapUnavailable();
-    final height = widget.compact ? 176.0 : 310.0;
+    final height = widget.compact ? 176.0 : 360.0;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
-      child: ColoredBox(
-        color: const Color(0xffe8f4fd),
-        child: SizedBox(
-          height: height,
-          child: LayoutBuilder(builder: (context, constraints) {
-            final points = _routePoints(
-              widget.stations.length,
-              constraints.biggest,
-              widget.compact,
-            );
+      child: SizedBox(
+        height: height,
+        child: FutureBuilder<List<TrainStatus>>(
+          future: _liveStatuses,
+          builder: (context, snapshot) {
+            final stations = widget.stations;
+            final stationsById = {for (final station in stations) station.id: station};
+            final trainStatuses = snapshot.data
+                    ?.where((status) => status.lat != null && status.lng != null)
+                    .toList() ??
+                const <TrainStatus>[];
+            final routeColor = _lineColor(widget.line);
 
-            return FutureBuilder<List<TrainStatus>>(
-              future: _liveStatuses,
-              builder: (context, snapshot) {
-                final loading =
-                    snapshot.connectionState == ConnectionState.waiting;
-
-
-
-
-                final positions = <double>[];
-                if (snapshot.hasData) {
-                  for (final status in snapshot.data!) {
-                    final index = _trackIndex(status, widget.stations);
-                    if (index != null) positions.add(index);
-                  }
-                }
-
-                return Stack(children: [
-                  Positioned.fill(
-                    child: CustomPaint(painter: _RoutePainter(points)),
+            return Stack(
+              children: [
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(stations.first.lat, stations.first.lng),
+                    zoom: 11,
                   ),
-                  ...List.generate(
-                    widget.stations.length,
-                    (index) => Positioned(
-                      left: points[index].dx - 8,
-                      top: points[index].dy - 8,
-                      child: GestureDetector(
-                        onTap: () =>
-                            widget.onStationTap(widget.stations[index]),
-                        child: Tooltip(
-                          message: widget.stations[index].name,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(0xff1267a9),
-                                width: 3,
-                              ),
-                            ),
-                          ),
+                  onMapCreated: (controller) => _fitRoute(controller, stations),
+                  markers: {
+                    for (final station in stations)
+                      Marker(
+                        markerId: MarkerId('station-${station.id}'),
+                        position: LatLng(station.lat, station.lng),
+                        infoWindow: InfoWindow(
+                          title: station.name,
+                          snippet: station.line,
+                        ),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(
+                          BitmapDescriptor.hueAzure,
+                        ),
+                        onTap: () => widget.onStationTap(station),
+                      ),
+                    for (final status in trainStatuses)
+                      Marker(
+                        markerId: MarkerId('train-${status.id}'),
+                        position: LatLng(status.lat!, status.lng!),
+                        infoWindow: InfoWindow(
+                          title: 'Live train',
+                          snippet: stationsById[status.stationId]?.name ?? widget.line,
+                        ),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(
+                          BitmapDescriptor.hueGreen,
                         ),
                       ),
+                  },
+                  polylines: {
+                    Polyline(
+                      polylineId: PolylineId('route-${widget.line}'),
+                      points: [
+                        for (final station in stations) LatLng(station.lat, station.lng),
+                      ],
+                      color: routeColor,
+                      width: 6,
+                      jointType: JointType.round,
                     ),
+                  },
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: !widget.compact,
+                  mapToolbarEnabled: !widget.compact,
+                  rotateGesturesEnabled: !widget.compact,
+                  scrollGesturesEnabled: !widget.compact,
+                  zoomGesturesEnabled: !widget.compact,
+                  tiltGesturesEnabled: !widget.compact,
+                ),
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: _MapLabel(
+                    line: widget.line,
+                    trainCount: trainStatuses.length,
+                    loading: snapshot.connectionState == ConnectionState.waiting,
                   ),
-                  ...List.generate(
-                    widget.stations.length,
-                    (index) => Positioned(
-                      left: math.max(6, points[index].dx - 35),
-                      top: points[index].dy + 14,
-                      width: 70,
-                      child: Text(
-                        widget.stations[index].name,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xff36565d),
-                        ),
-                      ),
-                    ),
-                  ),
-                  for (final position in positions)
-                    _TrainMarker(point: _pointAt(points, position)),
+                ),
+                if (widget.onExpand != null)
                   Positioned(
-                    top: 10,
-                    left: 12,
-                    child: Text(
-                      widget.line.isEmpty ? 'Route' : widget.line,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xff1a4f78),
-                          ),
-                    ),
-                  ),
-                  if (widget.onExpand != null)
-                    Positioned(
-                      top: 2,
-                      right: 2,
+                    top: 4,
+                    right: 4,
+                    child: Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(22),
                       child: IconButton(
                         onPressed: widget.onExpand,
                         tooltip: 'Open full route map',
                         icon: const Icon(Icons.open_in_full, size: 19),
                       ),
                     ),
-                  Positioned(
-                    left: 12,
-                    bottom: 8,
-                    right: 12,
-                    child: Text(
-                      _caption(loading, snapshot.hasError, positions.length),
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Color(0xff36565d),
-                      ),
-                    ),
                   ),
-                ]);
-              },
+                if (snapshot.hasError)
+                  const Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
+                    child: _MapNotice('Live train positions are unavailable right now.'),
+                  ),
+              ],
             );
-          }),
+          },
         ),
       ),
     );
   }
 
-  String _caption(bool loading, bool hasError, int trainCount) {
-    if (loading) return 'Loading live train positions…';
-    if (hasError) return 'Live positions unavailable right now.';
-    if (trainCount == 0) return 'No live trains on this line right now';
-    return trainCount == 1
-        ? '1 train currently on this line'
-        : '$trainCount trains currently on this line';
-  }
-
-  List<Offset> _routePoints(int count, Size size, bool compact) {
-    const padding = 26.0;
-    final y = compact ? 74.0 : size.height / 2;
-    final width = size.width - (padding * 2);
-    return List.generate(
-      count,
-      (index) => Offset(padding + (width * index / (count - 1)), y),
+  Future<void> _fitRoute(
+    GoogleMapController controller,
+    List<Station> stations,
+  ) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (!mounted) return;
+    var south = stations.first.lat;
+    var north = stations.first.lat;
+    var west = stations.first.lng;
+    var east = stations.first.lng;
+    for (final station in stations.skip(1)) {
+      south = station.lat < south ? station.lat : south;
+      north = station.lat > north ? station.lat : north;
+      west = station.lng < west ? station.lng : west;
+      east = station.lng > east ? station.lng : east;
+    }
+    if (south == north && west == east) {
+      await controller.animateCamera(
+        CameraUpdate.newLatLngZoom(LatLng(south, west), 14),
+      );
+      return;
+    }
+    await controller.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(south, west),
+          northeast: LatLng(north, east),
+        ),
+        widget.compact ? 34 : 50,
+      ),
     );
   }
 
-
-
-
-  double? _trackIndex(TrainStatus status, List<Station> stations) {
-    final lat = status.lat;
-    final lng = status.lng;
-    if (lat == null || lng == null) return null;
-    if (stations.length < 2) return null;
-
-    var nearest = 0;
-    var nearestDistance = double.infinity;
-    for (var i = 0; i < stations.length; i++) {
-      final distance =
-          _distanceMeters(lat, lng, stations[i].lat, stations[i].lng);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearest = i;
-      }
-    }
-
-    int? neighbour;
-    var neighbourDistance = double.infinity;
-    for (final candidate in [nearest - 1, nearest + 1]) {
-      if (candidate < 0 || candidate >= stations.length) continue;
-      final distance = _distanceMeters(
-        lat,
-        lng,
-        stations[candidate].lat,
-        stations[candidate].lng,
-      );
-      if (distance < neighbourDistance) {
-        neighbourDistance = distance;
-        neighbour = candidate;
-      }
-    }
-    if (neighbour == null) return nearest.toDouble();
-
-    final total = nearestDistance + neighbourDistance;
-    if (total <= 0) return nearest.toDouble();
-    final fraction = (nearestDistance / total).clamp(0.0, 1.0);
-    return nearest + (neighbour - nearest) * fraction;
-  }
-
-  double _distanceMeters(double lat1, double lng1, double lat2, double lng2) {
-    const earthRadius = 6371000.0;
-    final dLat = _toRadians(lat2 - lat1);
-    final dLng = _toRadians(lng2 - lng1);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_toRadians(lat1)) *
-            math.cos(_toRadians(lat2)) *
-            math.sin(dLng / 2) *
-            math.sin(dLng / 2);
-    return earthRadius * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-  }
-
-  double _toRadians(double degrees) => degrees * (math.pi / 180);
-
-  Offset _pointAt(List<Offset> points, double index) {
-    final clamped = index.clamp(0.0, (points.length - 1).toDouble());
-    final before = clamped.floor().clamp(0, points.length - 2);
-    return Offset.lerp(points[before], points[before + 1], clamped - before)!;
+  Color _lineColor(String line) {
+    final normalized = line.toLowerCase();
+    if (normalized.contains('seremban')) return const Color(0xff2e7d32);
+    if (normalized.contains('ets')) return const Color(0xffef6c00);
+    if (normalized.contains('shuttle')) return const Color(0xff8e24aa);
+    return const Color(0xff1267a9);
   }
 }
 
-class _TrainMarker extends StatelessWidget {
-  const _TrainMarker({required this.point});
+class _MapLabel extends StatelessWidget {
+  const _MapLabel({
+    required this.line,
+    required this.trainCount,
+    required this.loading,
+  });
 
-  final Offset point;
+  final String line;
+  final int trainCount;
+  final bool loading;
 
   @override
-  Widget build(BuildContext context) => Positioned(
-        left: point.dx - 13,
-        top: point.dy - 34,
-        child: const CircleAvatar(
-          radius: 13,
-          backgroundColor: Color(0xff006874),
-          child: Icon(Icons.train, color: Colors.white, size: 16),
+  Widget build(BuildContext context) {
+    final message = loading
+        ? 'Loading live trains…'
+        : trainCount == 0
+            ? 'No live trains right now'
+            : '$trainCount live train${trainCount == 1 ? '' : 's'}';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              line.isEmpty ? 'KTM route' : line,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+            ),
+            Text(message, style: const TextStyle(fontSize: 10)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapNotice extends StatelessWidget {
+  const _MapNotice(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Text(message, textAlign: TextAlign.center),
         ),
       );
-}
-
-class _RoutePainter extends CustomPainter {
-  const _RoutePainter(this.points);
-
-  final List<Offset> points;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (final point in points.skip(1)) {
-      path.lineTo(point.dx, point.dy);
-    }
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = const Color(0xff1267a9)
-        ..strokeWidth = 5
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _RoutePainter oldDelegate) =>
-      oldDelegate.points != points;
 }
 
 class _MapUnavailable extends StatelessWidget {
