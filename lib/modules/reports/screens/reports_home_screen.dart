@@ -5,6 +5,7 @@ import '../../../providers/reports_provider.dart';
 import '../../../services/reports_repository.dart';
 import '../../../services/auth_service.dart';
 import '../widgets/report_card.dart';
+import 'report_detail_screen.dart';
 import 'report_issue_screen.dart';
 
 
@@ -47,6 +48,11 @@ class ReportsHomeScreen extends StatelessWidget {
 
               if (submitted == true && context.mounted) {
                 context.read<ReportsProvider>().loadMyReports();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Report submitted. Tap it in My reports to view details.'),
+                  ),
+                );
               }
             },
           ),
@@ -155,6 +161,11 @@ class _ReportsHomeBody extends StatelessWidget {
               return ReportCard(
                 report: report,
                 onResolve: () => _confirmResolve(context, provider, report),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ReportDetailScreen(report: report),
+                  ),
+                ),
               );
             },
           ),
