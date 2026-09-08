@@ -356,7 +356,8 @@ class _AlertStatusCard extends StatelessWidget {
     final enabledCount = provider.savedStations.where((station) => station.enabled).length;
     final color = muted ? AppColors.warning : AppColors.success;
     return Card(
-      color: color.withValues(alpha: 0.08),
+      color: AppColors.cardBackground,
+      surfaceTintColor: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(

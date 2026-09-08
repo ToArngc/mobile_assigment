@@ -34,7 +34,8 @@ class OnTimeSummaryCard extends StatelessWidget {
                 ? 'Minor delays'
                 : 'Major delays';
     return Card(
-      color: percent == null ? null : color.withValues(alpha: 0.07),
+      color: AppColors.cardBackground,
+      surfaceTintColor: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
