@@ -14,6 +14,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
   bool _isSubmitting = false;
+  bool _isPasswordVisible = false;
   String? _error;
 
   @override
@@ -124,8 +125,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    obscureText: !_isPasswordVisible,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        tooltip: _isPasswordVisible
+                            ? 'Hide password'
+                            : 'Show password',
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible,
+                        ),
+                      ),
+                    ),
                     validator: (value) => (value == null || value.length < 6)
                         ? 'Password must be at least 6 characters'
                         : null,

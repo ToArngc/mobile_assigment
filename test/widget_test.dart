@@ -28,7 +28,11 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: LiveRouteMap(stations: [station], onStationTap: (_) {}),
+        body: LiveRouteMap(
+          stations: [station],
+          line: station.line,
+          onStationTap: (_) {},
+        ),
       ),
     ));
 

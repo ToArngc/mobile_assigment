@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../services/alerts_repository.dart';
 import '../services/delay_alert_service.dart';
+import '../services/leave_by_repository.dart';
+import '../services/notification_service.dart';
 import '../services/weekly_summary_repository.dart';
 import '../models/saved_station.dart';
 import '../models/mute_settings.dart';
@@ -12,14 +14,17 @@ class AlertsProvider extends ChangeNotifier {
   final AlertsRepository _repository;
   final WeeklySummaryRepository _ridesRepository;
   final DelayAlertService _delayAlertService;
+  final LeaveByRepository _leaveByRepository;
   final String userId;
 
   AlertsProvider({
     required AlertsRepository repository,
     required this.userId,
     WeeklySummaryRepository? ridesRepository,
+    LeaveByRepository? leaveByRepository,
   })  : _repository = repository,
         _ridesRepository = ridesRepository ?? WeeklySummaryRepository(),
+        _leaveByRepository = leaveByRepository ?? LeaveByRepository(),
         _delayAlertService = DelayAlertService.instance {
     _delayAlertService.lastCheckedAt.addListener(notifyListeners);
   }
@@ -81,6 +86,12 @@ class AlertsProvider extends ChangeNotifier {
   Future<void> _setMute(DateTime? mutedUntil) async {
     try {
       muteSettings = await _repository.setMute(userId, mutedUntil);
+      if (mutedUntil != null) {
+        final routes = await _leaveByRepository.getSavedRoutes(userId);
+        for (final route in routes) {
+          await NotificationService.cancelReminder(route.id.hashCode);
+        }
+      }
       notifyListeners();
     } catch (e) {
       errorMessage = e.toString();

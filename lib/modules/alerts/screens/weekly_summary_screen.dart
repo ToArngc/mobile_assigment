@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants.dart';
 import '../../../providers/weekly_summary_provider.dart';
+import '../../../models/weekly_ride_summary.dart';
 import '../../../services/weekly_summary_repository.dart';
 import '../../../services/auth_service.dart';
 
@@ -116,10 +118,80 @@ class _WeeklySummaryBody extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 28),
+              Text(
+                'Ride history',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              if (provider.summary.rides.isEmpty)
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.directions_train_outlined),
+                    title: Text('Ride details are not available yet'),
+                  ),
+                )
+              else
+                Card(
+                  child: Column(
+                    children: [
+                      for (final ride in provider.summary.rides)
+                        _RideHistoryTile(ride: ride),
+                    ],
+                  ),
+                ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _RideHistoryTile extends StatelessWidget {
+  final WeeklyRide ride;
+
+  const _RideHistoryTile({required this.ride});
+
+  @override
+  Widget build(BuildContext context) {
+    final delay = ride.delayMinutes;
+    final isOnTime = delay != null && delay <= onTimeThresholdMinutes;
+    final date = ride.detectedAt.toLocal();
+    final time = TimeOfDay.fromDateTime(date).format(context);
+    final dateLabel = '${date.day}/${date.month}/${date.year}';
+    final delayLabel = delay == null
+        ? 'Delay unavailable'
+        : isOnTime
+            ? 'On time · ${delay} min delay'
+            : '${delay} min delay';
+
+    return ListTile(
+      leading: Icon(
+        delay == null
+            ? Icons.help_outline
+            : isOnTime
+                ? Icons.check_circle_outline
+                : Icons.warning_amber_outlined,
+        color: delay == null
+            ? null
+            : isOnTime
+                ? Colors.green
+                : Colors.orange,
+      ),
+      title: Text(ride.stationName ?? 'Station'),
+      subtitle: Text('$dateLabel · $time'),
+      trailing: Text(
+        delayLabel,
+        textAlign: TextAlign.end,
+        style: TextStyle(
+          color: delay == null
+              ? Colors.grey
+              : isOnTime
+                  ? Colors.green
+                  : Colors.orange,
+        ),
+      ),
     );
   }
 }

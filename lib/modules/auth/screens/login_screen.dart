@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../../services/auth_service.dart';
 import 'sign_up_screen.dart';
 
@@ -16,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isSubmitting = false;
+  bool _isPasswordVisible = false;
   String? _error;
 
   @override
@@ -37,13 +36,25 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       // AuthGate's stream listener swaps to the app shell automatically.
-    } on AuthException catch (e) {
-      setState(() => _error = e.message);
     } catch (e) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = _friendlyError(e));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString().toLowerCase();
+    if (message.contains('socketexception') ||
+        message.contains('failed host lookup') ||
+        message.contains('network') ||
+        message.contains('timed out')) {
+      return 'Unable to connect. Check your internet connection and try again.';
+    }
+    if (message.contains('invalid login credentials')) {
+      return 'Incorrect email or password. Please try again.';
+    }
+    return 'Unable to log in right now. Please try again.';
   }
 
   @override
@@ -73,8 +84,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    obscureText: !_isPasswordVisible,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        tooltip: _isPasswordVisible
+                            ? 'Hide password'
+                            : 'Show password',
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible,
+                        ),
+                      ),
+                    ),
                     validator: (value) =>
                         (value == null || value.isEmpty) ? 'Password is required' : null,
                   ),
