@@ -1,12 +1,9 @@
 import '../models/train_status.dart';
 import 'edge_function_client.dart';
 
-/// One calendar day's on-time performance. The trend chart still needs a
-/// day-by-day series, and no Edge Function returns one (get-reliability-stats
-/// returns a single aggregated window, not a series — see
-/// ReliabilityRepository.fetchOnTimeStats), so this bucketing still happens
-/// in Dart, just over rows fetched from get-recent-train-delays instead of
-/// a direct `train_status` table read.
+/// One calendar day's on-time performance, from get-reliability-trend — the
+/// day bucketing happens in Postgres now (see
+/// ReliabilityRepository.fetchOnTimeStats), not client-side.
 class DailyOnTimeStat {
   final DateTime date; // local calendar day, midnight
   final int onTimeCount;
@@ -19,6 +16,27 @@ class DailyOnTimeStat {
   });
 
   double get onTimePercent => totalCount == 0 ? 0 : onTimeCount / totalCount * 100;
+}
+
+/// Aggregate reliability numbers for one station/line filter (or
+/// network-wide when both are omitted), straight from
+/// get-reliability-stats' / get-network-reliability-stats' own server-side
+/// aggregation — the values are computed by the reliability_stats() RPC,
+/// never folded from [DailyOnTimeStat] rows client-side.
+class ReliabilityStatsSummary {
+  final int daysOfData;
+  final double? onTimePercentage; // null when insufficientData
+  final double? averageDelayMinutes; // null when insufficientData
+  final int totalTrips;
+  final bool insufficientData;
+
+  ReliabilityStatsSummary({
+    required this.daysOfData,
+    this.onTimePercentage,
+    this.averageDelayMinutes,
+    required this.totalTrips,
+    required this.insufficientData,
+  });
 }
 
 enum RouteReliabilityStatus { onTrack, delayed, unreliable, notEnoughData }
@@ -93,95 +111,81 @@ class ReliabilityRepository {
   /// supabase/functions/_shared/reliability.ts — change both together.
   static const int onTimeThresholdMinutes = 5;
 
-  /// How many distinct calendar days (local time) have any train_status
-  /// rows for this filter — the dashboard uses this to size its trend
-  /// window instead of assuming a full week of history exists.
+  /// Aggregate stats for this filter (or network-wide if both are
+  /// omitted) over the trailing [days] days — total_trips,
+  /// on_time_percentage, average_delay_minutes, days_of_data,
+  /// insufficient_data, all computed server-side by the same RPC that
+  /// backs get-reliability-stats.
   ///
   /// get-reliability-stats requires station_id and/or line (400 with
   /// neither), but the Dashboard's default "all lines, all stations" view
-  /// has neither filter set. So this only calls get-reliability-stats when
-  /// at least one filter is present; the unfiltered case falls back to
-  /// counting distinct days from get-recent-train-delays' raw rows, same
-  /// technique as [fetchOnTimeStats]. Flagged as an open item: either relax
-  /// get-reliability-stats' required-filter constraint, or confirm this
-  /// fallback is acceptable long-term.
-  Future<int> fetchDistinctDaysCount({String? lineId, String? stationId}) async {
-    try {
-      if (lineId == null && stationId == null) {
-        final data = await invokeFunction(
-          'get-recent-train-delays',
-          queryParameters: {'limit': '2000'},
-        );
-        final days = (data as List)
-            .map((row) => DateTime.parse((row as Map<String, dynamic>)['recorded_at'] as String)
-                .toLocal())
-            .map((dt) => DateTime(dt.year, dt.month, dt.day))
-            .toSet();
-        return days.length;
-      }
-
-      final data = await invokeFunction(
-        'get-reliability-stats',
-        queryParameters: {
-          if (stationId != null) 'station_id': stationId,
-          if (lineId != null) 'line': lineId,
-          // Large window stands in for "all data" — the function requires
-          // an explicit days param and there's no dedicated distinct-days
-          // endpoint.
-          'days': '3650',
-        },
-      );
-      return (data as Map<String, dynamic>)['days_of_data'] as int? ?? 0;
-    } catch (e) {
-      throw Exception('Failed to load data availability: $e');
-    }
-  }
-
-  /// Aggregates recent arrivals from get-recent-train-delays by local
-  /// calendar day over the trailing [days] days: % of arrivals within
-  /// [onTimeThresholdMinutes] vs total. [lineId] is the free-text value of
-  /// train_status.line, matching StationRepository.getStationsByLine.
-  Future<List<DailyOnTimeStat>> fetchOnTimeStats({
+  /// has neither filter set. So this calls get-network-reliability-stats,
+  /// the network-wide counterpart, for that case, and get-reliability-stats
+  /// otherwise.
+  Future<ReliabilityStatsSummary> fetchReliabilitySummary({
     String? lineId,
     String? stationId,
     required int days,
   }) async {
     try {
       final data = await invokeFunction(
-        'get-recent-train-delays',
+        lineId == null && stationId == null
+            ? 'get-network-reliability-stats'
+            : 'get-reliability-stats',
         queryParameters: {
           if (stationId != null) 'station_id': stationId,
           if (lineId != null) 'line': lineId,
-          // Ordered/limited rather than date-bounded by wall-clock "now",
-          // same reasoning as the pre-migration client query: if the
-          // pipeline has gaps, the trend should still show the most recent
-          // days that actually have data.
-          'limit': '2000',
+          'days': '$days',
+        },
+      );
+      final map = data as Map<String, dynamic>;
+      return ReliabilityStatsSummary(
+        daysOfData: map['days_of_data'] as int? ?? 0,
+        onTimePercentage: (map['on_time_percentage'] as num?)?.toDouble(),
+        averageDelayMinutes: (map['average_delay_minutes'] as num?)?.toDouble(),
+        totalTrips: map['total_trips'] as int? ?? 0,
+        insufficientData: map['insufficient_data'] as bool? ?? true,
+      );
+    } catch (e) {
+      throw Exception('Failed to load data availability: $e');
+    }
+  }
+
+  /// Day-by-day on-time series over the trailing [days] days, from
+  /// get-reliability-trend (day bucketing now happens in Postgres, not
+  /// client-side). [lineId] is the free-text value of train_status.line,
+  /// matching StationRepository.getStationsByLine.
+  ///
+  /// get-reliability-trend requires station_id and/or line, same as
+  /// get-reliability-stats, so the Dashboard's default "all lines, all
+  /// stations" view — which has neither — has no per-day trend available;
+  /// this returns an empty list for that case rather than calling an
+  /// endpoint that would 400. The Dashboard already renders an empty state
+  /// when the series comes back empty.
+  Future<List<DailyOnTimeStat>> fetchOnTimeStats({
+    String? lineId,
+    String? stationId,
+    required int days,
+  }) async {
+    if (lineId == null && stationId == null) return [];
+
+    try {
+      final data = await invokeFunction(
+        'get-reliability-trend',
+        queryParameters: {
+          if (stationId != null) 'station_id': stationId,
+          if (lineId != null) 'line': lineId,
+          'days': '$days',
         },
       );
 
-      final rows = (data as List)
-          .map((row) => TrainStatus.fromJson(row as Map<String, dynamic>))
-          .where((row) => row.delayMinutes != null)
-          .toList();
-
-      final byDay = <DateTime, List<TrainStatus>>{};
-      for (final row in rows) {
-        final local = row.recordedAt.toLocal();
-        final day = DateTime(local.year, local.month, local.day);
-        byDay.putIfAbsent(day, () => []).add(row);
-      }
-
-      final sortedDays = byDay.keys.toList()..sort();
-      final recentDays =
-          sortedDays.length > days ? sortedDays.sublist(sortedDays.length - days) : sortedDays;
-
-      return recentDays.map((day) {
-        final dayRows = byDay[day]!;
-        final onTime = dayRows
-            .where((r) => (r.delayMinutes ?? 0) <= onTimeThresholdMinutes)
-            .length;
-        return DailyOnTimeStat(date: day, onTimeCount: onTime, totalCount: dayRows.length);
+      return (data as List).map((row) {
+        final map = row as Map<String, dynamic>;
+        return DailyOnTimeStat(
+          date: DateTime.parse(map['day'] as String),
+          onTimeCount: map['on_time_trips'] as int? ?? 0,
+          totalCount: map['total_trips'] as int? ?? 0,
+        );
       }).toList();
     } catch (e) {
       throw Exception('Failed to load on-time stats: $e');

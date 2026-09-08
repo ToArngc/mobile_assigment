@@ -97,3 +97,46 @@ export async function getReliabilityStatsByStationLine(
   }
   return result;
 }
+
+export interface DailyReliabilityStat {
+  day: string; // date, e.g. "2026-09-01"
+  totalTrips: number;
+  onTimeTrips: number;
+  onTimePercentage: number;
+  averageDelayMinutes: number;
+}
+
+interface RawDailyStatsRow {
+  day: string;
+  total_trips: number | string;
+  on_time_trips: number | string;
+  on_time_percentage: number | string;
+  average_delay_minutes: number | string;
+}
+
+/**
+ * Day-by-day stats for a single station/line filter, ordered ascending by
+ * day. The underlying RPC's GROUP BY only ever emits a row for a day that
+ * had >=1 matching trip, so days with no data are simply absent from the
+ * result rather than present with total_trips: 0 — callers should treat a
+ * missing date as "no data that day".
+ */
+export async function getDailyReliabilityStats(
+  supabase: SupabaseClient,
+  params: { stationId?: string | null; line?: string | null; days: number },
+): Promise<DailyReliabilityStat[]> {
+  const { data, error } = await supabase.rpc("get_daily_reliability_stats", {
+    p_station_id: params.stationId ?? null,
+    p_line: params.line ?? null,
+    p_days: params.days,
+  });
+  if (error) throw error;
+
+  return ((data ?? []) as RawDailyStatsRow[]).map((row) => ({
+    day: row.day,
+    totalTrips: Number(row.total_trips),
+    onTimeTrips: Number(row.on_time_trips),
+    onTimePercentage: Number(row.on_time_percentage),
+    averageDelayMinutes: Number(row.average_delay_minutes),
+  }));
+}
