@@ -43,7 +43,7 @@ class StationDetailPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text('Accessibility', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          _AccessibilityCard(features: station.accessibilityFeatures),
+          _AccessibilityCard(stationId: station.id),
           const SizedBox(height: 20),
           Text('Scheduled departures', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
@@ -55,36 +55,38 @@ class StationDetailPage extends StatelessWidget {
 }
 
 class _AccessibilityCard extends StatelessWidget {
-  const _AccessibilityCard({required this.features});
+  const _AccessibilityCard({required this.stationId});
 
-  final Map<String, dynamic>? features;
+  final String stationId;
 
   @override
   Widget build(BuildContext context) {
-    if (features == null || features!.isEmpty) {
-      return const Card(
-        child: ListTile(
-          leading: Icon(Icons.info_outline),
-          title: Text('Accessibility information is not available yet.'),
-        ),
-      );
-    }
-
-    final enabled = features!.entries
-        .where((entry) => entry.value == true)
-        .map((entry) => entry.key.replaceAll('_', ' '))
-        .toList();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: enabled.isEmpty
-            ? const Text('No accessibility facilities have been confirmed.')
-            : Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: enabled.map((feature) => Chip(label: Text(feature))).toList(),
-              ),
-      ),
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: StationRepository().getStationAccessibility(stationId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Card(child: Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator())));
+        }
+        if (snapshot.hasError) {
+          return const Card(child: ListTile(leading: Icon(Icons.info_outline), title: Text('Accessibility information is unavailable right now.')));
+        }
+        final features = snapshot.data;
+        if (features == null || features.isEmpty) {
+          return const Card(child: ListTile(leading: Icon(Icons.info_outline), title: Text('Accessibility information is not available yet.')));
+        }
+        final enabled = features.entries
+            .where((entry) => entry.key != 'station_id' && entry.value == true)
+            .map((entry) => entry.key.replaceAll('_', ' '))
+            .toList();
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: enabled.isEmpty
+                ? const Text('No accessibility facilities have been confirmed.')
+                : Wrap(spacing: 8, runSpacing: 8, children: enabled.map((feature) => Chip(label: Text(feature))).toList()),
+          ),
+        );
+      },
     );
   }
 }

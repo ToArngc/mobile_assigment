@@ -50,7 +50,7 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
     final portKlang = stations
         .where((station) => station.line.toLowerCase().contains('port klang'))
         .toList();
-    return (portKlang.isNotEmpty ? portKlang : stations).take(8).toList();
+    return portKlang.isNotEmpty ? portKlang : stations;
   }
 
   void _openStation(Station station) {
@@ -166,6 +166,7 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
                         const SizedBox(height: 8),
                         LiveRouteMap(
                           stations: _mapStations(stations),
+                          line: 'Port Klang Line',
                           compact: true,
                           onStationTap: _openStation,
                           onExpand: () => Navigator.of(context).push(

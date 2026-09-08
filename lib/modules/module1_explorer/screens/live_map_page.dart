@@ -22,13 +22,14 @@ class LiveMapPage extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              'Preview positions are replaced by the GTFS-Realtime feed when connected.',
+              'Current train locations are projected onto the route schematic.',
             ),
             const SizedBox(height: 18),
             Expanded(
               child: Center(
                 child: LiveRouteMap(
                   stations: stations,
+                  line: 'Port Klang Line',
                   onStationTap: (station) => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => StationDetailPage(station: station),

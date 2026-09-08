@@ -6,6 +6,8 @@ class TrainStatus {
   final DateTime? actualTime;
   final int? delayMinutes;
   final DateTime recordedAt;
+  final double? lat;
+  final double? lng;
 
   TrainStatus({
     required this.id,
@@ -15,6 +17,8 @@ class TrainStatus {
     this.actualTime,
     this.delayMinutes,
     required this.recordedAt,
+    this.lat,
+    this.lng,
   });
 
   factory TrainStatus.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,8 @@ class TrainStatus {
           : null,
       delayMinutes: json['delay_minutes'] as int?,
       recordedAt: DateTime.parse(json['recorded_at'] as String),
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
     );
   }
 
@@ -40,6 +46,8 @@ class TrainStatus {
       'actual_time': actualTime?.toIso8601String(),
       'delay_minutes': delayMinutes,
       'recorded_at': recordedAt.toIso8601String(),
+      'lat': lat,
+      'lng': lng,
     };
   }
 
