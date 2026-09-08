@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../services/station_repository.dart';
 import '../../../models/station.dart';
 
-/// Generic station picker — pops the selected Station back to the caller.
-/// Used by AddRouteScreen for picking origin and destination separately.
+
+
 class PickStationScreen extends StatefulWidget {
   final String title;
 

@@ -3,20 +3,20 @@ import '../../../models/saved_station.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/alerts_repository.dart';
 
-/// Step 2 of adding an Alert Rule: set the threshold, quiet hours, and
-/// active days for the station chosen in SelectStationScreen.
-///
-/// Saves directly through AlertsRepository rather than reading
-/// AlertsProvider via Provider.of — this screen is pushed onto the root
-/// Navigator (above MaterialApp), which sits outside the
-/// ChangeNotifierProvider<AlertsProvider> scope declared in
-/// AlertsHomeScreen, so Provider.of would fail here.
-/// Pops `true` on success; the caller (AlertsHomeScreen) is responsible
-/// for calling provider.loadAll() to refresh the list.
+
+
+
+
+
+
+
+
+
+
 class AlertRuleEditScreen extends StatefulWidget {
   final String stationId;
   final String stationName;
-  final SavedStation? existing; // non-null when editing an existing rule
+  final SavedStation? existing;
 
   const AlertRuleEditScreen({
     super.key,
@@ -86,7 +86,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
     setState(() => _saving = true);
     try {
       final saved = SavedStation(
-        id: widget.existing?.id ?? '', // empty id -> upsert treats as insert
+        id: widget.existing?.id ?? '',
         userId: userId,
         stationId: widget.stationId,
         alertDelayThreshold: _thresholdMinutes.round(),

@@ -148,7 +148,7 @@ def main():
     trip_headsign = {t["trip_id"]: t.get("trip_headsign", "") for t in trips}
     trip_direction_id = {t["trip_id"]: t.get("direction_id", "") for t in trips}
 
-    # Which lines serve each stop, for the aggregate `stations.line` field.
+
     stop_lines = {}
     for row in stop_times:
         line = route_name.get(trip_route.get(row["trip_id"]))

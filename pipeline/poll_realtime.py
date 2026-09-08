@@ -109,9 +109,9 @@ def main():
     for row in timetable:
         timetable_by_station.setdefault(row["station_id"], []).append(row)
 
-    # Bound the dedup lookup to the last 24h (comfortably covers a single
-    # commute window even where it crosses UTC midnight) instead of
-    # scanning all of train_status every poll.
+
+
+
     since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
     already_logged = {
         (row["trip_id"], row["station_id"])
@@ -131,12 +131,12 @@ def main():
 
             station_id = station["id"]
             if (trip_id, station_id) in already_logged:
-                break  # already logged this trip's arrival here — skip (§8 step 4)
+                break
 
             candidates = timetable_by_station.get(station_id, [])
             match = closest_timetable_match(candidates, actual_dt, local_date)
             if match is None:
-                break  # no schedule to compare against — can't compute a delay
+                break
 
             line, scheduled_dt = match
             delay_minutes = round((actual_dt - scheduled_dt).total_seconds() / 60)
@@ -153,7 +153,7 @@ def main():
             })
             already_logged.add((trip_id, station_id))
             logged_count += 1
-            break  # a vehicle can only be arriving at one station at a time
+            break
 
     print(f"Logged {logged_count} arrival(s).")
 

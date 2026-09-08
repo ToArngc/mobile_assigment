@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Colored pill for a line name, matching the team's mockup style
-/// (green for Seremban Line, blue for Port Klang Line, orange for ETS).
-/// Falls back to a neutral grey for any line name not in the map, so a
-/// new line added later doesn't crash — it just looks unstyled until
-/// someone adds its color here.
+
+
+
+
+
 class LineBadge extends StatelessWidget {
   final String line;
 

@@ -5,17 +5,17 @@ class RideLog {
   final DateTime detectedAt;
   final int? delayMinutes;
 
-  /// Station the ride ended at. Null if the ride was never "closed out"
-  /// (app closed, commute window ended, etc before a second station was
-  /// detected) -- see the ride detection design note.
+
+
+
   final String? destinationStationId;
 
-  /// Minutes between [detectedAt] and the destination detection.
-  /// Null until [destinationStationId] is set.
+
+
   final int? durationMinutes;
 
-  // Populated only when fetched with a joined `stations` select — not a
-  // real column on ride_logs.
+
+
   final String? stationName;
   final String? stationLine;
   final String? destinationStationName;
@@ -63,7 +63,7 @@ class RideLog {
     };
   }
 
-  /// True once the ride has an origin and a destination -- i.e. the
-  /// mockup's full "origin → destination, Xmin" row can be shown.
+
+
   bool get hasFullTripDetail => destinationStationId != null;
 }

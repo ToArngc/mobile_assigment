@@ -14,10 +14,10 @@ import '../../../services/station_repository.dart';
 import '../widgets/report_card.dart';
 import 'pick_report_station_screen.dart';
 
-/// Submits a fault report. Pushed on the root Navigator, same pattern as
-/// AddRouteScreen/AlertRuleEditScreen — saves directly through
-/// ReportsRepository (no Provider.of) and pops `true` on success so
-/// ReportsHomeScreen knows to refresh its "My reports" list.
+
+
+
+
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
 
@@ -45,12 +45,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     _detectNearestStation();
   }
 
-  /// Design doc §7 lists "auto-GPS + nearest station" as Core for this
-  /// screen. Reuses the shared LocationService (see the note in
-  /// location_service.dart about Module 1 and Module 4 sharing one GPS
-  /// stream) rather than opening a second subscription. Fails silently
-  /// and falls back to the manual picker if location is denied, off, or
-  /// slow to fix — never blocks the form.
+
+
+
+
+
+
   Future<void> _detectNearestStation() async {
     setState(() => _locating = true);
     try {
@@ -72,8 +72,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         _loadRecentReports();
       }
     } catch (_) {
-      // No fix within the timeout, or permission denied — leave _station
-      // null and let the rider use the manual picker below.
+
+
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -120,9 +120,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
   }
 
-  /// Design doc §2 specifies image_picker for camera *and* gallery. Both
-  /// go through the same submit path afterwards, so the only difference
-  /// is the ImageSource.
+
+
+
   Future<void> _pickPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -146,9 +146,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     );
     if (source == null) return;
 
-    // A denied camera/photo permission throws rather than returning null,
-    // and on either path that must not take the form down with it — the
-    // report is still submittable without a photo.
+
+
+
     try {
       final picker = ImagePicker();
       final picked = await picker.pickImage(
@@ -184,8 +184,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         photoFileName = _photo!.uri.pathSegments.last;
       }
 
-      // fault_reports stores one issue per row — one insert per selected
-      // category so each still shows up as its own card afterwards.
+
+
       for (final category in _categories) {
         await _repository.submitReport(
           userId: userId,
@@ -202,12 +202,24 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit: $e')),
+          SnackBar(content: Text(_submissionErrorMessage(e))),
         );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  String _submissionErrorMessage(Object error) {
+    final details = error.toString().toLowerCase();
+    if (details.contains('invalid or expired session') ||
+        details.contains('authorization header')) {
+      return 'Your session has expired. Please log in again and retry.';
+    }
+    if (details.contains('status 0') || details.contains('socketexception')) {
+      return 'Couldn\'t reach the service. Check your connection and try again.';
+    }
+    return 'We couldn\'t submit your report. Please try again.';
   }
 
   @override

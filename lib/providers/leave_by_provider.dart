@@ -18,7 +18,7 @@ class LeaveByProvider extends ChangeNotifier {
   LoadStatus status = LoadStatus.initial;
   String? errorMessage;
   List<SavedRoute> routes = [];
-  final Map<String, LeaveByResult?> results = {}; // routeId -> result (null = no upcoming departure / no data)
+  final Map<String, LeaveByResult?> results = {};
 
   Future<void> loadAll() async {
     status = LoadStatus.loading;
@@ -29,8 +29,8 @@ class LeaveByProvider extends ChangeNotifier {
       routes = await _repository.getSavedRoutes(userId);
       results.clear();
 
-      // Quick Mute covers every local reminder, Leave-By included
-      // (design doc §9). Checked once per load rather than per route.
+
+
       final muted = await MuteService.isMutedNow(userId);
 
       for (final route in routes) {
@@ -39,16 +39,16 @@ class LeaveByProvider extends ChangeNotifier {
           results[route.id] = result;
 
           if (muted) {
-            // Cancel as well as skip: a reminder scheduled before the
-            // mute was set still lives in the OS alarm queue and would
-            // otherwise fire anyway.
+
+
+
             await NotificationService.cancelReminder(route.id.hashCode);
             continue;
           }
 
-          // Re-schedule the reminder every time we recompute — this
-          // naturally replaces yesterday's (now-past) notification with
-          // today's, since the notification id is stable per route.
+
+
+
           if (result != null && result.hasEnoughData) {
             await NotificationService.scheduleLeaveByReminder(
               id: route.id.hashCode,

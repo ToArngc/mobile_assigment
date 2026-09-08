@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 import '../../../services/reliability_repository.dart';
 
-/// One saved route's card on the Route Suggestion screen — status badge
-/// plus an alternate-line suggestion when the trigger logic surfaces one.
+
+
 class RouteSuggestionCard extends StatelessWidget {
   final RouteSuggestion suggestion;
 

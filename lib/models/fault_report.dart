@@ -2,11 +2,11 @@ enum FaultStatus { open, resolved }
 
 class FaultReport {
   final String id;
-  final String? userId; // null if user account was deleted
+  final String? userId;
   final String stationId;
-  final String issueType; // 'lift_broken' | 'escalator_broken' | 'overcrowding'
+  final String issueType;
   final String? description;
-  final String? photoUrl; // Supabase Storage URL
+  final String? photoUrl;
   final double? lat;
   final double? lng;
   final FaultStatus status;
@@ -42,8 +42,8 @@ class FaultReport {
     );
   }
 
-  /// Same report, flipped to resolved — used to reflect a successful
-  /// resolve-fault-report call without refetching the list.
+
+
   FaultReport copyWithResolved() => FaultReport(
         id: id,
         userId: userId,

@@ -2,7 +2,7 @@ class TimetableEntry {
   final String id;
   final String stationId;
   final String line;
-  final String scheduledTime; // Postgres 'time' comes back as "HH:mm:ss"
+  final String scheduledTime;
   final String direction;
 
   TimetableEntry({

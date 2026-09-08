@@ -1,9 +1,9 @@
-// GET /get-mute-settings
-// Returns the caller's mute_settings row, or null if none exists (not an error).
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
@@ -12,14 +12,18 @@ Deno.serve(async (req) => {
   if (req.method !== "GET") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   const { data, error } = await supabase
     .from("mute_settings")
     .select()
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error) return errorResponse(error.message, 500);

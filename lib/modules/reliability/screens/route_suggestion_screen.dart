@@ -5,8 +5,8 @@ import '../../../services/reliability_repository.dart';
 import '../../../services/auth_service.dart';
 import '../widgets/route_suggestion_card.dart';
 
-/// Module 2's Route Suggestion screen — one card per saved route (owned by
-/// Module 4's saved_routes table) with a computed reliability badge.
+
+
 class RouteSuggestionScreen extends StatelessWidget {
   const RouteSuggestionScreen({super.key});
 

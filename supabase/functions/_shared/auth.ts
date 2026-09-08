@@ -1,7 +1,7 @@
-// Shared JWT verification + user extraction. Every function that touches
-// user-owned data calls this instead of decoding the JWT payload itself —
-// supabase.auth.getUser(jwt) round-trips to Auth to confirm the token is
-// genuinely valid (not just well-formed), which a manual decode would not.
+
+
+
+
 
 import { SupabaseClient, User } from "jsr:@supabase/supabase-js@2";
 import { errorResponse } from "./cors.ts";

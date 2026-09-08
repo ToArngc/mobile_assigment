@@ -1,10 +1,10 @@
-// GET /get-recent-rides?limit=<int>
-// Returns the caller's most recent ride_logs, joined with stations twice
-// (origin + destination) for display, newest first. Default limit 10.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
@@ -13,9 +13,13 @@ Deno.serve(async (req) => {
   if (req.method !== "GET") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   const url = new URL(req.url);
   const limitParam = url.searchParams.get("limit");
@@ -29,7 +33,7 @@ Deno.serve(async (req) => {
     .select(
       "*, stations!ride_logs_station_id_fkey(name, line), destination_station:stations!ride_logs_destination_station_id_fkey(name)",
     )
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("detected_at", { ascending: false })
     .limit(limit);
 

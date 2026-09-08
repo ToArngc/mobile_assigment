@@ -1,19 +1,19 @@
-// GET /get-latest-train-status?station_id=<uuid>
-//   Public. The most recent train_status row for one station, or null.
-//   Module 4's delay alerts depend on this exact shape — unchanged.
-//
-// GET /get-latest-train-status?line=<line>
-//   Public. The most recent train_status row per station on that line, as
-//   an array. Backs Module 1's live schematic.
-//
-// Exactly one of the two params must be supplied.
-//
-// The line variant is bounded to the last LIVE_WINDOW_MINUTES so "latest"
-// means "currently running" rather than "whatever was last seen days
-// ago". A line with no recent readings must come back empty, so the
-// caller can say so honestly instead of drawing a stale train. Deduping
-// to one row per station happens here rather than in SQL because the
-// window is small enough that the row count is trivial.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
     latestPerStation.push(row);
   }
 
-  // An unknown line is an empty array, not an error — the caller cannot
-  // tell a typo from a quiet line and should render "no live trains"
-  // either way.
+
+
+
   return jsonResponse(latestPerStation);
 });

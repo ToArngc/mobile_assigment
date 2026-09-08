@@ -3,10 +3,10 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme.dart';
 import '../../../services/reliability_repository.dart';
 
-/// On-time % trend line over however many days actually have data (up to
-/// 7) — the title text is built from the data, never hardcoded to "7-day".
-/// Caller only shows this when [stats] is non-empty; an empty list means
-/// "no data yet", handled by the screen's own empty state instead.
+
+
+
+
 class TrendChartWidget extends StatelessWidget {
   final List<DailyOnTimeStat> stats;
 
@@ -14,8 +14,8 @@ class TrendChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // maxX must stay > minX even with a single data point, or fl_chart has
-    // a zero-width range to lay out.
+
+
     final maxX = stats.length > 1 ? (stats.length - 1).toDouble() : 1.0;
 
     return Card(
