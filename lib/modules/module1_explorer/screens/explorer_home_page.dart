@@ -48,12 +48,31 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
   }
 
   List<Station> _mapStations(List<Station> stations) {
-    final portKlang = stations
+    final matching = stations
         .where((station) => station.line.toLowerCase().contains('port klang'))
         .toList();
-    return (portKlang.isNotEmpty ? portKlang : stations).take(8).toList();
+    return _orderRouteStations(matching.isNotEmpty ? matching : stations);
   }
 
+  List<Station> _orderRouteStations(List<Station> stations) {
+    if (stations.length < 3) return stations;
+    final remaining = List<Station>.from(stations);
+    remaining.sort((a, b) => a.lng.compareTo(b.lng));
+    final ordered = <Station>[remaining.removeAt(0)];
+    while (remaining.isNotEmpty) {
+      final current = ordered.last;
+      remaining.sort((a, b) => _distanceSquared(current, a)
+          .compareTo(_distanceSquared(current, b)));
+      ordered.add(remaining.removeAt(0));
+    }
+    return ordered;
+  }
+
+  double _distanceSquared(Station a, Station b) {
+    final latDelta = a.lat - b.lat;
+    final lngDelta = a.lng - b.lng;
+    return (latDelta * latDelta) + (lngDelta * lngDelta);
+  }
 
 
 

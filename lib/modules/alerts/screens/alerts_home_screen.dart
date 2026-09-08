@@ -69,6 +69,12 @@ class _AlertsHomeBody extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
               children: [
                 _Header(provider: provider),
+                const SizedBox(height: 14),
+                _AlertStatusCard(
+                  provider: provider,
+                  onOpenMute: () => _Header(provider: provider)
+                      ._handleAction(context, _HeaderAction.mute),
+                ),
                 const SizedBox(height: 22),
                 const _SectionLabel('Saved stations'),
                 const SizedBox(height: 8),
@@ -340,6 +346,16 @@ class _SavedStationCard extends StatelessWidget {
                         'Line unavailable',
                         style: TextStyle(color: AppColors.textSecondary),
                       ),
+                    if (station.alertDelayThreshold != null) ...[
+                      const SizedBox(height: 9),
+                      Text(
+                        'Alert when delay exceeds ${station.alertDelayThreshold} min',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -362,6 +378,59 @@ class _SavedStationCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AlertStatusCard extends StatelessWidget {
+  const _AlertStatusCard({required this.provider, required this.onOpenMute});
+
+  final AlertsProvider provider;
+  final VoidCallback onOpenMute;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = provider.isMutedNow;
+    final enabledCount = provider.savedStations.where((station) => station.enabled).length;
+    final color = muted ? Colors.orange.shade800 : AppColors.accent;
+    return Card(
+      color: color.withValues(alpha: 0.08),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.14),
+              child: Icon(
+                muted ? Icons.notifications_off_outlined : Icons.notifications_active_outlined,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    muted ? 'Alerts are muted' : 'Alerts are active',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    muted
+                        ? 'No delay notifications will be sent right now.'
+                        : '$enabledCount saved station${enabledCount == 1 ? '' : 's'} are monitored.',
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(onPressed: onOpenMute, child: Text(muted ? 'Manage' : 'Mute')),
+          ],
         ),
       ),
     );
