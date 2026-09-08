@@ -19,6 +19,7 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<Station>> _stationsFuture;
   String _query = '';
+  bool _liveMapExpanded = false;
 
   @override
   void initState() {
@@ -134,6 +135,26 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
               else if (snapshot.hasError)
                 SliverFillRemaining(child: _LoadError(onRetry: _refresh))
               else ...[
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverToBoxAdapter(
+                    child: _LivePositionsSection(
+                      stations: _mapStations(stations),
+                      line: _mapLine(stations),
+                      expanded: _liveMapExpanded,
+                      onToggle: () => setState(() => _liveMapExpanded = !_liveMapExpanded),
+                      onStationTap: _openStation,
+                      onOpenFullMap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => LiveMapPage(
+                            stations: _mapStations(stations),
+                            line: _mapLine(stations),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 if (filtered.isEmpty)
                   const SliverToBoxAdapter(
                     child: Padding(
@@ -159,39 +180,6 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                     ),
                   ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 22, 16, 28),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'LIVE TRAIN POSITIONS',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.1,
-                                color: const Color(0xff5f6a6d),
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        LiveRouteMap(
-                          stations: _mapStations(stations),
-                          line: _mapLine(stations),
-                          compact: true,
-                          onStationTap: _openStation,
-                          onExpand: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => LiveMapPage(
-                                stations: _mapStations(stations),
-                                line: _mapLine(stations),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ],
           ),
@@ -205,6 +193,86 @@ final _searchBorder = OutlineInputBorder(
   borderRadius: BorderRadius.circular(18),
   borderSide: const BorderSide(color: Color(0xffd0e8ec)),
 );
+
+class _LivePositionsSection extends StatelessWidget {
+  const _LivePositionsSection({
+    required this.stations,
+    required this.line,
+    required this.expanded,
+    required this.onToggle,
+    required this.onStationTap,
+    required this.onOpenFullMap,
+  });
+
+  final List<Station> stations;
+  final String line;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final ValueChanged<Station> onStationTap;
+  final VoidCallback onOpenFullMap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xffd5e6eb)),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onToggle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              child: Row(
+                children: [
+                  const Icon(Icons.train_outlined, color: Color(0xff1267a9)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Live train positions',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        Text(
+                          expanded ? 'Tap to hide the route map' : 'Tap to view the route map',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(expanded ? Icons.expand_less : Icons.expand_more),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: LiveRouteMap(
+                stations: stations,
+                line: line,
+                compact: true,
+                onStationTap: onStationTap,
+                onExpand: onOpenFullMap,
+              ),
+            ),
+            crossFadeState: expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _StationCard extends StatelessWidget {
   const _StationCard({required this.station, required this.onTap});
