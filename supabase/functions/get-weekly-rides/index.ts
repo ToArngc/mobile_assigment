@@ -22,7 +22,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 import { ON_TIME_THRESHOLD_MINUTES } from "../_shared/reliability.ts";
 
 Deno.serve(async (req) => {
@@ -32,14 +32,18 @@ Deno.serve(async (req) => {
   if (req.method !== "GET") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase.rpc("weekly_ride_summary", {
-    p_user_id: user.id,
+    p_user_id: userId,
     p_since: since,
     p_threshold: ON_TIME_THRESHOLD_MINUTES,
   });

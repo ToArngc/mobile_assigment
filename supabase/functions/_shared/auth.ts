@@ -29,3 +29,12 @@ export async function getAuthenticatedUser(
 
   return { user: data.user };
 }
+
+export async function requireUser(
+  req: Request,
+  supabase: SupabaseClient,
+): Promise<string> {
+  const result = await getAuthenticatedUser(req, supabase);
+  if ("error" in result) throw result.error;
+  return result.user.id;
+}
