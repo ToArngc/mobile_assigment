@@ -108,7 +108,7 @@ class _DashboardBodyState extends State<_DashboardBody> {
               else ...[
                 OnTimeSummaryCard(
                   onTimePercent: provider.currentOnTimePercent,
-                  windowDays: provider.trendWindowDays,
+                  windowDays: provider.actualDaysAvailable,
                 ),
                 const SizedBox(height: 12),
                 if (provider.trendSeries.isEmpty)
