@@ -50,10 +50,15 @@ class ReliabilityProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      actualDaysAvailable = await _repository.fetchDistinctDaysCount(
+      // Large window stands in for "all data" purely to size the trend
+      // window below — the function requires an explicit days param and
+      // there's no dedicated distinct-days endpoint.
+      final probe = await _repository.fetchReliabilitySummary(
         lineId: filter.lineId,
         stationId: filter.stationId,
+        days: 3650,
       );
+      actualDaysAvailable = probe.daysOfData;
 
       // Always query at least a 1-day window so "since" isn't ~now when no
       // data exists yet — harmless either way since an empty table just
@@ -62,15 +67,24 @@ class ReliabilityProvider extends ChangeNotifier {
           ? 1
           : (actualDaysAvailable > 7 ? 7 : actualDaysAvailable);
 
+      // Headline stats come straight from the aggregate endpoint's own
+      // server-side computation (over this same windowDays), not folded
+      // from trendSeries — trendSeries exists purely to feed the chart and
+      // is legitimately empty for the no-filter case (no meaningful
+      // "trend" for "all lines"), which must not blank out the summary
+      // card too.
+      final summary = await _repository.fetchReliabilitySummary(
+        lineId: filter.lineId,
+        stationId: filter.stationId,
+        days: windowDays,
+      );
+      currentOnTimePercent = summary.insufficientData ? null : summary.onTimePercentage;
+
       trendSeries = await _repository.fetchOnTimeStats(
         lineId: filter.lineId,
         stationId: filter.stationId,
         days: windowDays,
       );
-
-      final totalCount = trendSeries.fold<int>(0, (sum, s) => sum + s.totalCount);
-      final onTimeCount = trendSeries.fold<int>(0, (sum, s) => sum + s.onTimeCount);
-      currentOnTimePercent = totalCount == 0 ? null : onTimeCount / totalCount * 100;
 
       recentDelays = await _repository.fetchRecentTrainDelays(
         lineId: filter.lineId,

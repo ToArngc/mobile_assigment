@@ -1,6 +1,7 @@
-import 'supabase_service.dart';
-import 'auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/saved_route.dart';
+import 'edge_function_client.dart';
 
 /// Result of computing when the user needs to leave for a saved route.
 class LeaveByResult {
@@ -15,18 +16,28 @@ class LeaveByResult {
     required this.hasEnoughData,
     required this.leaveByTime,
   });
+
+  factory LeaveByResult.fromJson(Map<String, dynamic> json) {
+    return LeaveByResult(
+      nextScheduledDeparture:
+          DateTime.parse(json['next_scheduled_departure'] as String),
+      avgDelayMinutes: (json['average_delay_minutes'] as num).toDouble(),
+      hasEnoughData: json['has_enough_data'] as bool,
+      leaveByTime: DateTime.parse(json['leave_by_time'] as String),
+    );
+  }
 }
 
 class LeaveByRepository {
-  final _client = SupabaseService.client;
-
+  /// get-saved-routes is JWT-scoped to the caller — [userId] is kept in the
+  /// signature for existing callers but must always be the current user's
+  /// own id.
   Future<List<SavedRoute>> getSavedRoutes(String userId) async {
     try {
-      final data = await _client
-          .from('saved_routes')
-          .select()
-          .eq('user_id', userId);
-      return (data as List).map((row) => SavedRoute.fromJson(row)).toList();
+      final data = await invokeFunction('get-saved-routes');
+      return (data as List)
+          .map((row) => SavedRoute.fromJson(row as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       throw Exception('Failed to load saved routes: $e');
     }
@@ -34,12 +45,18 @@ class LeaveByRepository {
 
   Future<SavedRoute> upsertSavedRoute(SavedRoute route) async {
     try {
-      final data = await _client
-          .from('saved_routes')
-          .upsert(route.toJson())
-          .select()
-          .single();
-      return SavedRoute.fromJson(data);
+      final body = <String, dynamic>{
+        if (route.id.isNotEmpty) 'id': route.id,
+        'origin_station_id': route.originStationId,
+        'destination_station_id': route.destinationStationId,
+        'walking_minutes': route.walkingMinutes,
+      };
+      final data = await invokeFunction(
+        'upsert-saved-route',
+        method: HttpMethod.post,
+        body: body,
+      );
+      return SavedRoute.fromJson(data as Map<String, dynamic>);
     } catch (e) {
       throw Exception('Failed to save route: $e');
     }
@@ -47,77 +64,33 @@ class LeaveByRepository {
 
   Future<void> deleteSavedRoute(String id) async {
     try {
-      await _client
-          .from('saved_routes')
-          .delete()
-          .eq('id', id)
-          .eq('user_id', AuthService.currentUserId!);
+      await invokeFunction(
+        'delete-saved-route',
+        method: HttpMethod.delete,
+        body: {'id': id},
+      );
     } catch (e) {
       throw Exception('Failed to remove route: $e');
     }
   }
 
-  /// Combines the next scheduled departure from the origin station,
-  /// the historical average delay at that station, and the user's
-  /// walking time, into a single "leave by" time.
-  ///
-  /// Returns null if there's no upcoming scheduled departure today for
-  /// this station (e.g. timetable_entries hasn't been imported yet, or
-  /// the last train for today has already gone).
+  /// compute-leave-by-time is a full server-side re-implementation of the
+  /// local timetable + train_status averaging this method used to do —
+  /// that logic is gone entirely from the client now. [route.id] is always
+  /// a real saved_routes id here (every call site works from an
+  /// already-saved route), so `saved_route_id` alone is enough for the
+  /// function to look up walking_minutes itself.
   Future<LeaveByResult?> computeLeaveByTime(SavedRoute route) async {
-    final now = DateTime.now();
-    final nowTimeString =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:00';
-
-    // Next scheduled departure today from the origin station.
-    final timetableRows = await _client
-        .from('timetable_entries')
-        .select()
-        .eq('station_id', route.originStationId)
-        .gte('scheduled_time', nowTimeString)
-        .order('scheduled_time')
-        .limit(1);
-
-    if ((timetableRows as List).isEmpty) return null;
-
-    final scheduledTimeStr = timetableRows.first['scheduled_time'] as String;
-    final parts = scheduledTimeStr.split(':');
-    final scheduledDeparture = DateTime(
-      now.year, now.month, now.day,
-      int.parse(parts[0]), int.parse(parts[1]),
-    );
-
-    // Historical average delay at this station (recent records).
-    final delayRows = await _client
-        .from('train_status')
-        .select('delay_minutes')
-        .eq('station_id', route.originStationId)
-        .not('delay_minutes', 'is', null)
-        .order('recorded_at', ascending: false)
-        .limit(30);
-
-    final delays = (delayRows as List)
-        .map((r) => r['delay_minutes'] as int?)
-        .whereType<int>()
-        .toList();
-
-    final hasEnoughData = delays.isNotEmpty;
-    final avgDelay = hasEnoughData
-        ? delays.reduce((a, b) => a + b) / delays.length
-        : 0.0;
-
-    final arriveByTime = scheduledDeparture.add(
-      Duration(minutes: avgDelay.round()),
-    );
-    final leaveByTime = arriveByTime.subtract(
-      Duration(minutes: route.walkingMinutes),
-    );
-
-    return LeaveByResult(
-      nextScheduledDeparture: scheduledDeparture,
-      avgDelayMinutes: avgDelay,
-      hasEnoughData: hasEnoughData,
-      leaveByTime: leaveByTime,
-    );
+    try {
+      final data = await invokeFunction(
+        'compute-leave-by-time',
+        queryParameters: {'saved_route_id': route.id},
+      );
+      return data == null
+          ? null
+          : LeaveByResult.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Failed to compute leave-by time: $e');
+    }
   }
 }

@@ -1,12 +1,17 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'edge_function_client.dart';
 import 'supabase_service.dart';
 
 /// Email + password authentication, per design doc §7.
 ///
-/// Sign up also creates the matching `profiles` row (id + username).
-/// `profiles.username` has a UNIQUE constraint in the schema, so a taken
-/// username surfaces as a Postgrest unique-violation (code 23505) rather
-/// than needing a separate existence check.
+/// Sign up attaches the chosen username as auth user_metadata so it
+/// survives regardless of whether email confirmation delays the session,
+/// and also creates the matching `profiles` row (id + username) via
+/// create-profile when a session already exists. `profiles.username` has a
+/// UNIQUE constraint in the schema, so a taken username surfaces as a 409
+/// from create-profile (or a silent fallback from get-profile's
+/// auto-create) rather than needing a separate existence check.
 class AuthService {
   static SupabaseClient get _client => SupabaseService.client;
 
@@ -32,6 +37,7 @@ class AuthService {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
+      data: {'username': username.trim()},
     );
     final user = response.user;
     if (user == null) {
@@ -48,19 +54,23 @@ class AuthService {
       );
     }
 
-    try {
-      await _client.from('profiles').insert({
-        'id': user.id,
-        'username': username.trim(),
-      });
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') {
-        throw Exception('That username is already taken.');
-      }
-      rethrow;
+    final needsEmailConfirmation = response.session == null;
+
+    // The username is already attached as auth user_metadata above, so it
+    // survives even when there's no session yet (email confirmation on) —
+    // get-profile's auto-create reads it from there. When a session exists
+    // immediately (confirmation off), this call is just a defensive
+    // backstop that creates the row eagerly instead of waiting for the
+    // user's first Profile screen visit.
+    if (!needsEmailConfirmation) {
+      await invokeFunction(
+        'create-profile',
+        method: HttpMethod.post,
+        body: {'username': username.trim()},
+      );
     }
 
-    return response.session == null;
+    return needsEmailConfirmation;
   }
 
   static Future<void> signOut() => _client.auth.signOut();

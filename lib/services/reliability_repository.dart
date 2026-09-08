@@ -1,11 +1,9 @@
-import 'supabase_service.dart';
 import '../models/train_status.dart';
-import '../models/saved_route.dart';
-import '../models/station.dart';
+import 'edge_function_client.dart';
 
-/// One calendar day's on-time performance, aggregated client-side from
-/// train_status rows (mirrors LeaveByRepository's client-side average —
-/// no RPC functions used elsewhere in this codebase).
+/// One calendar day's on-time performance, from get-reliability-trend — the
+/// day bucketing happens in Postgres now (see
+/// ReliabilityRepository.fetchOnTimeStats), not client-side.
 class DailyOnTimeStat {
   final DateTime date; // local calendar day, midnight
   final int onTimeCount;
@@ -20,120 +18,174 @@ class DailyOnTimeStat {
   double get onTimePercent => totalCount == 0 ? 0 : onTimeCount / totalCount * 100;
 }
 
+/// Aggregate reliability numbers for one station/line filter (or
+/// network-wide when both are omitted), straight from
+/// get-reliability-stats' / get-network-reliability-stats' own server-side
+/// aggregation — the values are computed by the reliability_stats() RPC,
+/// never folded from [DailyOnTimeStat] rows client-side.
+class ReliabilityStatsSummary {
+  final int daysOfData;
+  final double? onTimePercentage; // null when insufficientData
+  final double? averageDelayMinutes; // null when insufficientData
+  final int totalTrips;
+  final bool insufficientData;
+
+  ReliabilityStatsSummary({
+    required this.daysOfData,
+    this.onTimePercentage,
+    this.averageDelayMinutes,
+    required this.totalTrips,
+    required this.insufficientData,
+  });
+}
+
 enum RouteReliabilityStatus { onTrack, delayed, unreliable, notEnoughData }
 
 /// One saved route's computed reliability, for the Route Suggestion screen.
+/// Reshaped directly from get-route-suggestions' response — the trigger
+/// logic (live delay wins regardless of the weekly stat; the weekly verdict
+/// only applies once >=2 days of history exist; below 70% weekly on-time is
+/// "unreliable") is now computed server-side, not in [status] locally.
 class RouteSuggestion {
-  final SavedRoute route;
+  final String routeId;
   final String originStationName;
   final String originLine;
   final String destinationStationName;
   final int daysOfData; // distinct days behind weeklyOnTimePercent, capped at 7
   final double? weeklyOnTimePercent; // null if no data at all
   final int? liveDelayMinutes; // most recent delay at origin, only if within last ~60 min
+  final RouteReliabilityStatus status;
   final String? alternateLine;
   final double? alternateLineOnTimePercent;
 
   RouteSuggestion({
-    required this.route,
+    required this.routeId,
     required this.originStationName,
     required this.originLine,
     required this.destinationStationName,
     required this.daysOfData,
     this.weeklyOnTimePercent,
     this.liveDelayMinutes,
+    required this.status,
     this.alternateLine,
     this.alternateLineOnTimePercent,
   });
 
-  /// Trigger logic per design doc §7: live delay wins regardless of the
-  /// weekly stat; the weekly verdict only applies once >=2 days of history
-  /// exist, otherwise there isn't enough signal to call a route unreliable.
-  RouteReliabilityStatus get status {
-    if (liveDelayMinutes != null &&
-        liveDelayMinutes! > ReliabilityRepository.onTimeThresholdMinutes) {
-      return RouteReliabilityStatus.delayed;
+  factory RouteSuggestion.fromJson(Map<String, dynamic> json) {
+    final route = json['route'] as Map<String, dynamic>? ?? const {};
+    final alternative = json['suggested_alternative'] as Map<String, dynamic>?;
+    return RouteSuggestion(
+      routeId: route['id'] as String? ?? '',
+      originStationName: json['origin_station_name'] as String? ?? 'Unknown station',
+      originLine: json['origin_line'] as String? ?? '',
+      destinationStationName:
+          json['destination_station_name'] as String? ?? 'Unknown station',
+      daysOfData: json['days_of_data'] as int? ?? 0,
+      weeklyOnTimePercent: (json['weekly_on_time_percentage'] as num?)?.toDouble(),
+      liveDelayMinutes: json['live_delay_minutes'] as int?,
+      status: _statusFromString(json['status'] as String?),
+      alternateLine: alternative?['line'] as String?,
+      alternateLineOnTimePercent:
+          (alternative?['on_time_percentage'] as num?)?.toDouble(),
+    );
+  }
+
+  static RouteReliabilityStatus _statusFromString(String? value) {
+    switch (value) {
+      case 'delayed':
+        return RouteReliabilityStatus.delayed;
+      case 'unreliable':
+        return RouteReliabilityStatus.unreliable;
+      case 'on_track':
+        return RouteReliabilityStatus.onTrack;
+      case 'not_enough_data':
+      default:
+        return RouteReliabilityStatus.notEnoughData;
     }
-    if (daysOfData < 2) return RouteReliabilityStatus.notEnoughData;
-    if (weeklyOnTimePercent != null && weeklyOnTimePercent! < 70) {
-      return RouteReliabilityStatus.unreliable;
-    }
-    return RouteReliabilityStatus.onTrack;
   }
 }
 
 class ReliabilityRepository {
-  final _client = SupabaseService.client;
-
   /// A train is "on time" if it arrived within this many minutes of its
-  /// scheduled time. Single named constant per design doc §7 — change this
-  /// one value to retune the whole module.
+  /// scheduled time. Matches ON_TIME_THRESHOLD_MINUTES in
+  /// supabase/functions/_shared/reliability.ts — change both together.
   static const int onTimeThresholdMinutes = 5;
 
-  /// How many distinct calendar days (local time) have any train_status
-  /// rows for this filter — the dashboard uses this to size its trend
-  /// window instead of assuming a full week of history exists.
-  Future<int> fetchDistinctDaysCount({String? lineId, String? stationId}) async {
-    try {
-      var query = _client.from('train_status').select('recorded_at');
-      if (lineId != null) query = query.eq('line', lineId);
-      if (stationId != null) query = query.eq('station_id', stationId);
-      final data = await query;
-
-      final days = (data as List)
-          .map((row) => DateTime.parse(row['recorded_at'] as String).toLocal())
-          .map((dt) => DateTime(dt.year, dt.month, dt.day))
-          .toSet();
-      return days.length;
-    } catch (e) {
-      throw Exception('Failed to load data availability: $e');
-    }
-  }
-
-  /// Aggregates train_status by local calendar day over the trailing [days]
-  /// days: % of arrivals within [onTimeThresholdMinutes] vs total. [lineId]
-  /// is the free-text value of train_status.line (there's no separate lines
-  /// table), matching StationRepository.getStationsByLine.
-  Future<List<DailyOnTimeStat>> fetchOnTimeStats({
+  /// Aggregate stats for this filter (or network-wide if both are
+  /// omitted) over the trailing [days] days — total_trips,
+  /// on_time_percentage, average_delay_minutes, days_of_data,
+  /// insufficient_data, all computed server-side by the same RPC that
+  /// backs get-reliability-stats.
+  ///
+  /// get-reliability-stats requires station_id and/or line (400 with
+  /// neither), but the Dashboard's default "all lines, all stations" view
+  /// has neither filter set. So this calls get-network-reliability-stats,
+  /// the network-wide counterpart, for that case, and get-reliability-stats
+  /// otherwise.
+  Future<ReliabilityStatsSummary> fetchReliabilitySummary({
     String? lineId,
     String? stationId,
     required int days,
   }) async {
     try {
-      var query = _client
-          .from('train_status')
-          .select()
-          .not('delay_minutes', 'is', null);
-      if (lineId != null) query = query.eq('line', lineId);
-      if (stationId != null) query = query.eq('station_id', stationId);
-      // Ordered/limited rather than date-bounded by wall-clock "now": if
-      // the pipeline has gaps (or hasn't run in a while), the trend should
-      // still show the most recent days that actually have data instead of
-      // silently going empty just because "now minus N days" landed after
-      // the last real row.
-      final data = await query.order('recorded_at', ascending: false).limit(2000);
+      final data = await invokeFunction(
+        lineId == null && stationId == null
+            ? 'get-network-reliability-stats'
+            : 'get-reliability-stats',
+        queryParameters: {
+          if (stationId != null) 'station_id': stationId,
+          if (lineId != null) 'line': lineId,
+          'days': '$days',
+        },
+      );
+      final map = data as Map<String, dynamic>;
+      return ReliabilityStatsSummary(
+        daysOfData: map['days_of_data'] as int? ?? 0,
+        onTimePercentage: (map['on_time_percentage'] as num?)?.toDouble(),
+        averageDelayMinutes: (map['average_delay_minutes'] as num?)?.toDouble(),
+        totalTrips: map['total_trips'] as int? ?? 0,
+        insufficientData: map['insufficient_data'] as bool? ?? true,
+      );
+    } catch (e) {
+      throw Exception('Failed to load data availability: $e');
+    }
+  }
 
-      final rows = (data as List)
-          .map((row) => TrainStatus.fromJson(row as Map<String, dynamic>))
-          .toList();
+  /// Day-by-day on-time series over the trailing [days] days, from
+  /// get-reliability-trend (day bucketing now happens in Postgres, not
+  /// client-side). [lineId] is the free-text value of train_status.line,
+  /// matching StationRepository.getStationsByLine.
+  ///
+  /// get-reliability-trend requires station_id and/or line, same as
+  /// get-reliability-stats, so the Dashboard's default "all lines, all
+  /// stations" view — which has neither — has no per-day trend available;
+  /// this returns an empty list for that case rather than calling an
+  /// endpoint that would 400. The Dashboard already renders an empty state
+  /// when the series comes back empty.
+  Future<List<DailyOnTimeStat>> fetchOnTimeStats({
+    String? lineId,
+    String? stationId,
+    required int days,
+  }) async {
+    if (lineId == null && stationId == null) return [];
 
-      final byDay = <DateTime, List<TrainStatus>>{};
-      for (final row in rows) {
-        final local = row.recordedAt.toLocal();
-        final day = DateTime(local.year, local.month, local.day);
-        byDay.putIfAbsent(day, () => []).add(row);
-      }
+    try {
+      final data = await invokeFunction(
+        'get-reliability-trend',
+        queryParameters: {
+          if (stationId != null) 'station_id': stationId,
+          if (lineId != null) 'line': lineId,
+          'days': '$days',
+        },
+      );
 
-      final sortedDays = byDay.keys.toList()..sort();
-      final recentDays =
-          sortedDays.length > days ? sortedDays.sublist(sortedDays.length - days) : sortedDays;
-
-      return recentDays.map((day) {
-        final dayRows = byDay[day]!;
-        final onTime = dayRows
-            .where((r) => (r.delayMinutes ?? 0) <= onTimeThresholdMinutes)
-            .length;
-        return DailyOnTimeStat(date: day, onTimeCount: onTime, totalCount: dayRows.length);
+      return (data as List).map((row) {
+        final map = row as Map<String, dynamic>;
+        return DailyOnTimeStat(
+          date: DateTime.parse(map['day'] as String),
+          onTimeCount: map['on_time_trips'] as int? ?? 0,
+          totalCount: map['total_trips'] as int? ?? 0,
+        );
       }).toList();
     } catch (e) {
       throw Exception('Failed to load on-time stats: $e');
@@ -147,10 +199,14 @@ class ReliabilityRepository {
     int limit = 20,
   }) async {
     try {
-      var query = _client.from('train_status').select();
-      if (lineId != null) query = query.eq('line', lineId);
-      if (stationId != null) query = query.eq('station_id', stationId);
-      final data = await query.order('recorded_at', ascending: false).limit(limit);
+      final data = await invokeFunction(
+        'get-recent-train-delays',
+        queryParameters: {
+          if (stationId != null) 'station_id': stationId,
+          if (lineId != null) 'line': lineId,
+          'limit': '$limit',
+        },
+      );
       return (data as List)
           .map((row) => TrainStatus.fromJson(row as Map<String, dynamic>))
           .toList();
@@ -159,88 +215,17 @@ class ReliabilityRepository {
     }
   }
 
-  /// Joins saved_routes with a computed weekly on-time % + most recent live
-  /// delay for each route's origin station, plus the best-performing
-  /// alternate line at that station (if it's an interchange). One saved
-  /// route means a handful of extra queries here — fine at this data scale,
-  /// not worth a batched RPC for a student project.
+  /// One call to get-route-suggestions returns all of the caller's saved
+  /// routes with their reliability already computed server-side — this
+  /// used to be an N+1 loop (two extra queries per route, plus more per
+  /// alternate line), now gone entirely. [userId] is kept in the signature
+  /// but the function is JWT-scoped to the caller.
   Future<List<RouteSuggestion>> fetchRouteSuggestionCandidates(String userId) async {
     try {
-      final data = await _client
-          .from('saved_routes')
-          .select(
-            '*, origin_station:stations!saved_routes_origin_station_id_fkey(name, line), '
-            'destination_station:stations!saved_routes_destination_station_id_fkey(name, line)',
-          )
-          .eq('user_id', userId);
-
-      final suggestions = <RouteSuggestion>[];
-      for (final row in (data as List)) {
-        final json = row as Map<String, dynamic>;
-        final route = SavedRoute.fromJson(json);
-        final originStation = json['origin_station'] as Map<String, dynamic>?;
-        final destinationStation = json['destination_station'] as Map<String, dynamic>?;
-
-        // Station.lines splits a station's (possibly comma/slash-joined)
-        // `line` field — reused here rather than duplicating that regex.
-        // Only `line` is used from this dummy Station, so the other
-        // required fields are just placeholders.
-        final originLineField = originStation?['line'] as String? ?? '';
-        final originLines = Station(
-          id: route.originStationId,
-          name: '',
-          line: originLineField,
-          lat: 0,
-          lng: 0,
-        ).lines;
-        final primaryLine = originLines.isNotEmpty ? originLines.first : originLineField;
-
-        final stats = await fetchOnTimeStats(stationId: route.originStationId, days: 7);
-        final daysOfData = stats.length;
-        final totalCount = stats.fold<int>(0, (sum, s) => sum + s.totalCount);
-        final onTimeCount = stats.fold<int>(0, (sum, s) => sum + s.onTimeCount);
-        final weeklyOnTimePercent = totalCount == 0 ? null : onTimeCount / totalCount * 100;
-
-        final recent = await fetchRecentTrainDelays(stationId: route.originStationId, limit: 1);
-        int? liveDelayMinutes;
-        if (recent.isNotEmpty) {
-          final latest = recent.first;
-          final minutesAgo = DateTime.now().toUtc().difference(latest.recordedAt.toUtc()).inMinutes;
-          if (minutesAgo <= 60) liveDelayMinutes = latest.delayMinutes;
-        }
-
-        String? alternateLine;
-        double? alternateLineOnTimePercent;
-        for (final line in originLines.where((l) => l != primaryLine)) {
-          final lineStats = await fetchOnTimeStats(
-            lineId: line,
-            stationId: route.originStationId,
-            days: 7,
-          );
-          final lineTotal = lineStats.fold<int>(0, (sum, s) => sum + s.totalCount);
-          if (lineTotal == 0) continue;
-          final lineOnTime = lineStats.fold<int>(0, (sum, s) => sum + s.onTimeCount);
-          final pct = lineOnTime / lineTotal * 100;
-          if (alternateLineOnTimePercent == null || pct > alternateLineOnTimePercent) {
-            alternateLine = line;
-            alternateLineOnTimePercent = pct;
-          }
-        }
-
-        suggestions.add(RouteSuggestion(
-          route: route,
-          originStationName: originStation?['name'] as String? ?? 'Unknown station',
-          originLine: primaryLine,
-          destinationStationName: destinationStation?['name'] as String? ?? 'Unknown station',
-          daysOfData: daysOfData,
-          weeklyOnTimePercent: weeklyOnTimePercent,
-          liveDelayMinutes: liveDelayMinutes,
-          alternateLine: alternateLine,
-          alternateLineOnTimePercent: alternateLineOnTimePercent,
-        ));
-      }
-
-      return suggestions;
+      final data = await invokeFunction('get-route-suggestions');
+      return (data as List)
+          .map((row) => RouteSuggestion.fromJson(row as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       throw Exception('Failed to load route suggestions: $e');
     }

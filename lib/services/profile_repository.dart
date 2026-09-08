@@ -1,66 +1,40 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/profile.dart';
-import 'supabase_service.dart';
+import 'edge_function_client.dart';
 
 /// Read/update the signed-in user's own `profiles` row.
 class ProfileRepository {
-  final _client = SupabaseService.client;
-
+  /// get-profile is JWT-scoped to the caller — [userId] is kept in the
+  /// signature for existing callers but must always be the current user's
+  /// own id.
   Future<Profile> getProfile(String userId) async {
-    final data = await _client
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .single();
-    return Profile.fromJson(data);
+    final data = await invokeFunction('get-profile');
+    return Profile.fromJson(data as Map<String, dynamic>);
   }
 
-  /// Older accounts can exist in Auth without a matching profiles row.
-  /// Create that missing row on first Profile-screen visit instead of
-  /// showing the PostgREST "0 rows" error.
+  /// get-profile already has get-or-create semantics server-side: it
+  /// creates a row with a "Rider <first 6 chars of id>" fallback username
+  /// if none exists yet (same format [fallbackUsername] computes), so this
+  /// just calls it. [fallbackUsername] is unused now but kept in the
+  /// signature for existing callers.
   Future<Profile> getOrCreateProfile({
     required String userId,
     required String fallbackUsername,
   }) async {
-    final existing = await _client
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
-    if (existing != null) return Profile.fromJson(existing);
-
-    try {
-      final created = await _client
-          .from('profiles')
-          .insert({'id': userId, 'username': fallbackUsername})
-          .select()
-          .single();
-      return Profile.fromJson(created);
-    } on PostgrestException catch (e) {
-      if (e.code != '23505') rethrow;
-      final profile = await _client
-          .from('profiles')
-          .select()
-          .eq('id', userId)
-          .single();
-      return Profile.fromJson(profile);
-    }
+    final data = await invokeFunction('get-profile');
+    return Profile.fromJson(data as Map<String, dynamic>);
   }
 
-  /// Throws with a friendly message if [username] is already taken
-  /// (`profiles.username` is UNIQUE — Postgrest code 23505).
+  /// Throws with a friendly message if [username] is already taken —
+  /// update-profile responds 409 with `{ "error": "That username is
+  /// already taken." }`, which invokeFunction surfaces as the exception
+  /// message directly.
   Future<void> updateUsername(String userId, String username) async {
-    try {
-      await _client.from('profiles').upsert({
-        'id': userId,
-        'username': username.trim(),
-      });
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') {
-        throw Exception('That username is already taken.');
-      }
-      rethrow;
-    }
+    await invokeFunction(
+      'update-profile',
+      method: HttpMethod.post,
+      body: {'username': username.trim()},
+    );
   }
 }

@@ -1,0 +1,51 @@
+// POST /log-ride
+// Body: { station_id, delay_minutes?, destination_station_id?, duration_minutes? }
+// Inserts a ride_logs row. user_id is always forced to the caller.
+
+import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { createAdminClient } from "../_shared/supabase-admin.ts";
+import { getAuthenticatedUser } from "../_shared/auth.ts";
+
+interface Body {
+  station_id?: string;
+  delay_minutes?: number | null;
+  destination_station_id?: string | null;
+  duration_minutes?: number | null;
+}
+
+Deno.serve(async (req) => {
+  const preflight = handleOptions(req);
+  if (preflight) return preflight;
+
+  if (req.method !== "POST") return errorResponse("Method not allowed", 405);
+
+  const supabase = createAdminClient();
+  const authResult = await getAuthenticatedUser(req, supabase);
+  if ("error" in authResult) return authResult.error;
+  const { user } = authResult;
+
+  let body: Body;
+  try {
+    body = await req.json();
+  } catch {
+    return errorResponse("Invalid JSON body", 400);
+  }
+
+  if (!body.station_id) return errorResponse("station_id is required", 400);
+
+  const { data, error } = await supabase
+    .from("ride_logs")
+    .insert({
+      user_id: user.id,
+      station_id: body.station_id,
+      detected_at: new Date().toISOString(),
+      delay_minutes: body.delay_minutes ?? null,
+      destination_station_id: body.destination_station_id ?? null,
+      duration_minutes: body.duration_minutes ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) return errorResponse(error.message, 500);
+  return jsonResponse(data, 201);
+});
