@@ -1,17 +1,17 @@
-// GET /get-station-accessibility?station_id=<uuid>
-//
-// Public — the current accessibility picture for one station, read from
-// the station_accessibility view (design doc §4.1), which keeps only the
-// newest fault report per station + issue type.
-//
-// This closes a contract gap: §4.1 dropped stations.accessibility_features
-// in favour of the view but never specified an endpoint to serve it, so
-// Module 1 had nothing to read and accessibility rendered permanently
-// blank. Reads the view rather than fault_reports directly so the
-// "latest per issue" rule stays defined in exactly one place.
-//
-// No auth and no user_id scoping: a broken lift is public reference data,
-// and the view exposes no reporter identity.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
   if (error) return errorResponse(error.message, 500);
 
-  // A station with no reports is a normal, good state — an empty array,
-  // never a 404. The caller renders it as "no issues reported".
+
+
   return jsonResponse(data ?? []);
 });

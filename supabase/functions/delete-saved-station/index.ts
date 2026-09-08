@@ -1,6 +1,6 @@
-// DELETE /delete-saved-station
-// Body or query param: { id: string }
-// Deletes one saved_stations row, only if owned by the caller.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       const body = await req.json();
       id = body?.id ?? null;
     } catch {
-      // no body — fall through to the missing-id check below
+
     }
   }
 

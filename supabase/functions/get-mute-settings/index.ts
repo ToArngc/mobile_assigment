@@ -1,5 +1,5 @@
-// GET /get-mute-settings
-// Returns the caller's mute_settings row, or null if none exists (not an error).
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -1,23 +1,23 @@
--- Baseline schema for OnJejak (design doc §4).
---
--- Every table, view, and storage bucket below was originally created by
--- hand in the Supabase dashboard. This migration captures that state so
--- the repository can reproduce the database standalone (design doc §4.2:
--- "Creating objects only in the Supabase dashboard is not acceptable").
---
--- It is dated ahead of the RPC migrations so a fresh database applies
--- tables first, then the functions that read them. Everything uses
--- IF NOT EXISTS / ON CONFLICT so re-applying it against the existing
--- project is a no-op rather than an error.
---
--- RLS is deliberately NOT enabled on any table. Per instructor guidance
--- (design doc §5) access control lives entirely in the Edge Functions,
--- which hold the service_role key. Do not add ENABLE ROW LEVEL SECURITY
--- here without reading §5 first.
---
--- Note: train_status.lat/lng are added by a later migration
--- (20260909000000_add_train_status_position.sql), not here, so that the
--- ordered set of migrations matches the order the real project evolved in.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 create extension if not exists pgcrypto;
 
@@ -56,9 +56,9 @@ create table if not exists public.train_status (
     foreign key (station_id) references public.stations(id)
 );
 
--- delay_minutes is intentionally never populated: a ride's delay is
--- resolved at read time by joining train_status (design doc §7, Weekly
--- Summary). The column is kept for schema stability only.
+
+
+
 create table if not exists public.ride_logs (
   id uuid not null default gen_random_uuid(),
   user_id uuid,
@@ -93,8 +93,8 @@ create table if not exists public.saved_stations (
     foreign key (station_id) references public.stations(id)
 );
 
--- Shared table: written by Module 4 (the user creates the route), read by
--- Module 2 (on-time % for route suggestions).
+
+
 create table if not exists public.saved_routes (
   id uuid not null default gen_random_uuid(),
   user_id uuid,
@@ -147,23 +147,23 @@ create table if not exists public.profiles (
   constraint profiles_id_fkey foreign key (id) references auth.users(id)
 );
 
--- Live accessibility status (design doc §4.1, Option B). Computed from
--- fault_reports rather than cached on stations, so Module 1's Station
--- Detail can never show a stale lift status after Module 3 files a
--- report. DISTINCT ON keeps only the newest report per station+issue.
+
+
+
+
 create or replace view public.station_accessibility as
 select distinct on (station_id, issue_type)
   station_id, issue_type, status, created_at
 from public.fault_reports
 order by station_id, issue_type, created_at desc;
 
--- security_invoker is a defensive default in case RLS is ever
--- reintroduced on fault_reports; with RLS disabled it has no effect.
+
+
 alter view public.station_accessibility set (security_invoker = true);
 
--- Photos attached to fault reports. Public-read because the app renders
--- fault_reports.photo_url directly; writes only ever happen server-side
--- in submit-fault-report using the service_role key.
+
+
+
 insert into storage.buckets (id, name, public)
 values ('report-photos', 'report-photos', true)
 on conflict (id) do nothing;

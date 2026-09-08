@@ -7,11 +7,11 @@ import '../../../services/auth_service.dart';
 import '../widgets/report_card.dart';
 import 'report_issue_screen.dart';
 
-/// Entry screen for Module 3 — Community Fault & Accessibility Reports.
-/// The body shows the rider's own submitted reports (design doc §7's
-/// "My Reports" requirement), mirroring how AlertsHomeScreen shows saved
-/// stations directly instead of a separate screen. The FAB opens
-/// ReportIssueScreen to submit a new one.
+
+
+
+
+
 class ReportsHomeScreen extends StatelessWidget {
   const ReportsHomeScreen({super.key});
 
@@ -41,10 +41,10 @@ class ReportsHomeScreen extends StatelessWidget {
               final submitted = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(builder: (_) => const ReportIssueScreen()),
               );
-              // ReportIssueScreen is pushed on the root Navigator (outside
-              // this ChangeNotifierProvider's scope), so it saves directly
-              // via ReportsRepository and just reports back whether to
-              // refresh — same pattern as AlertRuleEditScreen/AddRouteScreen.
+
+
+
+
               if (submitted == true && context.mounted) {
                 context.read<ReportsProvider>().loadMyReports();
               }
@@ -59,8 +59,8 @@ class ReportsHomeScreen extends StatelessWidget {
 class _ReportsHomeBody extends StatelessWidget {
   const _ReportsHomeBody();
 
-  /// Closing a report is what stops Module 1's Station Detail showing a
-  /// lift as broken forever, so confirm before doing it.
+
+
   Future<void> _confirmResolve(
     BuildContext context,
     ReportsProvider provider,

@@ -1,6 +1,6 @@
-// POST /update-profile
-// Body: { username: string }
-// Upserts the caller's own profiles row. 409 on duplicate username.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

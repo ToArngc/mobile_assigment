@@ -1,5 +1,5 @@
-// GET /get-station-reports?station_id=<uuid>
-// Public. Recent fault_reports for a station, newest first.
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

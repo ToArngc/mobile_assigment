@@ -14,7 +14,7 @@ import 'leave_by_screen.dart';
 import 'select_station_screen.dart';
 import 'weekly_summary_screen.dart';
 
-/// Module 4 home, styled to match the supplied "My alerts" prototype.
+
 class AlertsHomeScreen extends StatelessWidget {
   const AlertsHomeScreen({super.key});
 

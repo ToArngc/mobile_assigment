@@ -1,5 +1,5 @@
-// GET /get-saved-routes
-// Returns the caller's saved_routes rows.
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

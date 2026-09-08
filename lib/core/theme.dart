@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens pulled from the team's prototype mockups (cream
-/// background, sage-green accent, rounded white cards). Apply via
-/// MaterialApp(theme: appTheme) so every screen picks this up
-/// automatically without each widget hardcoding colors.
+
+
+
+
 class AppColors {
   static const background = Color(0xFFFAF7EF);
   static const accent = Color(0xFF7FA88C);

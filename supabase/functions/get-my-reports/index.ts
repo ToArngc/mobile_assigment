@@ -1,5 +1,5 @@
-// GET /get-my-reports
-// Returns the caller's own fault_reports, newest first.
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -1,12 +1,12 @@
-// PATCH /resolve-fault-report
-// Body: { id: string }
-// Marks one fault_reports row 'resolved'.
-//
-// Ownership: reports_repository.dart's markResolved (lines 112-116)
-// already filters `.eq('id', reportId).eq('user_id', currentUserId)` —
-// i.e. only the reporter can resolve their own report. That is NOT
-// ambiguous (contrary to the task brief's caveat) and is reproduced here
-// exactly: 404 if the report doesn't exist or isn't owned by the caller.
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

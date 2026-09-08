@@ -1,13 +1,12 @@
-// POST /submit-fault-report
-// Content-Type: multipart/form-data (chosen over base64-in-JSON: it's the
-// natural fit for a real file upload and avoids ~33% base64 bloat for
-// photo bytes over the wire).
-//
-// Fields: station_id, issue_type, description?, lat?, lng?, photo? (file)
-//
-// The client never gets direct write access to the report-photos bucket —
-// this function uploads with the service-role client, gets the public URL,
-// then inserts the fault_reports row. user_id is always forced to the caller.
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
@@ -37,23 +36,41 @@ Deno.serve(async (req) => {
   }
 
   const contentType = req.headers.get("content-type") ?? "";
-  if (!contentType.includes("multipart/form-data")) {
-    return errorResponse("Content-Type must be multipart/form-data", 400);
-  }
+  let stationId: unknown;
+  let issueType: unknown;
+  let description: unknown;
+  let latRaw: unknown;
+  let lngRaw: unknown;
+  let photo: unknown = null;
 
-  let form: FormData;
-  try {
-    form = await req.formData();
-  } catch {
-    return errorResponse("Invalid multipart/form-data body", 400);
+  if (contentType.includes("multipart/form-data")) {
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return errorResponse("Invalid multipart/form-data body", 400);
+    }
+    stationId = form.get("station_id");
+    issueType = form.get("issue_type");
+    description = form.get("description");
+    latRaw = form.get("lat");
+    lngRaw = form.get("lng");
+    photo = form.get("photo");
+  } else if (contentType.includes("application/json")) {
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse("Invalid JSON body", 400);
+    }
+    stationId = body.station_id;
+    issueType = body.issue_type;
+    description = body.description;
+    latRaw = body.lat;
+    lngRaw = body.lng;
+  } else {
+    return errorResponse("Content-Type must be application/json or multipart/form-data", 400);
   }
-
-  const stationId = form.get("station_id");
-  const issueType = form.get("issue_type");
-  const description = form.get("description");
-  const latRaw = form.get("lat");
-  const lngRaw = form.get("lng");
-  const photo = form.get("photo");
 
   if (typeof stationId !== "string" || !stationId) {
     return errorResponse("station_id is required", 400);
@@ -65,9 +82,9 @@ Deno.serve(async (req) => {
     );
   }
 
-  const lat = typeof latRaw === "string" && latRaw !== "" ? Number(latRaw) : null;
-  const lng = typeof lngRaw === "string" && lngRaw !== "" ? Number(lngRaw) : null;
-  if ((latRaw && Number.isNaN(lat)) || (lngRaw && Number.isNaN(lng))) {
+  const lat = latRaw !== null && latRaw !== undefined && latRaw !== "" ? Number(latRaw) : null;
+  const lng = lngRaw !== null && lngRaw !== undefined && lngRaw !== "" ? Number(lngRaw) : null;
+  if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) {
     return errorResponse("lat/lng must be numbers", 400);
   }
 

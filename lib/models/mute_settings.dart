@@ -1,7 +1,7 @@
 
 class MuteSettings {
   final String userId;
-  final DateTime? mutedUntil; // null = not muted
+  final DateTime? mutedUntil;
   final DateTime updatedAt;
 
   MuteSettings({
@@ -28,8 +28,8 @@ class MuteSettings {
     };
   }
 
-  /// `muted_until` is stored as a database DATE. Treat that date as
-  /// inclusive, so "mute until Sep 10" remains active through Sep 10.
+
+
   bool get isMutedNow {
     if (mutedUntil == null) return false;
     final now = DateTime.now();

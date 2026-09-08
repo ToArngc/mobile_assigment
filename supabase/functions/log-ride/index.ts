@@ -1,6 +1,6 @@
-// POST /log-ride
-// Body: { station_id, delay_minutes?, destination_station_id?, duration_minutes? }
-// Inserts a ride_logs row. user_id is always forced to the caller.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -1,30 +1,30 @@
-// GET /compute-leave-by-time?saved_route_id=<uuid>
-//   or  ?origin_station_id=<uuid>&destination_station_id=<uuid>&walking_minutes=<int>
-//
-// Full server-side re-implementation of LeaveByRepository.computeLeaveByTime:
-//   1. Look up the route's walking_minutes (from a saved_routes row, or the
-//      walking_minutes query param when computing ad hoc).
-//   2. Find the next scheduled departure today from the origin station
-//      (timetable_entries, same two raw filters as the Dart version: no
-//      line/direction filter — this preserves existing behavior exactly).
-//   3. Compute the average delay over the most recent 30 train_status rows
-//      at that station via the avg_recent_delay_minutes RPC (SQL-side
-//      aggregation, not fetch-then-average in TS).
-//   4. Return the computed leave-by timestamp plus the components used.
-//
-// "Now" and "today" are evaluated in Asia/Kuala_Lumpur time (the KTM
-// Komuter network's timezone, no DST) since timetable_entries.scheduled_time
-// is a timezone-less wall-clock time meant to be read as local Malaysia
-// time — see the assumptions note in the deliverable summary.
-//
-// Returns JSON `null` (200) if there's no more scheduled departure today,
-// mirroring the Dart function's nullable return.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { requireUser } from "../_shared/auth.ts";
 
-const KL_OFFSET_MINUTES = 8 * 60; // Asia/Kuala_Lumpur is UTC+8, no DST
+const KL_OFFSET_MINUTES = 8 * 60;
 
 function nowInKualaLumpur(): Date {
   const utcNow = new Date();
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     return jsonResponse(null);
   }
 
-  const scheduledTimeStr = timetableRows[0].scheduled_time as string; // "HH:mm:ss"
+  const scheduledTimeStr = timetableRows[0].scheduled_time as string;
   const [schedHour, schedMinute] = scheduledTimeStr.split(":").map((p) => parseInt(p, 10));
 
   const scheduledDepartureKl = new Date(Date.UTC(
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     schedHour,
     schedMinute,
   ));
-  // Convert the KL wall-clock instant back to a real UTC instant.
+
   const scheduledDepartureUtc = new Date(
     scheduledDepartureKl.getTime() - KL_OFFSET_MINUTES * 60 * 1000,
   );

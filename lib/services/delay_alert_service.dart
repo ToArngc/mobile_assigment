@@ -10,11 +10,11 @@ import 'mute_service.dart';
 import 'notification_service.dart';
 import 'reliability_repository.dart';
 
-/// Checks personal saved-station rules while the app is running.
-///
-/// This is deliberately foreground-only. Running checks after the app is
-/// terminated needs platform-specific background work and is outside the
-/// current project architecture.
+
+
+
+
+
 class DelayAlertService {
   DelayAlertService._();
 
@@ -54,9 +54,9 @@ class DelayAlertService {
       final savedStations = await _repository.getSavedStations(userId);
       for (final rule in savedStations) {
         if (!_isRuleActiveNow(rule)) continue;
-        // Module 2 owns the shared train-status query used by the
-        // Reliability dashboard. Reuse it so both modules assess the same
-        // latest live delay for a station.
+
+
+
         final recentStatuses = await _reliabilityRepository
             .fetchRecentTrainDelays(stationId: rule.stationId, limit: 1);
         final status = recentStatuses.isEmpty ? null : recentStatuses.first;
@@ -82,8 +82,8 @@ class DelayAlertService {
     if (!rule.enabled) return false;
     final now = DateTime.now();
     final activeDays = rule.activeDays;
-    // Missing legacy values mean every day; an explicit empty selection
-    // means the user has paused all days for this rule.
+
+
     if (activeDays != null &&
         !activeDays.contains(_weekdayLabel(now.weekday))) {
       return false;

@@ -3,9 +3,9 @@ import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/train_status.dart';
 
-/// One recent arrival in the per-train delay list. trip_id is the display
-/// label; older/manually-inserted rows can have it null (the live pipeline
-/// hasn't been running long), so this falls back to a short id.
+
+
+
 class TrainDelayListTile extends StatelessWidget {
   final TrainStatus status;
 

@@ -1,5 +1,5 @@
-// GET /get-saved-stations
-// Returns the caller's saved_stations rows joined with stations(name, line).
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -1,14 +1,14 @@
-// POST /upsert-saved-station
-// Body: { id?, station_id, alert_delay_threshold?, quiet_hours_start?,
-//         quiet_hours_end?, active_days?, enabled? }
-// user_id is always forced to the caller server-side, regardless of body.
-//
-// Deliberately NOT a blind `.upsert()`: if the body includes an id, we
-// verify it belongs to the caller before updating it. Since RLS is
-// disabled, a raw upsert keyed on a client-supplied id would let any
-// authenticated caller hijack another user's row by re-pointing its
-// user_id at themselves. If id is supplied but not owned, this returns 404
-// instead of silently taking over someone else's alert rule.
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

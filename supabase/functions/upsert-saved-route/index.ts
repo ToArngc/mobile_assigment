@@ -1,10 +1,10 @@
-// POST /upsert-saved-route
-// Body: { id?, origin_station_id, destination_station_id, walking_minutes? }
-// user_id is always forced to the caller server-side.
-//
-// Same reasoning as upsert-saved-station: an id is ownership-checked with
-// an UPDATE, never blindly upserted, so a caller can't repoint someone
-// else's saved route at themselves.
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -53,9 +53,9 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
     return (portKlang.isNotEmpty ? portKlang : stations).take(8).toList();
   }
 
-  /// The line the schematic is drawn for. _mapStations prefers the Port
-  /// Klang line, so take the line off whatever it actually returned
-  /// rather than hardcoding a name the live query then has to match.
+
+
+
   String _mapLine(List<Station> stations) {
     final mapped = _mapStations(stations);
     if (mapped.isEmpty) return '';

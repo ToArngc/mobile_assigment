@@ -1,9 +1,9 @@
-// GET /get-profile
-// Get-or-create semantics: returns the caller's profiles row, creating one
-// if it doesn't exist yet. Prefers the username stashed in auth
-// user_metadata at sign-up; falls back to a placeholder ("Rider <first 6
-// chars of user id>", matching profile_screen.dart) when there's no
-// metadata username or it collides with one already taken.
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
@@ -52,10 +52,10 @@ Deno.serve(async (req) => {
 
   if (insertError) {
     if (insertError.code === "23505") {
-      // If we tried the metadata username, the collision could be either
-      // another request creating this same row concurrently, or someone
-      // else already holding that exact username — retry with the generic
-      // fallback to distinguish (and resolve) the two cases.
+
+
+
+
       if (desiredUsername !== fallbackUsername) {
         const { data: retriedFallback, error: fallbackError } = await supabase
           .from("profiles")
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Lost a race with another request creating the same row concurrently.
+
       const { data: retried, error: retryError } = await supabase
         .from("profiles")
         .select()

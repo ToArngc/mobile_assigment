@@ -1,15 +1,15 @@
-// GET /get-network-reliability-stats?days=<int>
-// Public. Network-wide counterpart to get-reliability-stats: identical
-// aggregation via the same reliability_stats() RPC (which already supports
-// NULL station_id/line for a system-wide result — see the migration that
-// created it), just always called with no filter. Backs the Reliability
-// Dashboard's default "all lines, all stations" view, replacing the
-// client-side days-of-data derivation that used to read raw rows from
-// get-recent-train-delays (see ReliabilityRepository.fetchDistinctDaysCount).
-//
-// station_id/line are always null in the response, unlike
-// get-reliability-stats (which echoes back whatever filter it was given),
-// so callers can tell the two apart at a glance.
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

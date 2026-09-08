@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 
-/// KPI card showing the current on-time % for the selected filter, over
-/// however many days of trend data are actually available.
+
+
 class OnTimeSummaryCard extends StatelessWidget {
-  final double? onTimePercent; // null = no data at all
+  final double? onTimePercent;
   final int windowDays;
 
   const OnTimeSummaryCard({

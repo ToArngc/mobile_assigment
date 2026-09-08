@@ -1,6 +1,6 @@
-// GET /get-recent-rides?limit=<int>
-// Returns the caller's most recent ride_logs, joined with stations twice
-// (origin + destination) for display, newest first. Default limit 10.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -1,5 +1,5 @@
-// GET /search-stations?q=<string>
-// Public. Case-insensitive substring search on stations.name.
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

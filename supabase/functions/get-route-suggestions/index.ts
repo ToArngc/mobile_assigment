@@ -1,20 +1,20 @@
-// GET /get-route-suggestions
-// Joins the caller's saved_routes with the same reliability aggregation
-// used by get-reliability-stats — imported directly from
-// ../_shared/reliability.ts as plain function calls (no HTTP round-trip to
-// another function), and each called ONCE with the full batch of distinct
-// stations/lines involved, in a single grouped query per batch. This is
-// the fix for the N+1 bug flagged in
-// ReliabilityRepository.fetchRouteSuggestionCandidates, which issued two
-// extra queries per saved route (plus more per alternate line).
-//
-// Status/verdict logic mirrors RouteSuggestion.status in
-// reliability_repository.dart exactly: a live delay above the on-time
-// threshold wins regardless of the weekly stat; the weekly verdict only
-// applies once >=2 days of history exist; below 70% weekly on-time is
-// "unreliable". A suggested alternative line is included whenever a route
-// is flagged delayed/unreliable and a better-performing alternate line
-// exists at that (interchange) station.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
@@ -30,8 +30,8 @@ const DAYS_WINDOW = 7;
 const UNRELIABLE_THRESHOLD_PERCENT = 70;
 const LIVE_DELAY_STALE_MINUTES = 60;
 
-// Mirrors Station.lines in station.dart: splits a possibly comma/slash
-// joined `stations.line` display field into individual line names.
+
+
 function splitLines(line: string): string[] {
   return line
     .split(/\s*(?:,|\/|\||&| and )\s*/i)
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       getReliabilityStatsByStationLine(supabase, { stationIds, days: DAYS_WINDOW }),
     ]);
 
-    // Latest train_status per station, in one query (not one query per route).
+
     const { data: recentRows, error: recentError } = await supabase
       .from("train_status")
       .select("station_id, delay_minutes, recorded_at")

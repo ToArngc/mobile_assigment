@@ -5,10 +5,10 @@ import '../models/weekly_ride_summary.dart';
 import 'edge_function_client.dart';
 
 class WeeklySummaryRepository {
-  /// This week's rides with the on-time percentage and average delay
-  /// already aggregated server-side. get-weekly-rides is JWT-scoped to
-  /// the caller — [userId] is kept in the signature for existing callers
-  /// but must always be the current user's own id.
+
+
+
+
   Future<WeeklyRideSummary> getWeeklySummary(String userId) async {
     try {
       final data = await invokeFunction('get-weekly-rides');
@@ -18,10 +18,10 @@ class WeeklySummaryRepository {
     }
   }
 
-  /// Most recent rides, joined with station name/line for display — used
-  /// by the "Ride history" section on the Alerts Home screen. [userId] is
-  /// kept in the signature but get-recent-rides is JWT-scoped to the
-  /// caller.
+
+
+
+
   Future<List<RideLog>> getRecentRides(String userId, {int limit = 10}) async {
     try {
       final data = await invokeFunction(
@@ -36,9 +36,9 @@ class WeeklySummaryRepository {
     }
   }
 
-  /// Records a detected ride in one call. [userId] is kept in the
-  /// signature but log-ride always forces user_id to the JWT-authenticated
-  /// caller server-side.
+
+
+
   Future<void> logRide({
     required String userId,
     required String stationId,

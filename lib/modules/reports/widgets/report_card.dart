@@ -3,17 +3,17 @@ import '../../../core/theme.dart';
 import '../../../models/fault_report.dart';
 import '../../../services/reports_repository.dart' show ReportCategory;
 
-/// List tile for a single fault report. Used on ReportsHomeScreen ("My
-/// reports", spans multiple stations — pass [stationName]) and inline on
-/// ReportIssueScreen ("Recent reports for this station" — omit it, since
-/// every card there is already scoped to the one station shown).
+
+
+
+
 class ReportCard extends StatelessWidget {
   final FaultReport report;
   final String? stationName;
 
-  /// Supplied only where every card is known to belong to the signed-in
-  /// rider (the "My reports" list). Left null on the station feed, so the
-  /// resolve action never appears on someone else's report.
+
+
+
   final VoidCallback? onResolve;
 
   const ReportCard({

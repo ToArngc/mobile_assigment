@@ -1,7 +1,7 @@
-// Service-role Supabase client factory. Every function uses this — never
-// the anon key — because RLS is disabled on every table and this client,
-// plus the manual ownership checks in each handler, is the only access
-// control layer that exists.
+
+
+
+
 
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
 

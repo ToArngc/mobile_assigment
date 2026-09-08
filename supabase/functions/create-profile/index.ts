@@ -1,9 +1,9 @@
-// POST /create-profile
-// Body: { username?: string }
-// Inserts a profiles row with id = caller's user id, preferring the body's
-// username but falling back to the auth user_metadata username set at
-// sign-up (the same value get-profile's auto-create reads) so the two
-// functions never disagree about the intended username. 409 on duplicate.
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   try {
     body = await req.json();
   } catch {
-    // No body (or invalid JSON) is fine as long as metadata has a username.
+
   }
 
   const metadataUsername = (user.user_metadata?.username as string | undefined)

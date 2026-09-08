@@ -1,23 +1,23 @@
-// GET /get-reliability-trend?station_id=<uuid>&line=<string>&days=<int>
-// Public. Day-by-day counterpart to get-reliability-stats: one row per
-// calendar day instead of a single aggregated window, via the
-// get_daily_reliability_stats() RPC (COUNT/AVG/GROUP BY day in Postgres,
-// same 5-minute on-time threshold as get-reliability-stats). Backs the
-// Reliability Dashboard's Trend Chart, replacing the client-side
-// day-bucketing that used to run over get-recent-train-delays' raw rows
-// (see ReliabilityRepository.fetchOnTimeStats).
-//
-// Same required-filter validation as get-reliability-stats: this is a
-// per-station/line drill-down, not a network-wide series — see
-// get-network-reliability-stats for the network-wide aggregate. The
-// Dashboard's unfiltered "all lines, all stations" view has no per-day
-// trend for the same reason it has no get-reliability-stats-backed number;
-// the repository skips calling this endpoint entirely in that case rather
-// than hitting this 400.
-//
-// Days with zero matching trips are omitted from the response entirely
-// (not returned as a zero-row) — a sparse trend just has gaps in the
-// dates, which callers should render as missing data rather than 0%.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

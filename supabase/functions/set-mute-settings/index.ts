@@ -1,6 +1,6 @@
-// POST /set-mute-settings
-// Body: { muted_until: string | null }  ("YYYY-MM-DD" date, or null to clear)
-// Upserts mute_settings for the caller.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -1,8 +1,8 @@
-// PATCH /toggle-saved-station
-// Body: { id: string, enabled: boolean }
-// Ownership check + update happen atomically in one filtered UPDATE, so
-// there's no separate select-then-update race window. 404 if the row
-// doesn't exist or isn't owned by the caller.
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

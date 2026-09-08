@@ -1,5 +1,5 @@
-// GET /get-station-timetable?station_id=<uuid>
-// Public. timetable_entries for a station, ordered by scheduled_time.
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

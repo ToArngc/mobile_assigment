@@ -1,11 +1,11 @@
 import '../models/train_status.dart';
 import 'edge_function_client.dart';
 
-/// One calendar day's on-time performance, from get-reliability-trend — the
-/// day bucketing happens in Postgres now (see
-/// ReliabilityRepository.fetchOnTimeStats), not client-side.
+
+
+
 class DailyOnTimeStat {
-  final DateTime date; // local calendar day, midnight
+  final DateTime date;
   final int onTimeCount;
   final int totalCount;
 
@@ -18,15 +18,15 @@ class DailyOnTimeStat {
   double get onTimePercent => totalCount == 0 ? 0 : onTimeCount / totalCount * 100;
 }
 
-/// Aggregate reliability numbers for one station/line filter (or
-/// network-wide when both are omitted), straight from
-/// get-reliability-stats' / get-network-reliability-stats' own server-side
-/// aggregation — the values are computed by the reliability_stats() RPC,
-/// never folded from [DailyOnTimeStat] rows client-side.
+
+
+
+
+
 class ReliabilityStatsSummary {
   final int daysOfData;
-  final double? onTimePercentage; // null when insufficientData
-  final double? averageDelayMinutes; // null when insufficientData
+  final double? onTimePercentage;
+  final double? averageDelayMinutes;
   final int totalTrips;
   final bool insufficientData;
 
@@ -41,19 +41,19 @@ class ReliabilityStatsSummary {
 
 enum RouteReliabilityStatus { onTrack, delayed, unreliable, notEnoughData }
 
-/// One saved route's computed reliability, for the Route Suggestion screen.
-/// Reshaped directly from get-route-suggestions' response — the trigger
-/// logic (live delay wins regardless of the weekly stat; the weekly verdict
-/// only applies once >=2 days of history exist; below 70% weekly on-time is
-/// "unreliable") is now computed server-side, not in [status] locally.
+
+
+
+
+
 class RouteSuggestion {
   final String routeId;
   final String originStationName;
   final String originLine;
   final String destinationStationName;
-  final int daysOfData; // distinct days behind weeklyOnTimePercent, capped at 7
-  final double? weeklyOnTimePercent; // null if no data at all
-  final int? liveDelayMinutes; // most recent delay at origin, only if within last ~60 min
+  final int daysOfData;
+  final double? weeklyOnTimePercent;
+  final int? liveDelayMinutes;
   final RouteReliabilityStatus status;
   final String? alternateLine;
   final double? alternateLineOnTimePercent;
@@ -106,17 +106,17 @@ class RouteSuggestion {
 }
 
 class ReliabilityRepository {
-  /// Aggregate stats for this filter (or network-wide if both are
-  /// omitted) over the trailing [days] days — total_trips,
-  /// on_time_percentage, average_delay_minutes, days_of_data,
-  /// insufficient_data, all computed server-side by the same RPC that
-  /// backs get-reliability-stats.
-  ///
-  /// get-reliability-stats requires station_id and/or line (400 with
-  /// neither), but the Dashboard's default "all lines, all stations" view
-  /// has neither filter set. So this calls get-network-reliability-stats,
-  /// the network-wide counterpart, for that case, and get-reliability-stats
-  /// otherwise.
+
+
+
+
+
+
+
+
+
+
+
   Future<ReliabilityStatsSummary> fetchReliabilitySummary({
     String? lineId,
     String? stationId,
@@ -146,17 +146,17 @@ class ReliabilityRepository {
     }
   }
 
-  /// Day-by-day on-time series over the trailing [days] days, from
-  /// get-reliability-trend (day bucketing now happens in Postgres, not
-  /// client-side). [lineId] is the free-text value of train_status.line,
-  /// matching StationRepository.getStationsByLine.
-  ///
-  /// get-reliability-trend requires station_id and/or line, same as
-  /// get-reliability-stats, so the Dashboard's default "all lines, all
-  /// stations" view — which has neither — has no per-day trend available;
-  /// this returns an empty list for that case rather than calling an
-  /// endpoint that would 400. The Dashboard already renders an empty state
-  /// when the series comes back empty.
+
+
+
+
+
+
+
+
+
+
+
   Future<List<DailyOnTimeStat>> fetchOnTimeStats({
     String? lineId,
     String? stationId,
@@ -187,7 +187,7 @@ class ReliabilityRepository {
     }
   }
 
-  /// Recent individual arrivals for the per-train list — newest first.
+
   Future<List<TrainStatus>> fetchRecentTrainDelays({
     String? lineId,
     String? stationId,
@@ -210,11 +210,11 @@ class ReliabilityRepository {
     }
   }
 
-  /// One call to get-route-suggestions returns all of the caller's saved
-  /// routes with their reliability already computed server-side — this
-  /// used to be an N+1 loop (two extra queries per route, plus more per
-  /// alternate line), now gone entirely. [userId] is kept in the signature
-  /// but the function is JWT-scoped to the caller.
+
+
+
+
+
   Future<List<RouteSuggestion>> fetchRouteSuggestionCandidates(String userId) async {
     try {
       final data = await invokeFunction('get-route-suggestions');

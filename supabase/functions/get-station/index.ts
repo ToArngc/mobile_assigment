@@ -1,5 +1,5 @@
-// GET /get-station?id=<uuid>
-// Public. One station by id, 404 if not found.
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

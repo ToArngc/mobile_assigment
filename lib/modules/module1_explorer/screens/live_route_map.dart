@@ -6,19 +6,19 @@ import '../../../models/station.dart';
 import '../../../models/train_status.dart';
 import '../../../services/station_repository.dart';
 
-/// Route overview for Explore. Supply stations in their GTFS stop
-/// sequence.
-///
-/// The rendering is a schematic — evenly spaced dots on a straight line,
-/// not a geographic map — but the train positions on it are real, read
-/// from train_status via get-latest-train-status?line=. Each vehicle's
-/// lat/lng is projected onto the 1-D track by finding its nearest station
-/// and interpolating toward whichever neighbour it is closer to. That is
-/// deliberately crude: it is a schematic, not map-matching.
-///
-/// When no train has been seen on the line recently the map says so.
-/// There is no fallback animation — a moving icon with no data behind it
-/// misrepresents the feed as working.
+
+
+
+
+
+
+
+
+
+
+
+
+
 class LiveRouteMap extends StatefulWidget {
   const LiveRouteMap({
     required this.stations,
@@ -86,9 +86,9 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                 final loading =
                     snapshot.connectionState == ConnectionState.waiting;
 
-                // Rows written before lat/lng existed, and any row the
-                // pipeline could not place, are skipped rather than
-                // guessed at.
+
+
+
                 final positions = <double>[];
                 if (snapshot.hasData) {
                   for (final status in snapshot.data!) {
@@ -209,9 +209,9 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
     );
   }
 
-  /// Projects a vehicle's 2-D coordinate onto the 1-D schematic, returning
-  /// a fractional station index (2.4 = 40% of the way from stop 2 to stop
-  /// 3). Null when the row carries no usable position.
+
+
+
   double? _trackIndex(TrainStatus status, List<Station> stations) {
     final lat = status.lat;
     final lng = status.lng;

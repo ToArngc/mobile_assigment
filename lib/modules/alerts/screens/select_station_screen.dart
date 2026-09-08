@@ -3,8 +3,8 @@ import '../../../services/station_repository.dart';
 import '../../../models/station.dart';
 import 'alert_rule_edit_screen.dart';
 
-/// Step 1 of adding an Alert Rule: pick which station it's for.
-/// Reuses Module 1's StationRepository — Module 4 doesn't own station data.
+
+
 class SelectStationScreen extends StatefulWidget {
   const SelectStationScreen({super.key});
 
@@ -89,9 +89,9 @@ class _SelectStationScreenState extends State<SelectStationScreen> {
                       ),
                     ),
                   );
-                  // Forward the result up to SelectStationScreen's own
-                  // caller (AlertsHomeScreen), which decides whether to
-                  // refresh its list.
+
+
+
                   if (saved == true && context.mounted) {
                     Navigator.of(context).pop(true);
                   }
