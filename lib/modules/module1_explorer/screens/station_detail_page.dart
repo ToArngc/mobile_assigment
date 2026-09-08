@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/station.dart';
 import '../../../models/station_accessibility.dart';
@@ -46,7 +47,7 @@ class StationDetailPage extends StatelessWidget {
           Text('Accessibility', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           _AccessibilityCard(stationId: station.id),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.lg),
           Text('Scheduled departures', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           _Timetable(stationId: station.id),
@@ -69,7 +70,7 @@ class _AccessibilityCard extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Card(
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Center(child: CircularProgressIndicator()),
             ),
           );
@@ -81,7 +82,7 @@ class _AccessibilityCard extends StatelessWidget {
         if (snapshot.hasError) {
           return Card(
             child: ListTile(
-              leading: Icon(Icons.cloud_off_outlined, color: Colors.orange.shade700),
+              leading: const Icon(Icons.cloud_off_outlined, color: AppColors.warning),
               title: const Text('Accessibility status could not be loaded.'),
               subtitle: const Text('Pull down or reopen this page to retry.'),
             ),
@@ -95,7 +96,7 @@ class _AccessibilityCard extends StatelessWidget {
         if (issues.isEmpty) {
           return Card(
             child: ListTile(
-              leading: Icon(Icons.check_circle_outline, color: AppColors.accent),
+              leading: const Icon(Icons.check_circle_outline, color: AppColors.success),
               title: const Text('No accessibility issues reported'),
               subtitle: const Text('Riders have not flagged anything here.'),
             ),
@@ -108,7 +109,7 @@ class _AccessibilityCard extends StatelessWidget {
                 .map((issue) => ListTile(
                       leading: Icon(
                         Icons.report_problem_outlined,
-                        color: Colors.red.shade400,
+                        color: AppColors.danger,
                       ),
                       title: Text(_issueLabel(issue.issueType)),
                       subtitle: Text('Reported ${issue.relativeAge}'),
@@ -152,7 +153,12 @@ class _Timetable extends StatelessWidget {
       future: StationRepository().getTimetableForStation(stationId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
         if (snapshot.hasError) {
           return const Card(

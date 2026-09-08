@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 
+import 'constants.dart';
 
-
-
-
+/// Contrast ratios for text/icons on [background] / white:
+/// accent #006874: 6.07:1 / 6.50:1
+/// success #3E7050: 5.39:1 / 5.77:1
+/// warning #955C00: 5.15:1 / 5.51:1
+/// danger #BA1A1A: 6.03:1 / 6.46:1
+/// neutral and textSecondary #6B6B63: 5.02:1 / 5.37:1
 class AppColors {
   static const background = Color(0xFFFAF7EF);
-  static const accent = Color(0xFF7FA88C);
+  static const accent = Color(0xFF006874);
+  static const success = Color(0xFF3E7050);
+  static const warning = Color(0xFF955C00);
+  static const danger = Color(0xFFBA1A1A);
+  static const neutral = Color(0xFF6B6B63);
   static const cardBackground = Colors.white;
   static const textPrimary = Color(0xFF2B2B26);
-  static const textSecondary = Color(0xFF6B6B63);
+  static const textSecondary = neutral;
 }
 
 final ThemeData appTheme = ThemeData(
@@ -27,8 +35,8 @@ final ThemeData appTheme = ThemeData(
   ),
   cardTheme: CardThemeData(
     color: AppColors.cardBackground,
-    elevation: 0,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    elevation: 1,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
   ),
   switchTheme: SwitchThemeData(
@@ -56,5 +64,17 @@ final ThemeData appTheme = ThemeData(
     titleMedium: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
     bodyMedium: TextStyle(color: AppColors.textPrimary),
     bodySmall: TextStyle(color: AppColors.textSecondary),
+    displaySmall: TextStyle(
+      fontSize: 32,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.5,
+      color: AppColors.textPrimary,
+    ),
+    labelLarge: TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
+      color: AppColors.textPrimary,
+    ),
   ),
 );

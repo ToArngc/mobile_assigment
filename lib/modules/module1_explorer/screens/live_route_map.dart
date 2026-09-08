@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../core/constants.dart';
+import '../../../core/line_colors.dart';
+import '../../../core/theme.dart';
 import '../../../models/station.dart';
 import '../../../models/train_status.dart';
 import '../../../services/station_repository.dart';
@@ -43,7 +46,9 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
   }
 
   Future<List<TrainStatus>> _load() {
-    if (widget.line.trim().isEmpty) return Future.value(const <TrainStatus>[]);
+    if (widget.stations.length < 2 || widget.line.trim().isEmpty) {
+      return Future.value(const <TrainStatus>[]);
+    }
     return _repository.getLiveTrainStatusForLine(widget.line);
   }
 
@@ -53,7 +58,7 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
     final height = widget.compact ? 176.0 : 360.0;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: SizedBox(
         height: height,
         child: FutureBuilder<List<TrainStatus>>(
@@ -65,7 +70,7 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                     ?.where((status) => status.lat != null && status.lng != null)
                     .toList() ??
                 const <TrainStatus>[];
-            final routeColor = _lineColor(widget.line);
+            final routeColor = lineColor(widget.line);
 
             return Stack(
               children: [
@@ -135,8 +140,8 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                     top: 4,
                     right: 4,
                     child: Material(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       child: IconButton(
                         onPressed: widget.onExpand,
                         tooltip: 'Open full route map',
@@ -192,13 +197,6 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
     );
   }
 
-  Color _lineColor(String line) {
-    final normalized = line.toLowerCase();
-    if (normalized.contains('seremban')) return const Color(0xff2e7d32);
-    if (normalized.contains('ets')) return const Color(0xffef6c00);
-    if (normalized.contains('shuttle')) return const Color(0xff8e24aa);
-    return const Color(0xff1267a9);
-  }
 }
 
 class _MapLabel extends StatelessWidget {
@@ -220,8 +218,8 @@ class _MapLabel extends StatelessWidget {
             ? 'No live trains right now'
             : '$trainCount live train${trainCount == 1 ? '' : 's'}';
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
+      color: Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -247,8 +245,8 @@ class _MapNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Text(message, textAlign: TextAlign.center),
@@ -264,8 +262,8 @@ class _MapUnavailable extends StatelessWidget {
         height: 150,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xffe8f4fd),
-          borderRadius: BorderRadius.circular(18),
+          color: AppColors.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: const Text('Route stops are not available yet.'),
       );

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/reliability_provider.dart';
 import '../../../services/reliability_repository.dart';
 import '../../../services/auth_service.dart';
+import '../../../core/theme.dart';
 import '../widgets/route_suggestion_card.dart';
 
 
@@ -70,7 +71,7 @@ class _RouteSuggestionBody extends StatelessWidget {
                     'No saved routes yet. Add one from Alerts → Leave-By '
                     'Planner to see its reliability here.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
               ],

@@ -4,6 +4,8 @@ import '../../../models/fault_report.dart';
 import '../../../providers/reports_provider.dart';
 import '../../../services/reports_repository.dart';
 import '../../../services/auth_service.dart';
+import '../../../shared_widgets/app_empty_state.dart';
+import '../../../shared_widgets/app_error_state.dart';
 import '../widgets/report_card.dart';
 import 'report_detail_screen.dart';
 import 'report_issue_screen.dart';
@@ -116,18 +118,9 @@ class _ReportsHomeBody extends StatelessWidget {
         }
 
         if (provider.status == LoadStatus.error) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Failed to load: ${provider.errorMessage}'),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: provider.loadMyReports,
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+          return AppErrorState(
+            message: 'Failed to load: ${provider.errorMessage}',
+            onRetry: provider.loadMyReports,
           );
         }
 
@@ -136,15 +129,13 @@ class _ReportsHomeBody extends StatelessWidget {
             onRefresh: provider.loadMyReports,
             child: ListView(
               children: const [
-                Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    "You haven't reported anything yet. Tap \"Report an "
-                    "issue\" to flag a broken lift, escalator, overcrowding, "
-                    "or other station issue for other riders.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                AppEmptyState(
+                  icon: Icons.report_problem_outlined,
+                  title: "You haven't reported anything yet. Tap \"Report an "
+                      "issue\" to flag a broken lift, escalator, overcrowding, "
+                      "or other station issue for other riders.",
+                  subtitle: null,
+                  wrapped: false,
                 ),
               ],
             ),

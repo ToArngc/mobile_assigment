@@ -12,13 +12,13 @@ class RouteSuggestionCard extends StatelessWidget {
   (String, Color) _badge(RouteReliabilityStatus status) {
     switch (status) {
       case RouteReliabilityStatus.onTrack:
-        return ('On Track', AppColors.accent);
+        return ('On Track', AppColors.success);
       case RouteReliabilityStatus.delayed:
-        return ('Delayed', Colors.red.shade700);
+        return ('Delayed', AppColors.danger);
       case RouteReliabilityStatus.unreliable:
-        return ('Unreliable', Colors.orange.shade800);
+        return ('Unreliable', AppColors.warning);
       case RouteReliabilityStatus.notEnoughData:
-        return ('Not enough data yet', AppColors.textSecondary);
+        return ('Not enough data yet', AppColors.neutral);
     }
   }
 

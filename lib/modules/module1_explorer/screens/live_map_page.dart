@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants.dart';
 import '../../../models/station.dart';
 import 'live_route_map.dart';
 import 'station_detail_page.dart';
@@ -25,7 +26,7 @@ class LiveMapPage extends StatelessWidget {
             const Text(
               'Positions come from the KTMB GTFS-Realtime feed, refreshed each time this page opens.',
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppSpacing.md),
             Expanded(
               child: Center(
                 child: LiveRouteMap(

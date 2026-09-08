@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme.dart';
 import '../../../providers/leave_by_provider.dart';
 import '../../../services/leave_by_repository.dart';
 import '../../../services/auth_service.dart';
@@ -75,7 +76,7 @@ class _LeaveByBody extends StatelessWidget {
                 'No saved routes yet. Add one to get a personalised '
                     '"leave by" notification each morning.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
           );
