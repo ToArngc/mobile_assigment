@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constants.dart';
+import '../../../core/theme.dart';
 import '../../../models/station.dart';
 import '../../../providers/reliability_provider.dart';
 import '../../../services/auth_service.dart';
@@ -45,11 +47,25 @@ class _ReliabilityDashboardScaffold extends StatefulWidget {
 class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaffold> {
   final _stationRepository = StationRepository();
   late Future<List<Station>> _stationsFuture;
+  List<Station> _stations = const [];
 
   @override
   void initState() {
     super.initState();
     _stationsFuture = _stationRepository.getAllStations();
+    _stationsFuture.then(
+      (stations) {
+        if (mounted) setState(() => _stations = stations);
+      },
+      onError: (_) {},
+    );
+  }
+
+  String _stationLabel(String stationId) {
+    for (final station in _stations) {
+      if (station.id == stationId) return station.name;
+    }
+    return stationId;
   }
 
   @override
@@ -58,26 +74,14 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
       builder: (context, provider, _) => Scaffold(
         appBar: AppBar(
           title: const Text('Reliability'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              tooltip: 'Filters',
-              onPressed: () => _openFilters(context, provider),
-            ),
-            IconButton(
-              icon: const Icon(Icons.alt_route),
-              tooltip: 'Route suggestions',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const RouteSuggestionScreen()),
-              ),
-            ),
-          ],
         ),
         body: RefreshIndicator(
           onRefresh: () => provider.loadDashboard(provider.filter),
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              _buildFilterBar(context, provider),
+              const SizedBox(height: AppSpacing.md),
               if (provider.status == LoadStatus.loading ||
                   provider.status == LoadStatus.initial)
                 const Padding(
@@ -85,10 +89,14 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (provider.status == LoadStatus.error)
-                AppErrorState(
-                  message: 'Failed to load: ${provider.errorMessage}',
-                  onRetry: () => provider.loadDashboard(provider.filter),
-                )
+                ...[
+                  AppErrorState(
+                    message: 'Failed to load: ${provider.errorMessage}',
+                    onRetry: () => provider.loadDashboard(provider.filter),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const _RouteSuggestionEntry(),
+                ]
               else ...[
                 OnTimeSummaryCard(
                   onTimePercent: provider.currentOnTimePercent,
@@ -99,7 +107,9 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
                   const _EmptyTrendState()
                 else
                   TrendChartWidget(stats: provider.trendSeries),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.md),
+                const _RouteSuggestionEntry(),
+                const SizedBox(height: AppSpacing.lg),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: SectionLabel('Recent arrivals'),
@@ -124,6 +134,57 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
     );
   }
 
+  /// Chip row that both shows what the dashboard is currently scoped to and
+  /// opens the filter sheet, so the filter control carries a visible label.
+  Widget _buildFilterBar(BuildContext context, ReliabilityProvider provider) {
+    final filter = provider.filter;
+    final chips = <Widget>[];
+
+    if (filter.lineId != null) {
+      chips.add(
+        InputChip(
+          avatar: const Icon(Icons.timeline, size: 18, color: AppColors.accent),
+          label: Text('Line: ${filter.lineId}'),
+          onDeleted: () => provider.loadDashboard(const ReliabilityFilter()),
+          deleteButtonTooltipMessage: 'Show all lines',
+          visualDensity: VisualDensity.compact,
+        ),
+      );
+    }
+    if (filter.stationId != null) {
+      chips.add(
+        InputChip(
+          avatar: const Icon(Icons.place_outlined, size: 18, color: AppColors.accent),
+          label: Text('Station: ${_stationLabel(filter.stationId!)}'),
+          onDeleted: () => provider.loadDashboard(
+            ReliabilityFilter(lineId: filter.lineId),
+          ),
+          deleteButtonTooltipMessage: 'Show all stations on this line',
+          visualDensity: VisualDensity.compact,
+        ),
+      );
+    }
+
+    chips.add(
+      ActionChip(
+        avatar: Icon(
+          filter.isEmpty ? Icons.filter_alt_outlined : Icons.tune,
+          size: 18,
+          color: AppColors.accent,
+        ),
+        label: Text(filter.isEmpty ? 'Filter results' : 'Edit filters'),
+        onPressed: () => _openFilters(context, provider),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: chips,
+    );
+  }
+
   Future<void> _openFilters(BuildContext context, ReliabilityProvider provider) async {
     final stations = await _stationsFuture;
     if (!context.mounted) return;
@@ -133,6 +194,43 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
       builder: (_) => _FilterSheet(stations: stations, filter: provider.filter),
     );
     if (selected != null && context.mounted) await provider.loadDashboard(selected);
+  }
+}
+
+/// Labelled entry point to the route suggestions screen. Lives in the page
+/// flow rather than as a bare app bar icon so its purpose is readable.
+class _RouteSuggestionEntry extends StatelessWidget {
+  const _RouteSuggestionEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: AppColors.cardBackground,
+      surfaceTintColor: Colors.transparent,
+      child: ListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        leading: CircleAvatar(
+          backgroundColor: AppColors.accent.withValues(alpha: 0.12),
+          foregroundColor: AppColors.accent,
+          child: const Icon(Icons.alt_route),
+        ),
+        title: Text(
+          'Route suggestions',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        subtitle: const Text('Find more reliable alternatives to your usual route'),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RouteSuggestionScreen()),
+        ),
+      ),
+    );
   }
 }
 
