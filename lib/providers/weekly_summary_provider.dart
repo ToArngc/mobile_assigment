@@ -1,9 +1,17 @@
 import 'package:flutter/foundation.dart';
+import '../models/weekly_ride_summary.dart';
+import '../services/mute_service.dart';
+import '../services/notification_service.dart';
 import '../services/weekly_summary_repository.dart';
-import '../models/ride_log.dart';
 
 enum LoadStatus { initial, loading, loaded, error }
 
+/// Backs the Weekly Summary screen.
+///
+/// No aggregation happens here. get-weekly-rides returns ride_count,
+/// on_time_percentage and avg_delay_minutes already computed in SQL, so
+/// this provider only surfaces them — that keeps the on-time rule in one
+/// place instead of three.
 class WeeklySummaryProvider extends ChangeNotifier {
   final WeeklySummaryRepository _repository;
   final String userId;
@@ -15,25 +23,22 @@ class WeeklySummaryProvider extends ChangeNotifier {
 
   LoadStatus status = LoadStatus.initial;
   String? errorMessage;
-  List<RideLog> rides = [];
+  WeeklyRideSummary summary = WeeklyRideSummary.empty();
 
-  int get tripCount => rides.length;
+  /// The summary notification is a weekly digest, not a per-refresh
+  /// alert — pull-to-refresh must not re-fire it.
+  bool _notified = false;
 
-  double? get onTimePercent {
-    final withDelay = rides.where((r) => r.delayMinutes != null).toList();
-    if (withDelay.isEmpty) return null;
-    final onTime = withDelay.where(
-      (r) => r.delayMinutes! <= kOnTimeDelayThresholdMinutes,
-    ).length;
-    return onTime / withDelay.length * 100;
-  }
+  int get tripCount => summary.rideCount;
 
-  double? get averageDelayMinutes {
-    final withDelay = rides.where((r) => r.delayMinutes != null).toList();
-    if (withDelay.isEmpty) return null;
-    final total = withDelay.fold<int>(0, (sum, r) => sum + r.delayMinutes!);
-    return total / withDelay.length;
-  }
+  double? get onTimePercent => summary.onTimePercentage;
+
+  double? get averageDelayMinutes => summary.averageDelayMinutes;
+
+  /// False when rides exist but none could be matched to a train_status
+  /// reading — "not enough data yet", which the UI must show as distinct
+  /// from 0%.
+  bool get hasDelayData => summary.hasDelayData;
 
   Future<void> loadSummary() async {
     status = LoadStatus.loading;
@@ -41,12 +46,30 @@ class WeeklySummaryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      rides = await _repository.getRidesForLastWeek(userId);
+      summary = await _repository.getWeeklySummary(userId);
       status = LoadStatus.loaded;
+      await _maybeNotify();
     } catch (e) {
       errorMessage = e.toString();
       status = LoadStatus.error;
     }
     notifyListeners();
+  }
+
+  Future<void> _maybeNotify() async {
+    if (_notified || summary.rideCount == 0) return;
+    try {
+      // Quick Mute suppresses every local reminder (design doc §9).
+      if (await MuteService.isMutedNow(userId)) return;
+      await NotificationService.showWeeklySummary(
+        rideCount: summary.rideCount,
+        onTimePercentage: summary.onTimePercentage,
+        averageDelayMinutes: summary.averageDelayMinutes,
+      );
+      _notified = true;
+    } catch (_) {
+      // A summary notification failing must never take down the screen
+      // the user actually opened.
+    }
   }
 }

@@ -102,6 +102,20 @@ class _WeeklySummaryBody extends StatelessWidget {
                   ),
                 ],
               ),
+              if (!provider.hasDelayData) ...[
+                const SizedBox(height: 12),
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.hourglass_empty),
+                    title: Text('Not enough data yet'),
+                    subtitle: Text(
+                      'Your rides are recorded, but none could be matched to a '
+                      'train arrival record yet. On-time and average delay will '
+                      'appear once the arrival feed covers your travel times.',
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

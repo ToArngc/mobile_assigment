@@ -145,6 +145,8 @@ def main():
                 "station_id": station_id,
                 "line": line,
                 "trip_id": trip_id,
+                "lat": vehicle["lat"],
+                "lng": vehicle["lng"],
                 "scheduled_time": scheduled_dt.isoformat(),
                 "actual_time": actual_dt.isoformat(),
                 "delay_minutes": delay_minutes,

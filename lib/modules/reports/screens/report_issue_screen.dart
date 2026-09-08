@@ -120,10 +120,53 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
   }
 
+  /// Design doc §2 specifies image_picker for camera *and* gallery. Both
+  /// go through the same submit path afterwards, so the only difference
+  /// is the ImageSource.
   Future<void> _pickPhoto() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 80, maxWidth: 1600);
-    if (picked != null) setState(() => _photo = File(picked.path));
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    // A denied camera/photo permission throws rather than returning null,
+    // and on either path that must not take the form down with it — the
+    // report is still submittable without a photo.
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1600,
+      );
+      if (picked != null) setState(() => _photo = File(picked.path));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not open that source. Check the app permission and try again.',
+          ),
+        ),
+      );
+    }
   }
 
   bool get _canSave => _station != null && _categories.isNotEmpty && !_saving;
@@ -233,7 +276,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             )
           else
             OutlinedButton.icon(
-              icon: const Icon(Icons.camera_alt_outlined),
+              icon: const Icon(Icons.add_a_photo_outlined),
               label: const Text('Add a photo'),
               onPressed: _pickPhoto,
             ),

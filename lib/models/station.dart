@@ -4,7 +4,6 @@ class Station {
   final String line;
   final double lat;
   final double lng;
-  final Map<String, dynamic>? accessibilityFeatures;
 
   Station({
     required this.id,
@@ -12,7 +11,6 @@ class Station {
     required this.line,
     required this.lat,
     required this.lng,
-    this.accessibilityFeatures,
   });
 
   factory Station.fromJson(Map<String, dynamic> json) => Station(
@@ -21,8 +19,6 @@ class Station {
         line: json['line'] as String,
         lat: (json['lat'] as num).toDouble(),
         lng: (json['lng'] as num).toDouble(),
-        accessibilityFeatures:
-            json['accessibility_features'] as Map<String, dynamic>?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -31,7 +27,6 @@ class Station {
         'line': line,
         'lat': lat,
         'lng': lng,
-        'accessibility_features': accessibilityFeatures,
       };
 
   List<String> get lines => line

@@ -1,23 +1,18 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/ride_log.dart';
+import '../models/weekly_ride_summary.dart';
 import 'edge_function_client.dart';
 
-/// Threshold used to define "on-time" for the on-time % stat.
-/// Matches the default alert threshold used elsewhere in Module 4 —
-/// keep these in sync if either changes.
-const int kOnTimeDelayThresholdMinutes = 5;
-
 class WeeklySummaryRepository {
-  /// get-weekly-rides is JWT-scoped to the caller — [userId] is kept in the
-  /// signature for existing callers but must always be the current user's
-  /// own id.
-  Future<List<RideLog>> getRidesForLastWeek(String userId) async {
+  /// This week's rides with the on-time percentage and average delay
+  /// already aggregated server-side. get-weekly-rides is JWT-scoped to
+  /// the caller — [userId] is kept in the signature for existing callers
+  /// but must always be the current user's own id.
+  Future<WeeklyRideSummary> getWeeklySummary(String userId) async {
     try {
       final data = await invokeFunction('get-weekly-rides');
-      return (data as List)
-          .map((row) => RideLog.fromJson(row as Map<String, dynamic>))
-          .toList();
+      return WeeklyRideSummary.fromJson(data as Map<String, dynamic>);
     } catch (e) {
       throw Exception('Failed to load ride logs: $e');
     }

@@ -5,8 +5,9 @@ import 'live_route_map.dart';
 import 'station_detail_page.dart';
 
 class LiveMapPage extends StatelessWidget {
-  const LiveMapPage({required this.stations, super.key});
+  const LiveMapPage({required this.stations, required this.line, super.key});
   final List<Station> stations;
+  final String line;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -22,13 +23,14 @@ class LiveMapPage extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              'Preview positions are replaced by the GTFS-Realtime feed when connected.',
+              'Positions come from the KTMB GTFS-Realtime feed, refreshed each time this page opens.',
             ),
             const SizedBox(height: 18),
             Expanded(
               child: Center(
                 child: LiveRouteMap(
                   stations: stations,
+                  line: line,
                   onStationTap: (station) => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => StationDetailPage(station: station),

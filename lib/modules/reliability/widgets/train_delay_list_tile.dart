@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/train_status.dart';
-import '../../../services/reliability_repository.dart';
 
 /// One recent arrival in the per-train delay list. trip_id is the display
 /// label; older/manually-inserted rows can have it null (the live pipeline
@@ -21,7 +21,7 @@ class TrainDelayListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final delay = status.delayMinutes;
-    final onTime = (delay ?? 0) <= ReliabilityRepository.onTimeThresholdMinutes;
+    final onTime = (delay ?? 0) <= onTimeThresholdMinutes;
 
     return Card(
       child: ListTile(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../models/fault_report.dart';
 import '../../../providers/reports_provider.dart';
 import '../../../services/reports_repository.dart';
 import '../../../services/auth_service.dart';
@@ -58,6 +59,48 @@ class ReportsHomeScreen extends StatelessWidget {
 class _ReportsHomeBody extends StatelessWidget {
   const _ReportsHomeBody();
 
+  /// Closing a report is what stops Module 1's Station Detail showing a
+  /// lift as broken forever, so confirm before doing it.
+  Future<void> _confirmResolve(
+    BuildContext context,
+    ReportsProvider provider,
+    FaultReport report,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Mark as resolved?'),
+        content: const Text(
+          'Other riders will stop seeing this as an active issue at the '
+          'station. Only do this if the problem is actually fixed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Mark resolved'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final succeeded = await provider.resolveReport(report.id);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          succeeded
+              ? 'Report marked resolved.'
+              : 'Could not update that report. Try again.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ReportsProvider>(
@@ -107,7 +150,13 @@ class _ReportsHomeBody extends StatelessWidget {
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: provider.myReports.length,
-            itemBuilder: (context, index) => ReportCard(report: provider.myReports[index]),
+            itemBuilder: (context, index) {
+              final report = provider.myReports[index];
+              return ReportCard(
+                report: report,
+                onResolve: () => _confirmResolve(context, provider, report),
+              );
+            },
           ),
         );
       },

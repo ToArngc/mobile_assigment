@@ -6,6 +6,7 @@ import '../models/saved_station.dart';
 import '../models/train_status.dart';
 import 'alerts_repository.dart';
 import 'auth_service.dart';
+import 'mute_service.dart';
 import 'notification_service.dart';
 import 'reliability_repository.dart';
 
@@ -48,8 +49,7 @@ class DelayAlertService {
 
     _checking = true;
     try {
-      final muteSettings = await _repository.getMuteSettings(userId);
-      if (muteSettings?.isMutedNow ?? false) return;
+      if (await MuteService.isMutedNow(userId)) return;
 
       final savedStations = await _repository.getSavedStations(userId);
       for (final rule in savedStations) {

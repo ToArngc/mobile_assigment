@@ -53,7 +53,17 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
     return (portKlang.isNotEmpty ? portKlang : stations).take(8).toList();
   }
 
-  void _openStation(Station station) {
+  /// The line the schematic is drawn for. _mapStations prefers the Port
+  /// Klang line, so take the line off whatever it actually returned
+  /// rather than hardcoding a name the live query then has to match.
+  String _mapLine(List<Station> stations) {
+    final mapped = _mapStations(stations);
+    if (mapped.isEmpty) return '';
+    final lines = mapped.first.lines;
+    return lines.isEmpty ? mapped.first.line : lines.first;
+  }
+
+  void _openStation(Station station) {
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => StationDetailPage(station: station),
     ));
@@ -166,12 +176,14 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
                         const SizedBox(height: 8),
                         LiveRouteMap(
                           stations: _mapStations(stations),
+                          line: _mapLine(stations),
                           compact: true,
                           onStationTap: _openStation,
                           onExpand: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
                               builder: (_) => LiveMapPage(
                                 stations: _mapStations(stations),
+                                line: _mapLine(stations),
                               ),
                             ),
                           ),
