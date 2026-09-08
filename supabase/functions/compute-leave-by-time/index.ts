@@ -22,7 +22,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const KL_OFFSET_MINUTES = 8 * 60; // Asia/Kuala_Lumpur is UTC+8, no DST
 
@@ -38,9 +38,13 @@ Deno.serve(async (req) => {
   if (req.method !== "GET") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   const url = new URL(req.url);
   const savedRouteId = url.searchParams.get("saved_route_id");
@@ -53,7 +57,7 @@ Deno.serve(async (req) => {
       .from("saved_routes")
       .select()
       .eq("id", savedRouteId)
-      .eq("user_id", user.id)
+    .eq("user_id", userId)
       .maybeSingle();
 
     if (error) return errorResponse(error.message, 500);

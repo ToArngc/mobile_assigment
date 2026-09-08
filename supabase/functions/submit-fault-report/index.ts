@@ -11,7 +11,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const VALID_ISSUE_TYPES = [
   "lift_broken",
@@ -28,9 +28,13 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   const contentType = req.headers.get("content-type") ?? "";
   if (!contentType.includes("multipart/form-data")) {
@@ -89,7 +93,7 @@ Deno.serve(async (req) => {
   const { data, error } = await supabase
     .from("fault_reports")
     .insert({
-      user_id: user.id,
+      user_id: userId,
       station_id: stationId,
       issue_type: issueType,
       description: typeof description === "string" ? description : null,
