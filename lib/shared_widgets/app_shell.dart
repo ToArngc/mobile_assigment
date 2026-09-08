@@ -5,15 +5,15 @@ import '../modules/module1_explorer/screens/explorer_home_page.dart';
 import '../modules/reliability/screens/reliability_dashboard_screen.dart';
 import '../modules/reports/screens/reports_home_screen.dart';
 
-/// Shared bottom-navigation shell — matches the 4-tab layout (Explore /
-/// Reliability / Reports / Alerts) shown across all four modules' mockups.
-/// This file lives in `shared_widgets/` so any of the four of you can edit
-/// it to plug your module in without touching each other's module folders.
-///
-/// Profile (§7) is reached via the floating icon at top-right, not a tab —
-/// implemented as an overlay rather than a Scaffold-level AppBar because
-/// Reports and Alerts already have their own per-tab AppBars; a shell-level
-/// AppBar would double up on those two tabs.
+
+
+
+
+
+
+
+
+
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 

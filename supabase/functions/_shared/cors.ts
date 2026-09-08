@@ -1,8 +1,8 @@
-// Shared CORS + JSON response helpers used by every Edge Function.
-// Permissive CORS is intentional here: these functions are called by a
-// mobile app (no browser origin to protect) and permissive headers make
-// local curl/Postman testing straightforward per the project's Edge
-// Function conventions.
+
+
+
+
+
 
 export const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -11,7 +11,7 @@ export const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
 };
 
-/** Call at the top of every handler. Returns a Response for OPTIONS preflight, or null otherwise. */
+
 export function handleOptions(req: Request): Response | null {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });

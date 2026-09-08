@@ -29,7 +29,7 @@ class RideDetectionService {
   List<Station> _stations = [];
   StreamSubscription<LocationData>? _positionSub;
 
-  String? _currentStationId; // station we're currently "at", if any
+  String? _currentStationId;
   _OpenRide? _openRide;
 
   bool get isRunning => _positionSub != null;
@@ -72,7 +72,7 @@ class RideDetectionService {
       return;
     }
 
-    if (nearest.id == _currentStationId) return; // still at the same one
+    if (nearest.id == _currentStationId) return;
 
     _currentStationId = nearest.id;
     await _handleArrival(nearest, userId);

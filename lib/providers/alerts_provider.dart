@@ -67,9 +67,9 @@ class AlertsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- Quick Mute ----
 
-  /// "No Commute Today" — mutes until end of today.
+
+
   Future<void> muteToday() async {
     final today = DateTime.now();
     await _setMute(DateTime(today.year, today.month, today.day));
@@ -99,7 +99,7 @@ class AlertsProvider extends ChangeNotifier {
     }
   }
 
-  // ---- Alert Rules ----
+
 
   Future<void> saveAlertRule(SavedStation station) async {
     try {
@@ -128,8 +128,8 @@ class AlertsProvider extends ChangeNotifier {
     }
   }
 
-  /// Optimistic update — flips the switch immediately, reverts if the
-  /// write fails, rather than making the user wait on every tap.
+
+
   Future<void> toggleStationEnabled(String savedStationId, bool enabled) async {
     final index = savedStations.indexWhere((s) => s.id == savedStationId);
     if (index < 0) return;
@@ -141,7 +141,7 @@ class AlertsProvider extends ChangeNotifier {
     try {
       await _repository.setEnabled(savedStationId, enabled);
     } catch (e) {
-      savedStations[index] = previous; // revert
+      savedStations[index] = previous;
       errorMessage = e.toString();
       notifyListeners();
     }

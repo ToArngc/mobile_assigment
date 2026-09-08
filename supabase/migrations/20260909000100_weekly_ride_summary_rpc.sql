@@ -1,19 +1,19 @@
--- Task 5 — weekly ride summary, aggregated in Postgres.
---
--- ride_logs.delay_minutes is never populated (design doc §4): when a ride
--- is detected in the foreground the pipeline may not have polled that
--- trip yet, so logging a delay then would write a permanent null. Delay is
--- therefore resolved at READ time, here, by matching each ride to the
--- nearest train_status reading at the same station.
---
--- The aggregation lives in SQL rather than in the Edge Function or in Dart
--- so there is exactly one place the on-time rule is applied.
---
--- ASSUMPTION — p_tolerance. The fix task specified "nearest recorded_at"
--- with no bound, which on its own would let a ride match a reading from
--- hours earlier. 60 minutes is used as the default window: wide enough to
--- absorb the pipeline's polling gap, narrow enough that a match still
--- describes the same journey. Change it in one place if the team disagrees.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 create or replace function public.weekly_ride_summary(
   p_user_id uuid,
@@ -55,9 +55,9 @@ as $$
     count(*)::integer as ride_count,
     (count(*) filter (where delay_minutes <= p_threshold))::integer
       as on_time_count,
-    -- Percentage and average are over MATCHED rides only, and are null
-    -- when nothing matched. A user with rides but no train_status data
-    -- must see "not enough data", never a misleading 0%.
+
+
+
     case when count(delay_minutes) = 0 then null
       else round(
         (count(*) filter (where delay_minutes <= p_threshold))::numeric

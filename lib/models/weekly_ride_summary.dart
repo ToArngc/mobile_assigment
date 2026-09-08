@@ -1,13 +1,13 @@
-/// The response from get-weekly-rides.
-///
-/// The aggregates arrive already computed (design doc §7 / Task 5): the
-/// join between ride_logs and train_status and the on-time arithmetic all
-/// happen in the weekly_ride_summary RPC, so nothing here recomputes
-/// them.
-///
-/// [onTimePercentage] and [averageDelayMinutes] are null when no ride
-/// could be matched to a train_status reading. That is NOT the same as
-/// 0% or 0 minutes and must stay distinguishable in the UI.
+
+
+
+
+
+
+
+
+
+
 class WeeklyRideSummary {
   final int rideCount;
   final int onTimeCount;
@@ -36,8 +36,8 @@ class WeeklyRideSummary {
     );
   }
 
-  /// True when at least one ride matched a train_status reading, i.e. the
-  /// percentage and average mean something.
+
+
   bool get hasDelayData => onTimePercentage != null;
 
   static WeeklyRideSummary empty() =>

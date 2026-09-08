@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // AuthGate's stream listener swaps to the app shell automatically.
+
     } catch (e) {
       setState(() => _error = _friendlyError(e));
     } finally {

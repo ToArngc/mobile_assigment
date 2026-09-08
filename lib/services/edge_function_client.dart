@@ -2,12 +2,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'supabase_service.dart';
 
-/// Invokes one Edge Function through the shared Supabase client and
-/// normalizes failures to a single [Exception] pattern used by every
-/// repository: on a non-2xx response, the message is the function's own
-/// `{ "error": "..." }` body (see supabase/functions/_shared/cors.ts's
-/// errorResponse) when present, so the UI can eventually surface it
-/// directly instead of a generic exception string.
+
+
+
+
+
+
 Future<dynamic> invokeFunction(
   String functionName, {
   HttpMethod method = HttpMethod.get,

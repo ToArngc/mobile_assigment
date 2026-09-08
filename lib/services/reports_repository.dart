@@ -5,9 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/fault_report.dart';
 import 'edge_function_client.dart';
 
-/// The category chips shown on the Report an Issue screen, mapped to the
-/// string values stored in fault_reports.issue_type. issue_type has no
-/// check constraint in the schema, so all five are safe to submit.
+
+
+
 enum ReportCategory {
   liftBroken('Broken lift', 'lift_broken'),
   escalatorBroken('Broken escalator', 'escalator_broken'),
@@ -28,8 +28,8 @@ enum ReportCategory {
 }
 
 class ReportsRepository {
-  /// Recent reports for a station, newest first — shown inline on
-  /// ReportIssueScreen once a station is selected.
+
+
   Future<List<FaultReport>> getRecentReports(String stationId, {int limit = 20}) async {
     try {
       final data = await invokeFunction(
@@ -44,9 +44,9 @@ class ReportsRepository {
     }
   }
 
-  /// All of one rider's own submitted reports, newest first — feeds the
-  /// "My reports" list on ReportsHomeScreen. [userId] is kept in the
-  /// signature but get-my-reports is JWT-scoped to the caller.
+
+
+
   Future<List<FaultReport>> getMyReports(String userId, {int limit = 50}) async {
     try {
       final data = await invokeFunction(
@@ -61,13 +61,13 @@ class ReportsRepository {
     }
   }
 
-  /// Submits one fault report as multipart/form-data in a single call —
-  /// submit-fault-report uploads the photo (if any) to the report-photos
-  /// bucket and inserts the fault_reports row server-side, using its own
-  /// service-role client. The schema stores one issue per row, so a
-  /// submission with several categories calls this once per category.
-  /// [userId] is kept in the signature but the function always forces
-  /// user_id to the JWT-authenticated caller.
+
+
+
+
+
+
+
   Future<FaultReport> submitReport({
     required String? userId,
     required String stationId,
@@ -102,9 +102,9 @@ class ReportsRepository {
     }
   }
 
-  /// Lets a rider mark their own report resolved. resolve-fault-report
-  /// filters to rows owned by the caller server-side (404 otherwise),
-  /// reproducing the same ownership check the old direct UPDATE had.
+
+
+
   Future<void> markResolved(String reportId) async {
     try {
       await invokeFunction(

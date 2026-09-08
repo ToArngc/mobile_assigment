@@ -4,7 +4,7 @@ import '../models/train_status.dart';
 import '../models/timetable_entry.dart';
 import 'edge_function_client.dart';
 
-/// Shared station access for Explore, Reports, and Alerts.
+
 class StationRepository {
   Future<List<Station>> getAllStations() async {
     final data = await invokeFunction('get-stations');
@@ -31,9 +31,9 @@ class StationRepository {
       );
       return Station.fromJson(data as Map<String, dynamic>);
     } on Exception catch (e) {
-      // get-station 404s with "Station not found" instead of the old
-      // .maybeSingle()'s plain null — recover the nullable-return
-      // contract this method has always had.
+
+
+
       if (e.toString() == 'Exception: Station not found') return null;
       rethrow;
     }
@@ -59,9 +59,9 @@ class StationRepository {
         .toList();
   }
 
-  /// Live accessibility status for a station, newest report per issue
-  /// type, from the station_accessibility view. An empty list means
-  /// nothing has been reported — a good state, not a failure.
+
+
+
   Future<List<StationAccessibility>> getStationAccessibility(
       String stationId) async {
     final data = await invokeFunction(
@@ -74,10 +74,10 @@ class StationRepository {
         .toList();
   }
 
-  /// The latest train_status row per station along one line, bounded
-  /// server-side to recent readings. Backs Module 1's live schematic.
-  /// Returns an empty list when no train has been seen on the line
-  /// recently — the caller must say so rather than invent a position.
+
+
+
+
   Future<List<TrainStatus>> getLiveTrainStatusForLine(String line) async {
     final data = await invokeFunction(
       'get-latest-train-status',

@@ -1,5 +1,5 @@
-// GET /get-stations-by-line?line=<string>
-// Public. Stations matching an exact line value.
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -1,18 +1,18 @@
-// POST /upsert-saved-station
-// Body: { id?, station_id, alert_delay_threshold?, quiet_hours_start?,
-//         quiet_hours_end?, active_days?, enabled? }
-// user_id is always forced to the caller server-side, regardless of body.
-//
-// Deliberately NOT a blind `.upsert()`: if the body includes an id, we
-// verify it belongs to the caller before updating it. Since RLS is
-// disabled, a raw upsert keyed on a client-supplied id would let any
-// authenticated caller hijack another user's row by re-pointing its
-// user_id at themselves. If id is supplied but not owned, this returns 404
-// instead of silently taking over someone else's alert rule.
+
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 interface Body {
   id?: string;
@@ -31,9 +31,13 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   let body: Body;
   try {
@@ -58,7 +62,7 @@ Deno.serve(async (req) => {
       .from("saved_stations")
       .update(fields)
       .eq("id", body.id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .select()
       .maybeSingle();
 
@@ -69,7 +73,7 @@ Deno.serve(async (req) => {
 
   const { data, error } = await supabase
     .from("saved_stations")
-    .insert({ ...fields, user_id: user.id })
+    .insert({ ...fields, user_id: userId })
     .select()
     .single();
 

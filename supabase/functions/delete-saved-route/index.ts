@@ -1,10 +1,10 @@
-// DELETE /delete-saved-route
-// Body or query param: { id: string }
-// Deletes one saved_routes row, only if owned by the caller.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
@@ -13,9 +13,13 @@ Deno.serve(async (req) => {
   if (req.method !== "DELETE") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   const url = new URL(req.url);
   let id = url.searchParams.get("id");
@@ -24,7 +28,7 @@ Deno.serve(async (req) => {
       const body = await req.json();
       id = body?.id ?? null;
     } catch {
-      // no body — fall through to the missing-id check below
+
     }
   }
 
@@ -34,7 +38,7 @@ Deno.serve(async (req) => {
     .from("saved_routes")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .select();
 
   if (error) return errorResponse(error.message, 500);

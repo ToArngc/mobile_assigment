@@ -1,10 +1,10 @@
-// POST /update-profile
-// Body: { username: string }
-// Upserts the caller's own profiles row. 409 on duplicate username.
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
@@ -13,9 +13,13 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return errorResponse("Method not allowed", 405);
 
   const supabase = createAdminClient();
-  const authResult = await getAuthenticatedUser(req, supabase);
-  if ("error" in authResult) return authResult.error;
-  const { user } = authResult;
+  let userId: string;
+  try {
+    userId = await requireUser(req, supabase);
+  } catch (error) {
+    if (error instanceof Response) return error;
+    return errorResponse("Unable to verify session", 401);
+  }
 
   let body: { username?: string };
   try {
@@ -29,7 +33,7 @@ Deno.serve(async (req) => {
 
   const { data, error } = await supabase
     .from("profiles")
-    .upsert({ id: user.id, username })
+    .upsert({ id: userId, username })
     .select()
     .single();
 

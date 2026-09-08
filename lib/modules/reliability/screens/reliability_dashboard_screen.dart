@@ -10,8 +10,8 @@ import '../widgets/trend_chart_widget.dart';
 import '../widgets/train_delay_list_tile.dart';
 import 'route_suggestion_screen.dart';
 
-/// Entry screen for Module 2 — Reliability Engine (core scope: dashboard
-/// only; Route Suggestion is reached via the AppBar action).
+
+
 class ReliabilityDashboardScreen extends StatelessWidget {
   const ReliabilityDashboardScreen({super.key});
 
@@ -159,9 +159,9 @@ class _EmptyTrendState extends StatelessWidget {
   }
 }
 
-/// Line/station picker at the top of the dashboard. Both dropdowns are
-/// independent filters, AND-ed together by the repository — selecting a
-/// station doesn't clear the line choice and vice versa.
+
+
+
 class _FilterRow extends StatelessWidget {
   final List<Station> stations;
   final ReliabilityFilter filter;

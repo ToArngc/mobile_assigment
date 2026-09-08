@@ -6,11 +6,11 @@ import '../models/train_status.dart';
 import 'edge_function_client.dart';
 
 class AlertsRepository {
-  // ---- Alert Rules (saved_stations) ----
 
-  /// get-saved-stations is JWT-scoped to the caller — [userId] is kept in
-  /// the signature for existing callers but must always be the current
-  /// user's own id.
+
+
+
+
   Future<List<SavedStation>> getSavedStations(String userId) async {
     try {
       final data = await invokeFunction('get-saved-stations');
@@ -22,9 +22,9 @@ class AlertsRepository {
     }
   }
 
-  /// Quick on/off toggle for the switch in the "My alerts" list — pauses
-  /// the alert without discarding the threshold/quiet-hours/active-days
-  /// settings underneath (those still need the full editor to change).
+
+
+
   Future<void> setEnabled(String id, bool enabled) async {
     try {
       await invokeFunction(
@@ -37,10 +37,10 @@ class AlertsRepository {
     }
   }
 
-  /// Creates or updates an alert rule for a station.
-  /// If station.id is empty, this is a new row — upsert-saved-station
-  /// treats a missing id as "create", and always forces user_id to the
-  /// caller server-side regardless of what's in the body.
+
+
+
+
   Future<SavedStation> upsertSavedStation(SavedStation station) async {
     try {
       final body = <String, dynamic>{
@@ -75,8 +75,8 @@ class AlertsRepository {
     }
   }
 
-  /// Most recent status reported for one saved station. A null delay is a
-  /// valid status record but cannot produce a delay alert.
+
+
   Future<TrainStatus?> getLatestTrainStatus(String stationId) async {
     try {
       final data = await invokeFunction(
@@ -91,11 +91,11 @@ class AlertsRepository {
     }
   }
 
-  // ---- Quick Mute (mute_settings) ----
 
-  /// get-mute-settings is JWT-scoped to the caller — [userId] is kept in
-  /// the signature for existing callers but must always be the current
-  /// user's own id.
+
+
+
+
   Future<MuteSettings?> getMuteSettings(String userId) async {
     try {
       final data = await invokeFunction('get-mute-settings');
@@ -107,9 +107,9 @@ class AlertsRepository {
     }
   }
 
-  /// mutedUntil = null clears the mute ("No Commute Today" toggled back off,
-  /// or the muted-until date has passed). [userId] is kept in the signature
-  /// but set-mute-settings always upserts for the JWT-authenticated caller.
+
+
+
   Future<MuteSettings> setMute(String userId, DateTime? mutedUntil) async {
     try {
       final data = await invokeFunction(

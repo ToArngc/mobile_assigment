@@ -75,9 +75,9 @@ class _AccessibilityCard extends StatelessWidget {
           );
         }
 
-        // An error means we could not reach the view, which is not the
-        // same as "nothing is broken" — say so rather than implying the
-        // station is fine.
+
+
+
         if (snapshot.hasError) {
           return Card(
             child: ListTile(
@@ -120,9 +120,9 @@ class _AccessibilityCard extends StatelessWidget {
     );
   }
 
-  /// fault_reports.issue_type has no check constraint, so an unknown
-  /// value is possible — fall back to a readable form of whatever the
-  /// reporter sent instead of dropping the row.
+
+
+
   String _issueLabel(String issueType) {
     switch (issueType) {
       case 'lift_broken':

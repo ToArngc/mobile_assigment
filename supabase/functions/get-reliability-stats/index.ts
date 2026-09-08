@@ -1,13 +1,13 @@
-// GET /get-reliability-stats?station_id=<uuid>&line=<string>&days=<int>
-// Public. Sole owner of on-time % aggregation — computed in Postgres via
-// the reliability_stats() RPC (COUNT/AVG/GROUP BY), not fetched and
-// averaged in TS. "On-time" = delay_minutes <= 5 (ON_TIME_THRESHOLD_MINUTES,
-// matching reliability_repository.dart's onTimeThresholdMinutes).
-//
-// Sparse-data handling: when there are zero train_status rows in the
-// window, total_trips is 0 and insufficient_data is true, with
-// on_time_percentage / average_delay_minutes returned as null rather than
-// dividing by zero or erroring.
+
+
+
+
+
+
+
+
+
+
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";

@@ -3,15 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edge_function_client.dart';
 import 'supabase_service.dart';
 
-/// Email + password authentication, per design doc §7.
-///
-/// Sign up attaches the chosen username as auth user_metadata so it
-/// survives regardless of whether email confirmation delays the session,
-/// and also creates the matching `profiles` row (id + username) via
-/// create-profile when a session already exists. `profiles.username` has a
-/// UNIQUE constraint in the schema, so a taken username surfaces as a 409
-/// from create-profile (or a silent fallback from get-profile's
-/// auto-create) rather than needing a separate existence check.
+
+
+
+
+
+
+
+
+
 class AuthService {
   static SupabaseClient get _client => SupabaseService.client;
 
@@ -27,8 +27,8 @@ class AuthService {
     return _client.auth.signInWithPassword(email: email, password: password);
   }
 
-  /// Returns true when Supabase requires the user to confirm their email
-  /// before a session can be created.
+
+
   static Future<bool> signUp({
     required String email,
     required String password,
@@ -44,10 +44,10 @@ class AuthService {
       throw Exception('Sign up failed — please try again.');
     }
 
-    // With email enumeration protection enabled, Supabase returns a user
-    // object with no identities for an existing email. Trying to create a
-    // profile from that synthetic id causes the foreign-key error shown in
-    // the sign-up screen, so turn it into a useful instruction instead.
+
+
+
+
     if (user.identities?.isEmpty ?? false) {
       throw Exception(
         'An account with this email already exists. Please log in.',
@@ -56,12 +56,12 @@ class AuthService {
 
     final needsEmailConfirmation = response.session == null;
 
-    // The username is already attached as auth user_metadata above, so it
-    // survives even when there's no session yet (email confirmation on) —
-    // get-profile's auto-create reads it from there. When a session exists
-    // immediately (confirmation off), this call is just a defensive
-    // backstop that creates the row eagerly instead of waiting for the
-    // user's first Profile screen visit.
+
+
+
+
+
+
     if (!needsEmailConfirmation) {
       await invokeFunction(
         'create-profile',

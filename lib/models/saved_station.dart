@@ -2,16 +2,16 @@ class SavedStation {
   final String id;
   final String userId;
   final String stationId;
-  final int? alertDelayThreshold; // minutes
-  final String? quietHoursStart; // "HH:mm:ss"
+  final int? alertDelayThreshold;
+  final String? quietHoursStart;
   final String? quietHoursEnd;
-  final List<String>? activeDays; // e.g. ['Mon', 'Tue', 'Wed']
+  final List<String>? activeDays;
   final bool enabled;
   final DateTime createdAt;
 
-  // Populated only when the repository fetches with a joined `stations`
-  // select (see AlertsRepository.getSavedStations) — not a real column on
-  // saved_stations, so never sent back in toJson().
+
+
+
   final String? stationName;
   final String? stationLine;
 
@@ -30,8 +30,8 @@ class SavedStation {
   });
 
   factory SavedStation.fromJson(Map<String, dynamic> json) {
-    // When fetched with `.select('*, stations(name, line)')`, Supabase
-    // nests the joined row under the 'stations' key.
+
+
     final joinedStation = json['stations'] as Map<String, dynamic>?;
 
     return SavedStation(

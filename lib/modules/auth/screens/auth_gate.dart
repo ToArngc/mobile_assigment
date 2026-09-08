@@ -5,8 +5,8 @@ import '../../../services/auth_service.dart';
 import '../../../shared_widgets/app_shell.dart';
 import 'login_screen.dart';
 
-/// Splash/Auth gate per design doc §6 — shows the 4-tab shell once a
-/// session exists, otherwise Login. Reacts live to sign-in/sign-out.
+
+
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 

@@ -13,11 +13,10 @@ import 'modules/auth/screens/auth_gate.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseService.initialize();
+  runApp(const MyApp());
+
   await NotificationService.initialize();
 
-  // Module 4 services need the signed-in user's id. AuthGate handles the
-  // UI, while this listener starts/stops the foreground services whenever
-  // the session changes (including a persisted session at app launch).
   final rideDetection = RideDetectionService();
   AuthService.authStateChanges.listen((authState) {
     if (authState.session == null) {
@@ -29,7 +28,6 @@ Future<void> main() async {
     unawaited(rideDetection.start());
   });
 
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
