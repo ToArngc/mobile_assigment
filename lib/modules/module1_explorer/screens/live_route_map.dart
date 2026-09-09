@@ -231,14 +231,6 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
       ),
     );
   }
-
-  Color _lineColor(String line) {
-    final normalized = line.toLowerCase();
-    if (normalized.contains('seremban')) return const Color(0xff2e7d32);
-    if (normalized.contains('ets')) return const Color(0xffef6c00);
-    if (normalized.contains('shuttle')) return const Color(0xff8e24aa);
-    return const Color(0xff1267a9);
-  }
 }
 
 class _MapLabel extends StatelessWidget {
@@ -287,8 +279,8 @@ class _MapNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Text(message, textAlign: TextAlign.center),

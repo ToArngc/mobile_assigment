@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/malaysia_time.dart';
-import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/ride_log.dart';
 import '../../../models/saved_station.dart';
@@ -440,7 +439,7 @@ class _AlertStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final muted = provider.isMutedNow;
     final enabledCount = provider.savedStations.where((station) => station.enabled).length;
-    final color = muted ? Colors.orange.shade800 : AppColors.accent;
+    final color = muted ? AppColors.warning : AppColors.success;
     return Card(
       color: AppColors.cardBackground,
       surfaceTintColor: Colors.transparent,
