@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/saved_route.dart';
 import 'edge_function_client.dart';
+import 'supabase_service.dart';
 
 
 class LeaveByResult {
@@ -9,12 +10,14 @@ class LeaveByResult {
   final double avgDelayMinutes;
   final bool hasEnoughData;
   final DateTime leaveByTime;
+  final int sampleSize;
 
   LeaveByResult({
     required this.nextScheduledDeparture,
     required this.avgDelayMinutes,
     required this.hasEnoughData,
     required this.leaveByTime,
+    required this.sampleSize,
   });
 
   factory LeaveByResult.fromJson(Map<String, dynamic> json) {
@@ -24,6 +27,7 @@ class LeaveByResult {
       avgDelayMinutes: (json['average_delay_minutes'] as num).toDouble(),
       hasEnoughData: json['has_enough_data'] as bool,
       leaveByTime: DateTime.parse(json['leave_by_time'] as String),
+      sampleSize: (json['sample_size'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -34,9 +38,23 @@ class LeaveByRepository {
 
   Future<List<SavedRoute>> getSavedRoutes(String userId) async {
     try {
-      final data = await invokeFunction('get-saved-routes');
+      // Read from the table so saved routes are available even while an older
+      // version of the Edge Function is still deployed. The query remains
+      // scoped to the signed-in user.
+      final data = await SupabaseService.client
+          .from('saved_routes')
+          .select(
+            '*, origin_station:stations!saved_routes_origin_station_id_fkey(name, line)',
+          )
+          .eq('user_id', userId)
+          .not('origin_station_id', 'is', null)
+          .order('created_at', ascending: false);
       return (data as List)
-          .map((row) => SavedRoute.fromJson(row as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((row) => SavedRoute.tryFromJson(
+                Map<String, dynamic>.from(row),
+              ))
+          .whereType<SavedRoute>()
           .toList();
     } catch (e) {
       throw Exception('Failed to load saved routes: $e');
@@ -48,7 +66,8 @@ class LeaveByRepository {
       final body = <String, dynamic>{
         if (route.id.isNotEmpty) 'id': route.id,
         'origin_station_id': route.originStationId,
-        'destination_station_id': route.destinationStationId,
+        if (route.destinationStationId != null)
+          'destination_station_id': route.destinationStationId,
         'walking_minutes': route.walkingMinutes,
       };
       final data = await invokeFunction(
