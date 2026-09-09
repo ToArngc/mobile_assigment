@@ -26,7 +26,6 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
   Station? _station;
   int _walkingMinutes = 10;
   bool _saving = false;
-  bool _gettingLocation = false;
   String _locationMessage = 'Choose a station to estimate your walk.';
 
   Future<void> _pickStation() async {
@@ -42,7 +41,6 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
 
   Future<void> _estimateWalkingTime(Station station) async {
     setState(() {
-      _gettingLocation = true;
       _locationMessage = 'Getting your current location…';
     });
     LocationData? location;
@@ -57,7 +55,6 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
     if (!mounted) return;
     if (location?.latitude == null || location?.longitude == null) {
       setState(() {
-        _gettingLocation = false;
         _locationMessage = 'Location unavailable. Set your walking time below.';
       });
       return;
@@ -70,7 +67,6 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
       station.lng,
     );
     setState(() {
-      _gettingLocation = false;
       _walkingMinutes = (meters / 75).ceil().clamp(1, 120).toInt();
       _locationMessage =
           'Using your current location · ${(meters / 1000).toStringAsFixed(1)} km away';

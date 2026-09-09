@@ -219,7 +219,7 @@ class _LeaveByCard extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '${departureTime} train · ${route.walkingMinutes} min walk'
+                '$departureTime train · ${route.walkingMinutes} min walk'
                 '${result!.hasEnoughData ? ' · ${result!.sampleSize} delay records' : ''}',
                 style: const TextStyle(color: AppColors.textSecondary),
               ),

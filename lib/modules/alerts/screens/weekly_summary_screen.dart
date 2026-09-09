@@ -173,8 +173,8 @@ class _RideHistoryTile extends StatelessWidget {
     final delayLabel = delay == null
         ? 'Delay unavailable'
         : isOnTime
-            ? 'On time · ${delay} min delay'
-            : '${delay} min delay';
+            ? 'On time · $delay min delay'
+            : '$delay min delay';
 
     return ListTile(
       onTap: () => Navigator.of(context).push(
