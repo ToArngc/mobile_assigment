@@ -32,7 +32,7 @@ class ReportDetailScreen extends StatelessWidget {
                     children: [
                       Icon(
                         open ? Icons.error_outline : Icons.check_circle_outline,
-                        color: open ? Colors.orange.shade800 : AppColors.accent,
+                        color: open ? AppColors.warning : AppColors.success,
                         size: 30,
                       ),
                       const SizedBox(width: 12),
@@ -156,9 +156,9 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Chip(
         label: Text(open ? 'Open' : 'Resolved'),
-        labelStyle: TextStyle(color: open ? Colors.orange.shade800 : AppColors.accent),
+        labelStyle: TextStyle(color: open ? AppColors.warning : AppColors.success),
         backgroundColor:
-            open ? Colors.orange.shade50 : AppColors.accent.withValues(alpha: 0.12),
+            (open ? AppColors.warning : AppColors.success).withValues(alpha: 0.12),
         side: BorderSide.none,
       );
 }

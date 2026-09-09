@@ -40,10 +40,30 @@ def headers():
     }
 
 
+PAGE_SIZE = 1000  # matches Supabase's default db-max-rows cap
+
+
 def get_json(path, params=None):
-    resp = requests.get(f"{supabase_url()}{path}", headers=headers(), params=params, timeout=30)
-    resp.raise_for_status()
-    return resp.json()
+    """Fetches all rows from a PostgREST endpoint, paginating past the
+    server's default row cap (1000) so large tables like timetable_entries
+    aren't silently truncated. Orders by id for stable pagination —
+    without an explicit order, Postgres doesn't guarantee consistent row
+    order across separate paginated requests."""
+    params = dict(params or {})
+    params.setdefault("order", "id.asc")
+
+    all_rows = []
+    offset = 0
+    while True:
+        page_params = {**params, "limit": PAGE_SIZE, "offset": offset}
+        resp = requests.get(f"{supabase_url()}{path}", headers=headers(), params=page_params, timeout=30)
+        resp.raise_for_status()
+        page = resp.json()
+        all_rows.extend(page)
+        if len(page) < PAGE_SIZE:
+            break
+        offset += PAGE_SIZE
+    return all_rows
 
 
 def insert_train_status(row):

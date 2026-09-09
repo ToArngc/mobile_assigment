@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/profile.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/profile_repository.dart';
+import '../../../shared_widgets/section_label.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,7 +13,6 @@ class ProfileScreen extends StatefulWidget {
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
-
 class _ProfileScreenState extends State<ProfileScreen> {
   final _repository = ProfileRepository();
   final _usernameController = TextEditingController();
@@ -94,16 +95,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final username = snapshot.data!.username;
           return SafeArea(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xl,
+              ),
               children: [
                 _ProfileHeader(username: username, email: _email),
                 const SizedBox(height: 24),
-                const _SectionLabel('Account details'),
+                const SectionLabel('Account details'),
                 const SizedBox(height: 8),
                 Card(
                   margin: EdgeInsets.zero,
                   child: Padding(
-                    padding: const EdgeInsets.all(18),
+                    padding: const EdgeInsets.all(AppSpacing.md),
                     child: Column(
                       children: [
                         Row(
@@ -166,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : const Text('Save changes'),
                 ),
                 const SizedBox(height: 28),
-                const _SectionLabel('Account'),
+                const SectionLabel('Account'),
                 const SizedBox(height: 8),
                 Card(
                   margin: EdgeInsets.zero,
@@ -194,7 +200,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({required this.username, required this.email});
 
@@ -211,7 +216,7 @@ class _ProfileHeader extends StatelessWidget {
         CircleAvatar(
           radius: 34,
           backgroundColor: AppColors.accent.withValues(alpha: .22),
-          foregroundColor: const Color(0xFF3E7050),
+          foregroundColor: AppColors.success,
           child: Text(
             initial,
             style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
@@ -234,20 +239,4 @@ class _ProfileHeader extends StatelessWidget {
       ],
     );
   }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    text.toUpperCase(),
-    style: const TextStyle(
-      color: AppColors.textSecondary,
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
-      letterSpacing: .6,
-    ),
-  );
 }

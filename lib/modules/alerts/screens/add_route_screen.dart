@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme.dart';
 import '../../../models/station.dart';
 import '../../../models/saved_route.dart';
 import '../../../services/auth_service.dart';
@@ -98,7 +100,7 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
           Text('Walking time to station', style: Theme.of(context).textTheme.titleMedium),
           const Text(
             'How long does it take you to walk from home to the origin station?',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           Row(
             children: [

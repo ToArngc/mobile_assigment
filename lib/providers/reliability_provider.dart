@@ -11,6 +11,8 @@ class ReliabilityFilter {
   final String? stationId;
 
   const ReliabilityFilter({this.lineId, this.stationId});
+
+  bool get isEmpty => lineId == null && stationId == null;
 }
 
 class ReliabilityProvider extends ChangeNotifier {

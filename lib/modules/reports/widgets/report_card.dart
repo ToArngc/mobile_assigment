@@ -54,10 +54,10 @@ class ReportCard extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
-          backgroundColor: (open ? Colors.orange : AppColors.accent).withValues(alpha: 0.12),
+          backgroundColor: (open ? AppColors.warning : AppColors.success).withValues(alpha: 0.12),
           child: Icon(
             _categoryIcon,
-            color: open ? Colors.orange.shade800 : AppColors.accent,
+            color: open ? AppColors.warning : AppColors.success,
           ),
         ),
         title: Text(_title),
@@ -69,9 +69,10 @@ class ReportCard extends StatelessWidget {
               label: Text(open ? 'Open' : 'Resolved'),
               labelStyle: TextStyle(
                 fontSize: 12,
-                color: open ? Colors.red.shade700 : AppColors.accent,
+                color: open ? AppColors.warning : AppColors.success,
               ),
-              backgroundColor: open ? Colors.red.shade50 : AppColors.accent.withValues(alpha: 0.12),
+              backgroundColor: (open ? AppColors.warning : AppColors.success)
+                  .withValues(alpha: 0.12),
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               side: BorderSide.none,

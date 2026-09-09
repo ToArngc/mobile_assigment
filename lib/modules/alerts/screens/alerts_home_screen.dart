@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-<<<<<<< Updated upstream
-=======
 import '../../../core/constants.dart';
 import '../../../core/malaysia_time.dart';
->>>>>>> Stashed changes
+import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/ride_log.dart';
 import '../../../models/saved_station.dart';
 import '../../../providers/alerts_provider.dart';
 import '../../../services/alerts_repository.dart';
 import '../../../services/auth_service.dart';
+import '../../../shared_widgets/app_empty_state.dart';
+import '../../../shared_widgets/app_error_state.dart';
 import '../../../shared_widgets/line_badge.dart';
+import '../../../shared_widgets/section_label.dart';
 import '../widgets/quick_mute_card.dart';
 import 'alert_rule_edit_screen.dart';
 import 'leave_by_screen.dart';
@@ -34,13 +35,11 @@ class AlertsHomeScreen extends StatelessWidget {
       create: (_) =>
           AlertsProvider(repository: AlertsRepository(), userId: userId)
             ..loadAll(),
-      child: const Scaffold(body: _AlertsHomeBody()),
+      child: const _AlertsHomeScreen(),
     );
   }
 }
 
-<<<<<<< Updated upstream
-=======
 class _AlertsHomeScreen extends StatelessWidget {
   const _AlertsHomeScreen();
 
@@ -77,13 +76,13 @@ class _AlertsHomeScreen extends StatelessWidget {
   );
 }
 
->>>>>>> Stashed changes
 class _AlertsHomeBody extends StatelessWidget {
-  const _AlertsHomeBody();
+  const _AlertsHomeBody({required this.provider});
+
+  final AlertsProvider provider;
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< Updated upstream
     return Consumer<AlertsProvider>(
       builder: (context, provider, _) {
         if (provider.status == LoadStatus.loading ||
@@ -106,30 +105,43 @@ class _AlertsHomeBody extends StatelessWidget {
           );
         }
 
-        return SafeArea(
+    return SafeArea(
           bottom: false,
           child: RefreshIndicator(
             onRefresh: provider.loadAll,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.xl,
+              ),
               children: [
-                _Header(provider: provider),
+                const Text(
+                  'Manage station notifications',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+                if (provider.lastAlertCheckedAt != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Last checked: ${_formatCheckedTime(provider.lastAlertCheckedAt!)}',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 _AlertStatusCard(
                   provider: provider,
-                  onOpenMute: () => _Header(provider: provider)
-                      ._handleAction(context, _HeaderAction.mute),
+                  onOpenMute: () => _handleAlertAction(context, provider, _HeaderAction.mute),
                 ),
-                const SizedBox(height: 22),
-                const _SectionLabel('Saved stations'),
+                const SizedBox(height: AppSpacing.lg),
+                const SectionLabel('Saved stations'),
                 const SizedBox(height: 8),
                 if (provider.savedStations.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 18),
-                    child: Text(
-                      'No saved stations yet. Add one to receive delay alerts.',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
+                  const AppEmptyState(
+                    icon: Icons.notifications_off_outlined,
+                    title: 'No saved stations yet. Add one to receive delay alerts.',
+                    subtitle: null,
+                    wrapped: false,
                   )
                 else
                   ...provider.savedStations.map(
@@ -154,9 +166,9 @@ class _AlertsHomeBody extends StatelessWidget {
                     icon: const Icon(Icons.add),
                     label: const Text('Add station'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF16869A),
-                      side: const BorderSide(
-                        color: Color(0xFF9DD9E0),
+                      foregroundColor: AppColors.accent,
+                      side: BorderSide(
+                        color: AppColors.accent.withValues(alpha: 0.4),
                         width: 1.5,
                       ),
                       shape: RoundedRectangleBorder(
@@ -166,7 +178,7 @@ class _AlertsHomeBody extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 28),
-                const _SectionLabel('Ride history'),
+                const SectionLabel('Ride history'),
                 if (provider.recentRides.isEmpty)
                   const _EmptyRideHistory()
                 else
@@ -176,105 +188,6 @@ class _AlertsHomeBody extends StatelessWidget {
           ),
         );
       },
-=======
-    if (provider.status == LoadStatus.loading ||
-        provider.status == LoadStatus.initial) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (provider.status == LoadStatus.error) {
-      return AppErrorState(
-        message: 'Failed to load: ${provider.errorMessage}',
-        onRetry: provider.loadAll,
-      );
-    }
-
-    return SafeArea(
-      bottom: false,
-      child: RefreshIndicator(
-        onRefresh: provider.loadAll,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.xl,
-          ),
-          children: [
-            const Text(
-              'Manage station notifications',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            if (provider.lastAlertCheckedAt != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Last checked: ${_formatCheckedTime(provider.lastAlertCheckedAt!)}',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-            const SizedBox(height: 14),
-            _AlertStatusCard(
-              provider: provider,
-              onOpenMute: () =>
-                  _handleAlertAction(context, provider, _HeaderAction.mute),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            const SectionLabel('Saved stations'),
-            const SizedBox(height: 8),
-            if (provider.savedStations.isEmpty)
-              const AppEmptyState(
-                icon: Icons.notifications_off_outlined,
-                title:
-                    'No saved stations yet. Add one to receive delay alerts.',
-                subtitle: null,
-                wrapped: false,
-              )
-            else
-              ...provider.savedStations.map(
-                (station) => _SavedStationCard(
-                  station: station,
-                  onToggle: (enabled) =>
-                      provider.toggleStationEnabled(station.id, enabled),
-                  onEdit: () => _editStation(context, provider, station),
-                  onRemove: () => _confirmRemoveAlert(
-                    context,
-                    provider,
-                    station.id,
-                    station.stationName ?? 'this station',
-                  ),
-                ),
-              ),
-            const SizedBox(height: 6),
-            SizedBox(
-              height: 58,
-              child: OutlinedButton.icon(
-                onPressed: () => _addStation(context, provider),
-                icon: const Icon(Icons.add),
-                label: const Text('Add station'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.accent,
-                  side: BorderSide(
-                    color: AppColors.accent.withValues(alpha: 0.4),
-                    width: 1.5,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 28),
-            const SectionLabel('Ride history'),
-            if (provider.recentRides.isEmpty)
-              const _EmptyRideHistory()
-            else
-              ...provider.recentRides.map(_RideHistoryCard.new),
-          ],
-        ),
-      ),
->>>>>>> Stashed changes
     );
   }
 
@@ -334,7 +247,6 @@ class _AlertsHomeBody extends StatelessWidget {
   }
 }
 
-<<<<<<< Updated upstream
 class _Header extends StatelessWidget {
   const _Header({required this.provider});
 
@@ -418,51 +330,10 @@ class _Header extends StatelessWidget {
           context,
         ).push(MaterialPageRoute(builder: (_) => const LeaveByScreen()));
     }
-=======
-void _handleAlertAction(
-  BuildContext context,
-  AlertsProvider provider,
-  _HeaderAction action,
-) {
-  switch (action) {
-    case _HeaderAction.mute:
-      showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        builder: (_) => ChangeNotifierProvider.value(
-          value: provider,
-          child: const SafeArea(child: QuickMuteCard()),
-        ),
-      );
-    case _HeaderAction.summary:
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const WeeklySummaryScreen()));
-    case _HeaderAction.leaveBy:
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const LeaveByScreen()));
->>>>>>> Stashed changes
   }
 }
 
 enum _HeaderAction { mute, summary, leaveBy }
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    text.toUpperCase(),
-    style: const TextStyle(
-      color: AppColors.textSecondary,
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
-      letterSpacing: .6,
-    ),
-  );
-}
 
 class _SavedStationCard extends StatelessWidget {
   const _SavedStationCard({
@@ -490,7 +361,12 @@ class _SavedStationCard extends StatelessWidget {
         onTap: onEdit,
         onLongPress: onRemove,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 10, 14),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -563,17 +439,11 @@ class _AlertStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = provider.isMutedNow;
-<<<<<<< Updated upstream
     final enabledCount = provider.savedStations.where((station) => station.enabled).length;
     final color = muted ? Colors.orange.shade800 : AppColors.accent;
-=======
-    final enabledCount = provider.savedStations
-        .where((station) => station.enabled)
-        .length;
-    final color = muted ? AppColors.warning : AppColors.success;
->>>>>>> Stashed changes
     return Card(
-      color: color.withValues(alpha: 0.08),
+      color: AppColors.cardBackground,
+      surfaceTintColor: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -623,7 +493,6 @@ class _EmptyRideHistory extends StatelessWidget {
   const _EmptyRideHistory();
 
   @override
-<<<<<<< Updated upstream
   Widget build(BuildContext context) => Card(
     margin: const EdgeInsets.only(top: 10),
     child: const Padding(
@@ -641,15 +510,6 @@ class _EmptyRideHistory extends StatelessWidget {
           ),
         ],
       ),
-=======
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.only(top: 10),
-    child: AppEmptyState(
-      icon: Icons.route_outlined,
-      title: 'No rides logged yet',
-      subtitle: 'Your completed rides will appear here.',
-      wrapped: true,
->>>>>>> Stashed changes
     ),
   );
 }

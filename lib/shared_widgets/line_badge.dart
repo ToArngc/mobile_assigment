@@ -1,24 +1,14 @@
 import 'package:flutter/material.dart';
 
-
-
-
-
-
+import '../core/line_colors.dart';
 class LineBadge extends StatelessWidget {
   final String line;
 
   const LineBadge(this.line, {super.key});
 
-  static const Map<String, Color> _lineColors = {
-    'Seremban Line': Color(0xFF4CAF6D),
-    'Port Klang Line': Color(0xFF3B82C4),
-    'ETS Intercity': Color(0xFFE07A3F),
-  };
-
   @override
   Widget build(BuildContext context) {
-    final color = _lineColors[line] ?? Colors.grey.shade600;
+    final color = lineColor(line);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
