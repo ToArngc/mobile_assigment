@@ -27,7 +27,11 @@ class WeeklySummaryProvider extends ChangeNotifier {
 
 
 
-  bool _notified = false;
+
+
+
+
+  static final Set<String> _notifiedUserIds = <String>{};
 
   int get tripCount => summary.rideCount;
 
@@ -57,7 +61,7 @@ class WeeklySummaryProvider extends ChangeNotifier {
   }
 
   Future<void> _maybeNotify() async {
-    if (_notified || summary.rideCount == 0) return;
+    if (_notifiedUserIds.contains(userId) || summary.rideCount == 0) return;
     try {
 
       if (await MuteService.isMutedNow(userId)) return;
@@ -66,7 +70,7 @@ class WeeklySummaryProvider extends ChangeNotifier {
         onTimePercentage: summary.onTimePercentage,
         averageDelayMinutes: summary.averageDelayMinutes,
       );
-      _notified = true;
+      _notifiedUserIds.add(userId);
     } catch (_) {
 
 

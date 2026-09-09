@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../models/profile.dart';
 import '../../../services/auth_service.dart';
@@ -57,18 +58,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await _repository.updateUsername(_userId, _usernameController.text);
       if (mounted) {
+        setState(() => _profileFuture = _load());
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Profile updated')));
       }
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      setState(
+        () => _error = friendlyErrorMessage(
+          e,
+          fallback: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
   Future<void> _logout() async {
+    final shouldLogOut = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Log out?'),
+        content: const Text(
+          'You will need to sign in again to see your alerts and reports.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Log out'),
+          ),
+        ],
+      ),
+    );
+    if (shouldLogOut != true) return;
     await AuthService.signOut();
     if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -87,7 +114,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Could not load profile: ${snapshot.error}'),
+                child: Text(
+                  friendlyErrorMessage(
+                    snapshot.error,
+                    fallback: 'Your profile could not be loaded.',
+                  ),
+                ),
               ),
             );
           }
@@ -174,19 +206,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 28),
                 const SectionLabel('Account'),
                 const SizedBox(height: 8),
-                Card(
-                  margin: EdgeInsets.zero,
-                  child: ListTile(
-                    leading: const Icon(Icons.notifications_outlined),
-                    title: const Text('Personal alerts'),
-                    subtitle: const Text(
-                      'Manage your saved station notifications',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: _logout,
                   icon: const Icon(Icons.logout),

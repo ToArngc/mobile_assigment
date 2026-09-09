@@ -41,6 +41,12 @@ class ReliabilityProvider extends ChangeNotifier {
 
 
 
+
+
+
+
+  static const _probeWindowDays = 90;
+
   LoadStatus routeStatus = LoadStatus.initial;
   String? routeErrorMessage;
   List<RouteSuggestion> routeSuggestions = [];
@@ -58,7 +64,7 @@ class ReliabilityProvider extends ChangeNotifier {
       final probe = await _repository.fetchReliabilitySummary(
         lineId: filter.lineId,
         stationId: filter.stationId,
-        days: 3650,
+        days: _probeWindowDays,
       );
       actualDaysAvailable = probe.daysOfData;
 

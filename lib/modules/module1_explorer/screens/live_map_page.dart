@@ -12,12 +12,12 @@ class LiveMapPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('KTM route map')),
+        appBar: AppBar(title: Text(line)),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
-              'Live train positions',
+              'Live train positions · $line',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),

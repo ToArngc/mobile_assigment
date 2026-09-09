@@ -58,7 +58,7 @@ class TrendChartWidget extends StatelessWidget {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              '${date.month}/${date.day}',
+                              '${date.day}/${date.month}',
                               style: const TextStyle(fontSize: 10),
                             ),
                           );

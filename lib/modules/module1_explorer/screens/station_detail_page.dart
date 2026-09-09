@@ -57,15 +57,31 @@ class StationDetailPage extends StatelessWidget {
   }
 }
 
-class _AccessibilityCard extends StatelessWidget {
+class _AccessibilityCard extends StatefulWidget {
   const _AccessibilityCard({required this.stationId});
 
   final String stationId;
 
   @override
+  State<_AccessibilityCard> createState() => _AccessibilityCardState();
+}
+
+class _AccessibilityCardState extends State<_AccessibilityCard> {
+  final StationRepository _repository = StationRepository();
+  late Future<List<StationAccessibility>> _accessibilityFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _accessibilityFuture = _repository.getStationAccessibility(
+      widget.stationId,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<StationAccessibility>>(
-      future: StationRepository().getStationAccessibility(stationId),
+      future: _accessibilityFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Card(
@@ -142,15 +158,29 @@ class _AccessibilityCard extends StatelessWidget {
   }
 }
 
-class _Timetable extends StatelessWidget {
+class _Timetable extends StatefulWidget {
   const _Timetable({required this.stationId});
 
   final String stationId;
 
   @override
+  State<_Timetable> createState() => _TimetableState();
+}
+
+class _TimetableState extends State<_Timetable> {
+  final StationRepository _repository = StationRepository();
+  late Future<List<TimetableEntry>> _timetableFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _timetableFuture = _repository.getTimetableForStation(widget.stationId);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<TimetableEntry>>(
-      future: StationRepository().getTimetableForStation(stationId),
+      future: _timetableFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
@@ -170,11 +200,13 @@ class _Timetable extends StatelessWidget {
         }
         final entries = snapshot.data ?? const <TimetableEntry>[];
         if (entries.isEmpty) {
-          return const Card(child: ListTile(title: Text('No scheduled departures found.')));
+          return const Card(
+            child: ListTile(title: Text('No more departures scheduled today.')),
+          );
         }
         return Card(
           child: Column(
-            children: entries.take(8).map((entry) {
+            children: entries.map((entry) {
               return ListTile(
                 leading: const Icon(Icons.departure_board_outlined),
                 title: Text(entry.scheduledTime.substring(0, 5)),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants.dart';
+import '../../../core/friendly_error.dart';
 import '../../../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isSubmitting = false;
   bool _isPasswordVisible = false;
   String? _error;
@@ -23,6 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _usernameController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -72,15 +75,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   String _friendlyError(Object error) {
-    final message = error.toString();
-    final normalized = message.toLowerCase();
-
-    if (normalized.contains('socketexception') ||
-        normalized.contains('failed host lookup') ||
-        normalized.contains('network') ||
-        normalized.contains('timed out')) {
-      return 'Unable to connect. Check your internet connection and try again.';
-    }
+    final normalized = error.toString().toLowerCase();
     if (normalized.contains('already exists') ||
         normalized.contains('already registered')) {
       return 'An account with this email already exists. Please log in.';
@@ -88,7 +83,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (normalized.contains('username is already taken')) {
       return 'That username is already taken. Please choose another one.';
     }
-    return 'Unable to create your account. Please check your details and try again.';
+    return friendlyErrorMessage(
+      error,
+      fallback:
+          'Unable to create your account. Please check your details and try again.',
+    );
   }
 
   @override
@@ -108,20 +107,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: 'Username'),
-                    validator: (value) =>
-                        (value == null || value.trim().isEmpty)
-                        ? 'Username is required'
-                        : null,
+                    maxLength: 24,
+                    validator: (value) {
+                      final username = value?.trim() ?? '';
+                      if (username.isEmpty) return 'Username is required';
+                      if (username.length < 3) {
+                        return 'Username must be at least 3 characters';
+                      }
+                      if (!usernamePattern.hasMatch(username)) {
+                        return 'Use letters, numbers, spaces, . _ or - only';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(labelText: 'Email'),
-                    validator: (value) =>
-                        (value == null || value.trim().isEmpty)
-                        ? 'Email is required'
-                        : null,
+                    validator: (value) {
+                      final email = value?.trim() ?? '';
+                      if (email.isEmpty) return 'Email is required';
+                      if (!emailPattern.hasMatch(email)) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -145,6 +156,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     validator: (value) => (value == null || value.length < 6)
                         ? 'Password must be at least 6 characters'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: !_isPasswordVisible,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm password',
+                    ),
+                    validator: (value) => value != _passwordController.text
+                        ? 'Passwords do not match'
                         : null,
                   ),
                   if (_error != null) ...[

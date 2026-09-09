@@ -20,3 +20,7 @@ class AppRadius {
 }
 
 const int onTimeThresholdMinutes = 5;
+
+final RegExp emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+
+final RegExp usernamePattern = RegExp(r'^[A-Za-z0-9 ._-]+$');

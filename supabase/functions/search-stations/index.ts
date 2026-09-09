@@ -14,11 +14,18 @@ Deno.serve(async (req) => {
   const q = url.searchParams.get("q");
   if (!q) return errorResponse("q query param is required", 400);
 
+
+
+
+
+
+  const escaped = q.replace(/[\\%_]/g, (c) => `\\${c}`);
+
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("stations")
     .select()
-    .ilike("name", `%${q}%`)
+    .ilike("name", `%${escaped}%`)
     .order("name");
 
   if (error) return errorResponse(error.message, 500);

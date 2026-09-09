@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
 import '../modules/alerts/screens/alerts_home_screen.dart';
-import '../modules/auth/screens/profile_screen.dart';
 import '../modules/module1_explorer/screens/explorer_home_page.dart';
 import '../modules/reliability/screens/reliability_dashboard_screen.dart';
 import '../modules/reports/screens/reports_home_screen.dart';
-
-
-
-
-
-
-
-
-
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -34,37 +24,13 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: _index,
-            children: const [
-              ExplorerHomePage(),
-              ReliabilityDashboardScreen(),
-              ReportsHomeScreen(),
-              AlertsHomeScreen(),
-            ],
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Material(
-                  color: Theme.of(context).colorScheme.surface,
-                  shape: const CircleBorder(),
-                  elevation: 2,
-                  child: IconButton(
-                    icon: const Icon(Icons.person_outline),
-                    tooltip: 'Profile',
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+      body: IndexedStack(
+        index: _index,
+        children: const [
+          ExplorerHomePage(),
+          ReliabilityDashboardScreen(),
+          ReportsHomeScreen(),
+          AlertsHomeScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

@@ -24,6 +24,8 @@ from google.transit import gtfs_realtime_pb2
 
 GTFS_REALTIME_URL = "https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb"
 ARRIVAL_RADIUS_METERS = 200
+
+MAX_MATCH_WINDOW_MINUTES = 30
 MYT = ZoneInfo("Asia/Kuala_Lumpur")
 
 
@@ -110,12 +112,17 @@ def scheduled_time_to_datetime(hms, local_date):
 def closest_timetable_match(candidates, actual_dt, local_date):
     """candidates: timetable_entries rows for one station. Returns
     (line, scheduled_dt) for whichever has the smallest time difference
-    from actual_dt, or None if there are no candidates."""
+    from actual_dt, or None if there are no candidates within
+    MAX_MATCH_WINDOW_MINUTES. Without that window the nearest entry could be
+    hours away, and the arrival would be logged as a huge positive or negative
+    "delay" against a departure it has nothing to do with."""
     best = None
     best_diff = None
     for row in candidates:
         scheduled_dt = scheduled_time_to_datetime(row["scheduled_time"], local_date)
         diff = abs((actual_dt - scheduled_dt).total_seconds())
+        if diff > MAX_MATCH_WINDOW_MINUTES * 60:
+            continue
         if best_diff is None or diff < best_diff:
             best, best_diff = (row["line"], scheduled_dt), diff
     return best

@@ -30,6 +30,15 @@ Deno.serve(async (req) => {
 
   const username = body.username?.trim();
   if (!username) return errorResponse("username is required", 400);
+  if (username.length < 3 || username.length > 24) {
+    return errorResponse("username must be 3-24 characters", 400);
+  }
+  if (!/^[A-Za-z0-9 ._-]+$/.test(username)) {
+    return errorResponse(
+      "username may only contain letters, numbers, spaces, . _ or -",
+      400,
+    );
+  }
 
   const { data, error } = await supabase
     .from("profiles")

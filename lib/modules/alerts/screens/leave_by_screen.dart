@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/malaysia_time.dart';
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../providers/leave_by_provider.dart';
 import '../../../services/leave_by_repository.dart';
@@ -60,7 +61,12 @@ class _LeaveByBody extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Failed to load: ${provider.errorMessage}'),
+                Text(
+                  friendlyErrorMessage(
+                    provider.errorMessage,
+                    fallback: 'Your saved routes could not be loaded.',
+                  ),
+                ),
                 const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: provider.loadAll,
@@ -107,13 +113,25 @@ class _LeaveByBody extends StatelessWidget {
                     'Leave by $timeStr (${result.avgDelayMinutes.round()} min avg delay)';
               }
 
+              final origin = provider.stationName(route.originStationId);
+              final destination = provider.stationName(
+                route.destinationStationId,
+              );
+
               return ListTile(
                 leading: const Icon(Icons.directions_walk),
-                title: Text('${route.walkingMinutes} min walk to station'),
-                subtitle: Text(subtitle),
+                title: Text('$origin → $destination'),
+                subtitle: Text(
+                  '${route.walkingMinutes} min walk · $subtitle',
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  onPressed: () => provider.removeRoute(route.id),
+                  onPressed: () => _confirmRemoveRoute(
+                    context,
+                    provider,
+                    route.id,
+                    '$origin → $destination',
+                  ),
                 ),
               );
             },
@@ -121,5 +139,33 @@ class _LeaveByBody extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _confirmRemoveRoute(
+    BuildContext context,
+    LeaveByProvider provider,
+    String routeId,
+    String routeName,
+  ) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove route?'),
+        content: Text('Remove the leave-by reminder for $routeName?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (shouldRemove == true && context.mounted) {
+      await provider.removeRoute(routeId);
+    }
   }
 }
