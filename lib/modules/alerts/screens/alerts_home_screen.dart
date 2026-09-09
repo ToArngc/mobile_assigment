@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/malaysia_time.dart';
+import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 import '../../../models/ride_log.dart';
 import '../../../models/saved_station.dart';
@@ -15,9 +17,9 @@ import '../../../shared_widgets/section_label.dart';
 import '../widgets/quick_mute_card.dart';
 import 'alert_rule_edit_screen.dart';
 import 'leave_by_screen.dart';
+import 'ride_detail_screen.dart';
 import 'select_station_screen.dart';
 import 'weekly_summary_screen.dart';
-
 
 class AlertsHomeScreen extends StatelessWidget {
   const AlertsHomeScreen({super.key});
@@ -43,25 +45,35 @@ class _AlertsHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Consumer<AlertsProvider>(
-        builder: (context, provider, _) => Scaffold(
-          appBar: AppBar(
-            title: const Text('My alerts'),
-            actions: [
-              PopupMenuButton<_HeaderAction>(
-                icon: const Icon(Icons.tune),
-                tooltip: 'Alert options',
-                onSelected: (action) => _handleAlertAction(context, provider, action),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: _HeaderAction.mute, child: Text('Mute alerts')),
-                  PopupMenuItem(value: _HeaderAction.summary, child: Text('Weekly summary')),
-                  PopupMenuItem(value: _HeaderAction.leaveBy, child: Text('Leave-By planner')),
-                ],
+    builder: (context, provider, _) => Scaffold(
+      appBar: AppBar(
+        title: const Text('My alerts'),
+        actions: [
+          PopupMenuButton<_HeaderAction>(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Alert options',
+            onSelected: (action) =>
+                _handleAlertAction(context, provider, action),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: _HeaderAction.mute,
+                child: Text('Mute alerts'),
+              ),
+              PopupMenuItem(
+                value: _HeaderAction.summary,
+                child: Text('Weekly summary'),
+              ),
+              PopupMenuItem(
+                value: _HeaderAction.leaveBy,
+                child: Text('Leave-By planner'),
               ),
             ],
           ),
-          body: _AlertsHomeBody(provider: provider),
-        ),
-      );
+        ],
+      ),
+      body: _AlertsHomeBody(provider: provider),
+    ),
+  );
 }
 
 class _AlertsHomeBody extends StatelessWidget {
@@ -71,15 +83,27 @@ class _AlertsHomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (provider.status == LoadStatus.loading || provider.status == LoadStatus.initial) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (provider.status == LoadStatus.error) {
-      return AppErrorState(
-        message: 'Failed to load: ${provider.errorMessage}',
-        onRetry: provider.loadAll,
-      );
-    }
+    return Consumer<AlertsProvider>(
+      builder: (context, provider, _) {
+        if (provider.status == LoadStatus.loading ||
+            provider.status == LoadStatus.initial) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (provider.status == LoadStatus.error) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Failed to load: ${provider.errorMessage}'),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: provider.loadAll,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
 
     return SafeArea(
           bottom: false,
@@ -162,6 +186,8 @@ class _AlertsHomeBody extends StatelessWidget {
               ],
             ),
           ),
+        );
+      },
     );
   }
 
@@ -221,11 +247,70 @@ class _AlertsHomeBody extends StatelessWidget {
   }
 }
 
-void _handleAlertAction(
-  BuildContext context,
-  AlertsProvider provider,
-  _HeaderAction action,
-) {
+class _Header extends StatelessWidget {
+  const _Header({required this.provider});
+
+  final AlertsProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'My alerts',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 3),
+        const Text(
+          'Manage station notifications',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        if (provider.lastAlertCheckedAt != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Last checked: ${_formatCheckedTime(provider.lastAlertCheckedAt!)}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+        const SizedBox(height: 4),
+        PopupMenuButton<_HeaderAction>(
+          tooltip: 'Alert options',
+          onSelected: (action) => _handleAction(context, action),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.tune, size: 18),
+                SizedBox(width: 6),
+                Text('Alert options'),
+              ],
+            ),
+          ),
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: _HeaderAction.mute,
+              child: Text('Mute alerts'),
+            ),
+            PopupMenuItem(
+              value: _HeaderAction.summary,
+              child: Text('Weekly summary'),
+            ),
+            PopupMenuItem(
+              value: _HeaderAction.leaveBy,
+              child: Text('Leave-By planner'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _handleAction(BuildContext context, _HeaderAction action) {
     switch (action) {
       case _HeaderAction.mute:
         showModalBottomSheet<void>(
@@ -245,6 +330,7 @@ void _handleAlertAction(
           context,
         ).push(MaterialPageRoute(builder: (_) => const LeaveByScreen()));
     }
+  }
 }
 
 enum _HeaderAction { mute, summary, leaveBy }
@@ -354,7 +440,7 @@ class _AlertStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final muted = provider.isMutedNow;
     final enabledCount = provider.savedStations.where((station) => station.enabled).length;
-    final color = muted ? AppColors.warning : AppColors.success;
+    final color = muted ? Colors.orange.shade800 : AppColors.accent;
     return Card(
       color: AppColors.cardBackground,
       surfaceTintColor: Colors.transparent,
@@ -365,7 +451,9 @@ class _AlertStatusCard extends StatelessWidget {
             CircleAvatar(
               backgroundColor: color.withValues(alpha: 0.14),
               child: Icon(
-                muted ? Icons.notifications_off_outlined : Icons.notifications_active_outlined,
+                muted
+                    ? Icons.notifications_off_outlined
+                    : Icons.notifications_active_outlined,
                 color: color,
               ),
             ),
@@ -377,8 +465,8 @@ class _AlertStatusCard extends StatelessWidget {
                   Text(
                     muted ? 'Alerts are muted' : 'Alerts are active',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -390,7 +478,10 @@ class _AlertStatusCard extends StatelessWidget {
                 ],
               ),
             ),
-            TextButton(onPressed: onOpenMute, child: Text(muted ? 'Manage' : 'Mute')),
+            TextButton(
+              onPressed: onOpenMute,
+              child: Text(muted ? 'Manage' : 'Mute'),
+            ),
           ],
         ),
       ),
@@ -402,15 +493,25 @@ class _EmptyRideHistory extends StatelessWidget {
   const _EmptyRideHistory();
 
   @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.only(top: 10),
-        child: AppEmptyState(
-          icon: Icons.route_outlined,
-          title: 'No rides logged yet',
-          subtitle: 'Your completed rides will appear here.',
-          wrapped: true,
-        ),
-      );
+  Widget build(BuildContext context) => Card(
+    margin: const EdgeInsets.only(top: 10),
+    child: const Padding(
+      padding: EdgeInsets.all(22),
+      child: Column(
+        children: [
+          Icon(Icons.route_outlined, size: 32, color: AppColors.textSecondary),
+          SizedBox(height: 8),
+          Text('No rides logged yet'),
+          SizedBox(height: 4),
+          Text(
+            'Your completed rides will appear here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _RideHistoryCard extends StatelessWidget {
@@ -420,53 +521,69 @@ class _RideHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final route = ride.destinationStationName == null
-        ? (ride.stationName ?? 'Saved station')
-        : '${ride.stationName ?? 'Saved station'} → ${ride.destinationStationName}';
-    final date = ride.detectedAt.toLocal();
+        ? (ride.stationName ?? 'Origin unavailable')
+        : '${ride.stationName ?? 'Origin unavailable'} → ${ride.destinationStationName}';
+    final date = MalaysiaTime.fromUtc(ride.detectedAt);
     final dateLabel =
-        '${date.day.toString().padLeft(2, '0')} ${_month(date.month)} ${date.year}';
+        '${date.day.toString().padLeft(2, '0')} ${_month(date.month)} ${date.year} · '
+        '${date.hour.toString().padLeft(2, '0')}:'
+        '${date.minute.toString().padLeft(2, '0')} MYT';
     return Card(
       margin: const EdgeInsets.only(top: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (ride.stationLine != null) LineBadge(ride.stationLine!),
-                const Spacer(),
-                if (ride.durationMinutes != null)
-                  Text(
-                    '${ride.durationMinutes} min',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => RideDetailScreen(ride: ride)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (ride.stationLine != null) LineBadge(ride.stationLine!),
+                  const Spacer(),
+                  if (ride.durationMinutes != null)
+                    Text(
+                      '${ride.durationMinutes} min',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textSecondary,
                   ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              route,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 7),
-            Row(
-              children: [
-                const Icon(
-                  Icons.schedule,
-                  size: 15,
-                  color: AppColors.textSecondary,
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                route,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  dateLabel,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 7),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.schedule,
+                    size: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    dateLabel,
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

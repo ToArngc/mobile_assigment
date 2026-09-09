@@ -2,27 +2,25 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:location/location.dart';
 
+import '../core/malaysia_time.dart';
 import 'auth_service.dart';
 import '../models/station.dart';
 import 'station_repository.dart';
 import 'weekly_summary_repository.dart';
 import 'location_service.dart';
 
-
 class RideDetectionService {
   RideDetectionService({
     StationRepository? stationRepository,
     WeeklySummaryRepository? weeklySummaryRepository,
-  })  : _stationRepository = stationRepository ?? StationRepository(),
-        _weeklySummaryRepository =
-            weeklySummaryRepository ?? WeeklySummaryRepository();
+  }) : _stationRepository = stationRepository ?? StationRepository(),
+       _weeklySummaryRepository =
+           weeklySummaryRepository ?? WeeklySummaryRepository();
 
   final StationRepository _stationRepository;
   final WeeklySummaryRepository _weeklySummaryRepository;
 
-
   static const double _proximityThresholdMeters = 150;
-
 
   static const Duration _maxOpenRideAge = Duration(hours: 3);
 
@@ -42,8 +40,7 @@ class RideDetectionService {
 
     _stations = await _stationRepository.getAllStations();
 
-    _positionSub =
-        LocationService.instance.positionStream.listen(_onPosition);
+    _positionSub = LocationService.instance.positionStream.listen(_onPosition);
   }
 
   void stop() {
@@ -53,7 +50,7 @@ class RideDetectionService {
 
   Future<void> _onPosition(LocationData position) async {
     if (position.latitude == null || position.longitude == null) return;
-    if (!_isCommuteHour(DateTime.now())) return;
+    if (!MalaysiaTime.isCommuteWindow(MalaysiaTime.now())) return;
     if (_stations.isEmpty) return;
 
     final userId = AuthService.currentUserId;
@@ -67,7 +64,6 @@ class RideDetectionService {
     );
 
     if (nearest == null) {
-
       _currentStationId = null;
       return;
     }
@@ -81,8 +77,8 @@ class RideDetectionService {
   Future<void> _handleArrival(Station station, String userId) async {
     final open = _openRide;
 
-    if (open == null || DateTime.now().difference(open.startedAt) > _maxOpenRideAge) {
-
+    if (open == null ||
+        DateTime.now().difference(open.startedAt) > _maxOpenRideAge) {
       _openRide = _OpenRide(
         originStationId: station.id,
         startedAt: DateTime.now(),
@@ -91,7 +87,6 @@ class RideDetectionService {
     }
 
     if (station.id == open.originStationId) {
-
       return;
     }
 
@@ -125,16 +120,12 @@ class RideDetectionService {
     return (best != null && bestDistance <= thresholdMeters) ? best : null;
   }
 
-  double _distanceMeters(
-    double lat1,
-    double lng1,
-    double lat2,
-    double lng2,
-  ) {
+  double _distanceMeters(double lat1, double lng1, double lat2, double lng2) {
     const earthRadiusMeters = 6371000.0;
     final dLat = _degToRad(lat2 - lat1);
     final dLng = _degToRad(lng2 - lng1);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_degToRad(lat1)) *
             math.cos(_degToRad(lat2)) *
             math.sin(dLng / 2) *
@@ -144,18 +135,10 @@ class RideDetectionService {
   }
 
   double _degToRad(double deg) => deg * (math.pi / 180);
-
-  bool _isCommuteHour(DateTime now) {
-    final hour = now.hour;
-    return (hour >= 7 && hour < 10) || (hour >= 17 && hour < 20);
-  }
 }
 
 class _OpenRide {
-  _OpenRide({
-    required this.originStationId,
-    required this.startedAt,
-  });
+  _OpenRide({required this.originStationId, required this.startedAt});
 
   final String originStationId;
   final DateTime startedAt;

@@ -1,77 +1,56 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz_data;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import '../core/malaysia_time.dart';
 
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
-
-
 
   static const int _weeklySummaryNotificationId = 90001;
 
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    tz_data.initializeTimeZones();
+    MalaysiaTime.initialize();
+    tz.setLocalLocation(MalaysiaTime.location);
 
-
-
-
-    tz.setLocalLocation(tz.local);
-
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings();
-    const settings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+    const settings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
 
     await _plugin.initialize(settings);
-
-
     await _plugin
         .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
-
-
-
     await _plugin
         .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestExactAlarmsPermission();
 
     _initialized = true;
   }
-
-
-
 
   static Future<void> scheduleLeaveByReminder({
     required int id,
     required DateTime leaveByTime,
     required String stationLabel,
   }) async {
-
-    if (leaveByTime.isBefore(DateTime.now())) return;
+    final scheduledTime = MalaysiaTime.fromUtc(leaveByTime);
+    if (scheduledTime.isBefore(MalaysiaTime.now())) return;
 
     await _plugin.zonedSchedule(
       id,
       'Time to leave',
       'Leave now for $stationLabel to make your usual train.',
-      tz.TZDateTime.from(leaveByTime, tz.local),
+      scheduledTime,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'leave_by_channel',
@@ -84,7 +63,7 @@ class NotificationService {
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
-      UILocalNotificationDateInterpretation.absoluteTime,
+          UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: null,
     );
   }
@@ -92,12 +71,6 @@ class NotificationService {
   static Future<void> cancelReminder(int id) async {
     await _plugin.cancel(id);
   }
-
-
-
-
-
-
 
   static Future<void> showWeeklySummary({
     required int rideCount,
@@ -108,7 +81,7 @@ class NotificationService {
     final body = onTimePercentage == null || averageDelayMinutes == null
         ? '$rideLabel this week. Not enough matching arrival data for on-time stats yet.'
         : '$rideLabel this week, ${onTimePercentage.round()}% on-time, '
-            'avg ${averageDelayMinutes.round()} min delay.';
+              'avg ${averageDelayMinutes.round()} min delay.';
 
     await _plugin.show(
       _weeklySummaryNotificationId,
@@ -126,7 +99,6 @@ class NotificationService {
       ),
     );
   }
-
 
   static Future<void> showDelayAlert({
     required int id,

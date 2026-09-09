@@ -30,6 +30,7 @@ class LiveRouteMap extends StatefulWidget {
 class _LiveRouteMapState extends State<LiveRouteMap> {
   final StationRepository _repository = StationRepository();
   late Future<List<TrainStatus>> _liveStatuses;
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
@@ -40,9 +41,28 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
   @override
   void didUpdateWidget(covariant LiveRouteMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.line != widget.line || oldWidget.stations != widget.stations) {
-      setState(() => _liveStatuses = _load());
+    final lineChanged = oldWidget.line != widget.line;
+    final stationsChanged = !_sameStations(oldWidget.stations, widget.stations);
+    if (lineChanged || stationsChanged) {
+      _liveStatuses = _load();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final controller = _mapController;
+        if (mounted && controller != null && widget.stations.length >= 2) {
+          _fitRoute(controller, widget.stations);
+        }
+      });
     }
+  }
+
+  bool _sameStations(List<Station> first, List<Station> second) {
+    if (identical(first, second)) return true;
+    if (first.length != second.length) return false;
+    for (var index = 0; index < first.length; index++) {
+      final a = first[index];
+      final b = second[index];
+      if (a.id != b.id || a.lat != b.lat || a.lng != b.lng) return false;
+    }
+    return true;
   }
 
   Future<List<TrainStatus>> _load() {
@@ -62,12 +82,18 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
       child: SizedBox(
         height: height,
         child: FutureBuilder<List<TrainStatus>>(
+          key: ValueKey('live-status-${widget.line}'),
           future: _liveStatuses,
           builder: (context, snapshot) {
             final stations = widget.stations;
-            final stationsById = {for (final station in stations) station.id: station};
-            final trainStatuses = snapshot.data
-                    ?.where((status) => status.lat != null && status.lng != null)
+            final stationsById = {
+              for (final station in stations) station.id: station,
+            };
+            final trainStatuses =
+                snapshot.data
+                    ?.where(
+                      (status) => status.lat != null && status.lng != null,
+                    )
                     .toList() ??
                 const <TrainStatus>[];
             final routeColor = lineColor(widget.line);
@@ -79,7 +105,10 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                     target: LatLng(stations.first.lat, stations.first.lng),
                     zoom: 11,
                   ),
-                  onMapCreated: (controller) => _fitRoute(controller, stations),
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                    _fitRoute(controller, stations);
+                  },
                   markers: {
                     for (final station in stations)
                       Marker(
@@ -100,7 +129,9 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                         position: LatLng(status.lat!, status.lng!),
                         infoWindow: InfoWindow(
                           title: 'Live train',
-                          snippet: stationsById[status.stationId]?.name ?? widget.line,
+                          snippet:
+                              stationsById[status.stationId]?.name ??
+                              widget.line,
                         ),
                         icon: BitmapDescriptor.defaultMarkerWithHue(
                           BitmapDescriptor.hueGreen,
@@ -111,7 +142,8 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                     Polyline(
                       polylineId: PolylineId('route-${widget.line}'),
                       points: [
-                        for (final station in stations) LatLng(station.lat, station.lng),
+                        for (final station in stations)
+                          LatLng(station.lat, station.lng),
                       ],
                       color: routeColor,
                       width: 6,
@@ -132,7 +164,8 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                   child: _MapLabel(
                     line: widget.line,
                     trainCount: trainStatuses.length,
-                    loading: snapshot.connectionState == ConnectionState.waiting,
+                    loading:
+                        snapshot.connectionState == ConnectionState.waiting,
                   ),
                 ),
                 if (widget.onExpand != null)
@@ -154,7 +187,9 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
                     left: 12,
                     right: 12,
                     bottom: 12,
-                    child: _MapNotice('Live train positions are unavailable right now.'),
+                    child: _MapNotice(
+                      'Live train positions are unavailable right now.',
+                    ),
                   ),
               ],
             );
@@ -197,6 +232,13 @@ class _LiveRouteMapState extends State<LiveRouteMap> {
     );
   }
 
+  Color _lineColor(String line) {
+    final normalized = line.toLowerCase();
+    if (normalized.contains('seremban')) return const Color(0xff2e7d32);
+    if (normalized.contains('ets')) return const Color(0xffef6c00);
+    if (normalized.contains('shuttle')) return const Color(0xff8e24aa);
+    return const Color(0xff1267a9);
+  }
 }
 
 class _MapLabel extends StatelessWidget {
@@ -215,8 +257,8 @@ class _MapLabel extends StatelessWidget {
     final message = loading
         ? 'Loading live trains…'
         : trainCount == 0
-            ? 'No live trains right now'
-            : '$trainCount live train${trainCount == 1 ? '' : 's'}';
+        ? 'No live trains right now'
+        : '$trainCount live train${trainCount == 1 ? '' : 's'}';
     return Material(
       color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -245,8 +287,8 @@ class _MapNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Text(message, textAlign: TextAlign.center),
