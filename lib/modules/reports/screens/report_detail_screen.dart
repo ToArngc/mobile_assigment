@@ -86,7 +86,7 @@ class ReportDetailScreen extends StatelessWidget {
                   child: Image.network(
                     report.photoUrl!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _PhotoUnavailable(),
+                    errorBuilder: (_, _, _) => const _PhotoUnavailable(),
                   ),
                 ),
               ],

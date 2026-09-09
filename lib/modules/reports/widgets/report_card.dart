@@ -44,9 +44,9 @@ class ReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final open = report.status == FaultStatus.open;
-    final subtitleParts = [
-      if (stationName != null) stationName!,
-      if (report.description != null) report.description!,
+    final subtitleParts = <String>[
+      ?stationName,
+      ?report.description,
       _relativeTime,
     ];
 

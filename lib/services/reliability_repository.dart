@@ -122,16 +122,15 @@ class ReliabilityRepository {
     String? stationId,
     required int days,
   }) async {
+    final parameters = <String, String>{'days': '$days'};
+    if (stationId != null) parameters['station_id'] = stationId;
+    if (lineId != null) parameters['line'] = lineId;
     try {
       final data = await invokeFunction(
         lineId == null && stationId == null
             ? 'get-network-reliability-stats'
             : 'get-reliability-stats',
-        queryParameters: {
-          if (stationId != null) 'station_id': stationId,
-          if (lineId != null) 'line': lineId,
-          'days': '$days',
-        },
+        queryParameters: parameters,
       );
       final map = data as Map<String, dynamic>;
       return ReliabilityStatsSummary(
@@ -163,15 +162,14 @@ class ReliabilityRepository {
     required int days,
   }) async {
     if (lineId == null && stationId == null) return [];
+    final parameters = <String, String>{'days': '$days'};
+    if (stationId != null) parameters['station_id'] = stationId;
+    if (lineId != null) parameters['line'] = lineId;
 
     try {
       final data = await invokeFunction(
         'get-reliability-trend',
-        queryParameters: {
-          if (stationId != null) 'station_id': stationId,
-          if (lineId != null) 'line': lineId,
-          'days': '$days',
-        },
+        queryParameters: parameters,
       );
 
       return (data as List).map((row) {
@@ -193,14 +191,13 @@ class ReliabilityRepository {
     String? stationId,
     int limit = 20,
   }) async {
+    final parameters = <String, String>{'limit': '$limit'};
+    if (stationId != null) parameters['station_id'] = stationId;
+    if (lineId != null) parameters['line'] = lineId;
     try {
       final data = await invokeFunction(
         'get-recent-train-delays',
-        queryParameters: {
-          if (stationId != null) 'station_id': stationId,
-          if (lineId != null) 'line': lineId,
-          'limit': '$limit',
-        },
+        queryParameters: parameters,
       );
       return (data as List)
           .map((row) => TrainStatus.fromJson(row as Map<String, dynamic>))

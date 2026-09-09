@@ -82,10 +82,10 @@ class ReportsRepository {
       final fields = <String, String>{
         'station_id': stationId,
         'issue_type': categories.map((c) => c.issueType).join(','),
-        if (description != null) 'description': description,
-        if (lat != null) 'lat': '$lat',
-        if (lng != null) 'lng': '$lng',
       };
+      if (description != null) fields['description'] = description;
+      if (lat != null) fields['lat'] = '$lat';
+      if (lng != null) fields['lng'] = '$lng';
       final files = photoBytes != null && photoFileName != null
           ? [MultipartFile.fromBytes('photo', photoBytes, filename: photoFileName)]
           : null;
