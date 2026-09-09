@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'core/malaysia_time.dart';
 import 'core/theme.dart';
 import 'services/auth_service.dart';
 import 'services/delay_alert_service.dart';
@@ -12,10 +13,10 @@ import 'modules/auth/screens/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MalaysiaTime.initialize();
   await SupabaseService.initialize();
-  runApp(const MyApp());
-
   await NotificationService.initialize();
+  runApp(const MyApp());
 
   final rideDetection = RideDetectionService();
   AuthService.authStateChanges.listen((authState) {
@@ -27,7 +28,6 @@ Future<void> main() async {
     unawaited(DelayAlertService.instance.start());
     unawaited(rideDetection.start());
   });
-
 }
 
 class MyApp extends StatelessWidget {

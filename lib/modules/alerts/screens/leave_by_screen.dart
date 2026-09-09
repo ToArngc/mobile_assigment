@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+<<<<<<< Updated upstream
+=======
+import '../../../core/malaysia_time.dart';
+import '../../../core/theme.dart';
+>>>>>>> Stashed changes
 import '../../../providers/leave_by_provider.dart';
 import '../../../services/leave_by_repository.dart';
 import '../../../services/auth_service.dart';
@@ -16,10 +21,9 @@ class LeaveByScreen extends StatelessWidget {
     }
 
     return ChangeNotifierProvider(
-      create: (_) => LeaveByProvider(
-        repository: LeaveByRepository(),
-        userId: userId,
-      )..loadAll(),
+      create: (_) =>
+          LeaveByProvider(repository: LeaveByRepository(), userId: userId)
+            ..loadAll(),
       child: Builder(
         builder: (context) => Scaffold(
           appBar: AppBar(title: const Text('Leave-By Planner')),
@@ -61,7 +65,10 @@ class _LeaveByBody extends StatelessWidget {
               children: [
                 Text('Failed to load: ${provider.errorMessage}'),
                 const SizedBox(height: 8),
-                ElevatedButton(onPressed: provider.loadAll, child: const Text('Retry')),
+                ElevatedButton(
+                  onPressed: provider.loadAll,
+                  child: const Text('Retry'),
+                ),
               ],
             ),
           );
@@ -73,7 +80,7 @@ class _LeaveByBody extends StatelessWidget {
               padding: EdgeInsets.all(24),
               child: Text(
                 'No saved routes yet. Add one to get a personalised '
-                    '"leave by" notification each morning.',
+                '"leave by" notification each morning.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey),
               ),
@@ -93,12 +100,14 @@ class _LeaveByBody extends StatelessWidget {
               if (result == null) {
                 subtitle = 'No upcoming departure found today';
               } else if (!result.hasEnoughData) {
-                subtitle = 'Data accumulating — not enough history yet to estimate delay';
+                subtitle =
+                    'Data accumulating — not enough history yet to estimate delay';
               } else {
-                final t = result.leaveByTime;
+                final t = MalaysiaTime.fromUtc(result.leaveByTime);
                 final timeStr =
                     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-                subtitle = 'Leave by $timeStr (${result.avgDelayMinutes.round()} min avg delay)';
+                subtitle =
+                    'Leave by $timeStr (${result.avgDelayMinutes.round()} min avg delay)';
               }
 
               return ListTile(
