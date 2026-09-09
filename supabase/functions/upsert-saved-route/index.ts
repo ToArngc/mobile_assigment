@@ -39,13 +39,13 @@ Deno.serve(async (req) => {
     return errorResponse("Invalid JSON body", 400);
   }
 
-  if (!body.origin_station_id || !body.destination_station_id) {
-    return errorResponse("origin_station_id and destination_station_id are required", 400);
+  if (!body.origin_station_id) {
+    return errorResponse("origin_station_id is required", 400);
   }
 
   const fields = {
     origin_station_id: body.origin_station_id,
-    destination_station_id: body.destination_station_id,
+    destination_station_id: body.destination_station_id ?? null,
     walking_minutes: body.walking_minutes ?? 10,
   };
 

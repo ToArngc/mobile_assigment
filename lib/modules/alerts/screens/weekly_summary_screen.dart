@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants.dart';
 import '../../../core/friendly_error.dart';
+import '../../../core/malaysia_time.dart';
 import '../../../core/theme.dart';
+import '../../../models/ride_log.dart';
 import '../../../providers/weekly_summary_provider.dart';
 import '../../../models/weekly_ride_summary.dart';
 import '../../../services/weekly_summary_repository.dart';
 import '../../../services/auth_service.dart';
+import 'ride_detail_screen.dart';
 
 class WeeklySummaryScreen extends StatelessWidget {
   const WeeklySummaryScreen({super.key});
@@ -164,7 +167,7 @@ class _RideHistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final delay = ride.delayMinutes;
     final isOnTime = delay != null && delay <= onTimeThresholdMinutes;
-    final date = ride.detectedAt.toLocal();
+    final date = MalaysiaTime.fromUtc(ride.detectedAt);
     final time = TimeOfDay.fromDateTime(date).format(context);
     final dateLabel = '${date.day}/${date.month}/${date.year}';
     final delayLabel = delay == null
@@ -174,6 +177,20 @@ class _RideHistoryTile extends StatelessWidget {
             : '${delay} min delay';
 
     return ListTile(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => RideDetailScreen(
+            ride: RideLog(
+              id: '',
+              userId: '',
+              stationId: '',
+              stationName: ride.stationName,
+              detectedAt: ride.detectedAt,
+              delayMinutes: ride.delayMinutes,
+            ),
+          ),
+        ),
+      ),
       leading: Icon(
         delay == null
             ? Icons.help_outline
@@ -188,16 +205,22 @@ class _RideHistoryTile extends StatelessWidget {
       ),
       title: Text(ride.stationName ?? 'Station'),
       subtitle: Text('$dateLabel · $time'),
-      trailing: Text(
-        delayLabel,
-        textAlign: TextAlign.end,
-        style: TextStyle(
-          color: delay == null
-              ? AppColors.neutral
-              : isOnTime
-                  ? AppColors.success
-                  : AppColors.warning,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            delayLabel,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: delay == null
+                  ? AppColors.neutral
+                  : isOnTime
+                      ? AppColors.success
+                      : AppColors.warning,
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
       ),
     );
   }

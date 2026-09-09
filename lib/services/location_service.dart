@@ -40,6 +40,11 @@ class LocationService {
         permission == PermissionStatus.grantedLimited;
   }
 
+  Future<LocationData?> getCurrentLocation() async {
+    if (!await ensurePermission()) return null;
+    return _location.getLocation();
+  }
+
 
 
 

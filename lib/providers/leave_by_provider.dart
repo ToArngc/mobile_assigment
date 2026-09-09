@@ -68,7 +68,7 @@ class LeaveByProvider extends ChangeNotifier {
             await NotificationService.scheduleLeaveByReminder(
               id: route.id.hashCode,
               leaveByTime: result.leaveByTime,
-              stationLabel: stationName(route.originStationId),
+              stationLabel: route.stationName ?? stationName(route.originStationId),
             );
           }
         } catch (_) {

@@ -139,6 +139,40 @@ class _AlertsHomeBody extends StatelessWidget {
                   provider: provider,
                   onOpenMute: () => _handleAlertAction(context, provider, _HeaderAction.mute),
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 52,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _handleAlertAction(
+                            context,
+                            provider,
+                            _HeaderAction.summary,
+                          ),
+                          icon: const Icon(Icons.bar_chart_outlined),
+                          label: const Text('Weekly summary'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SizedBox(
+                        height: 52,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _handleAlertAction(
+                            context,
+                            provider,
+                            _HeaderAction.leaveBy,
+                          ),
+                          icon: const Icon(Icons.directions_walk_outlined),
+                          label: const Text('Leave-By'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 const SectionLabel('Saved stations'),
                 const SizedBox(height: 8),
@@ -253,6 +287,8 @@ class _AlertsHomeBody extends StatelessWidget {
   }
 }
 
+enum _HeaderAction { mute, summary, leaveBy }
+
 void _handleAlertAction(
   BuildContext context,
   AlertsProvider provider,
@@ -268,18 +304,19 @@ void _handleAlertAction(
           child: const SafeArea(child: QuickMuteCard()),
         ),
       );
+      return;
     case _HeaderAction.summary:
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const WeeklySummaryScreen()));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const WeeklySummaryScreen()),
+      );
+      return;
     case _HeaderAction.leaveBy:
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const LeaveByScreen()));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LeaveByScreen()),
+      );
+      return;
   }
 }
-
-enum _HeaderAction { mute, summary, leaveBy }
 
 class _SavedStationCard extends StatelessWidget {
   const _SavedStationCard({

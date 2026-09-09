@@ -22,8 +22,10 @@ Deno.serve(async (req) => {
 
   const { data, error } = await supabase
     .from("saved_routes")
-    .select()
-    .eq("user_id", userId);
+    .select("*, origin_station:stations!saved_routes_origin_station_id_fkey(name, line)")
+    .eq("user_id", userId)
+    .not("origin_station_id", "is", null)
+    .order("created_at", { ascending: false });
 
   if (error) return errorResponse(error.message, 500);
   return jsonResponse(data);

@@ -50,6 +50,14 @@ class RideDetailScreen extends StatelessWidget {
                   const Divider(height: 28),
                   _DetailRow(
                     icon: Icons.timer_outlined,
+                    label: 'Train delay',
+                    value: ride.delayMinutes == null
+                        ? 'Unavailable'
+                        : '${ride.delayMinutes} minutes',
+                  ),
+                  const Divider(height: 28),
+                  _DetailRow(
+                    icon: Icons.timer_outlined,
                     label: 'Duration',
                     value: ride.durationMinutes == null
                         ? 'Unavailable'
