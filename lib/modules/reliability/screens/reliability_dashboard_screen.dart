@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../models/station.dart';
 import '../../../providers/reliability_provider.dart';
@@ -10,6 +11,7 @@ import '../../../services/reliability_repository.dart';
 import '../../../services/station_repository.dart';
 import '../../../shared_widgets/app_empty_state.dart';
 import '../../../shared_widgets/app_error_state.dart';
+import '../../../shared_widgets/profile_action.dart';
 import '../../../shared_widgets/section_label.dart';
 import '../widgets/ontime_summary_card.dart';
 import '../widgets/train_delay_list_tile.dart';
@@ -74,6 +76,7 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
       builder: (context, provider, _) => Scaffold(
         appBar: AppBar(
           title: const Text('Reliability'),
+          actions: const [ProfileAction()],
         ),
         body: RefreshIndicator(
           onRefresh: () => provider.loadDashboard(provider.filter),
@@ -91,7 +94,10 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
               else if (provider.status == LoadStatus.error)
                 ...[
                   AppErrorState(
-                    message: 'Failed to load: ${provider.errorMessage}',
+                    message: friendlyErrorMessage(
+                      provider.errorMessage,
+                      fallback: 'Reliability data could not be loaded.',
+                    ),
                     onRetry: () => provider.loadDashboard(provider.filter),
                   ),
                   const SizedBox(height: AppSpacing.md),

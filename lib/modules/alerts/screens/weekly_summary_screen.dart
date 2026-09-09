@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants.dart';
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../providers/weekly_summary_provider.dart';
 import '../../../models/weekly_ride_summary.dart';
@@ -47,7 +48,12 @@ class _WeeklySummaryBody extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Failed to load: ${provider.errorMessage}'),
+                Text(
+                  friendlyErrorMessage(
+                    provider.errorMessage,
+                    fallback: 'Your weekly summary could not be loaded.',
+                  ),
+                ),
                 const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: provider.loadSummary,

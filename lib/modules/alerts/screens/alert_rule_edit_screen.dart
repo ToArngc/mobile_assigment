@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../models/saved_station.dart';
 import '../../../services/auth_service.dart';
@@ -85,6 +86,18 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
     final userId = AuthService.currentUserId;
     if (userId == null) return;
 
+
+
+
+    if ((_quietStart == null) != (_quietEnd == null)) {
+      _showMessage('Set both a start and an end time for quiet hours, or clear both.');
+      return;
+    }
+    if (_activeDays.isEmpty) {
+      _showMessage('Pick at least one active day for this alert.');
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       final saved = SavedStation(
@@ -102,13 +115,20 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
+        _showMessage(
+          friendlyErrorMessage(
+            e,
+            fallback: 'This alert rule could not be saved. Please try again.',
+          ),
         );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -187,6 +207,7 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: _allDays.map((day) {
               final selected = _activeDays.contains(day);
               return FilterChip(

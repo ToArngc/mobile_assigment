@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("fault_reports")
-    .select()
+    .select("id, station_id, issue_type, description, photo_url, status, created_at")
     .eq("station_id", stationId)
     .order("created_at", { ascending: false })
     .limit(limit);

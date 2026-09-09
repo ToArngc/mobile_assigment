@@ -7,6 +7,7 @@ import '../../../services/station_repository.dart';
 import '../../../shared_widgets/app_empty_state.dart';
 import '../../../shared_widgets/app_error_state.dart';
 import '../../../shared_widgets/line_badge.dart';
+import '../../../shared_widgets/profile_action.dart';
 import 'live_map_page.dart';
 import 'live_route_map.dart';
 import 'station_detail_page.dart';
@@ -133,6 +134,7 @@ class _ExplorerHomePageState extends State<ExplorerHomePage> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text('Explore stations'),
+      actions: const [ProfileAction()],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(72),
         child: Padding(

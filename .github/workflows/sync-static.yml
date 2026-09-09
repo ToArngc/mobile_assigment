@@ -2,13 +2,10 @@ name: Sync GTFS static
 
 on:
   schedule:
-    # Design doc §8 calls for once-daily (KTMB publishes at 00:01 MYT), but
-    # running every 15 min for now to get real stations/timetable_entries
-    # into Supabase ASAP — poll-realtime.yml can't log anything real until
-    # this has synced at least once. Safe to run this often: sync_static.py
-    # upserts stations by name and does a full delete+reinsert of
-    # timetable_entries, so repeat runs are idempotent, just redundant.
-    - cron: '*/15 * * * *'
+    # Design doc §8 calls for once-daily; KTMB publishes at 00:01 MYT, so this
+    # runs at 00:30 MYT (16:30 UTC the previous day). Use workflow_dispatch for
+    # an immediate sync when timetable_entries need to be populated now.
+    - cron: '30 16 * * *'
   workflow_dispatch:
 
 jobs:

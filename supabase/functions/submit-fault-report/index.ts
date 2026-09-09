@@ -20,6 +20,17 @@ const VALID_ISSUE_TYPES = [
   "safety_hazard",
 ];
 
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+
+
+
+function safeFileName(name: string): string {
+  const cleaned = name.replace(/[^A-Za-z0-9._-]/g, "_");
+  return cleaned.slice(-80) || "photo";
+}
+
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
   if (preflight) return preflight;
@@ -75,7 +86,17 @@ Deno.serve(async (req) => {
   if (typeof stationId !== "string" || !stationId) {
     return errorResponse("station_id is required", 400);
   }
-  if (typeof issueType !== "string" || !VALID_ISSUE_TYPES.includes(issueType)) {
+
+
+
+
+  const issueTypes = typeof issueType === "string"
+    ? issueType.split(",").map((t) => t.trim()).filter(Boolean)
+    : [];
+  if (issueTypes.length === 0) {
+    return errorResponse("issue_type is required", 400);
+  }
+  if (issueTypes.some((t) => !VALID_ISSUE_TYPES.includes(t))) {
     return errorResponse(
       `issue_type must be one of: ${VALID_ISSUE_TYPES.join(", ")}`,
       400,
@@ -90,7 +111,17 @@ Deno.serve(async (req) => {
 
   let photoUrl: string | null = null;
   if (photo instanceof File) {
-    const path = `${stationId}/${Date.now()}_${photo.name}`;
+    if (photo.size > MAX_PHOTO_BYTES) {
+      return errorResponse("Photo must be 5 MB or smaller", 400);
+    }
+    if (!ALLOWED_PHOTO_TYPES.includes(photo.type)) {
+      return errorResponse(
+        `Photo must be one of: ${ALLOWED_PHOTO_TYPES.join(", ")}`,
+        400,
+      );
+    }
+
+    const path = `${stationId}/${Date.now()}_${safeFileName(photo.name)}`;
     const bytes = new Uint8Array(await photo.arrayBuffer());
 
     const { error: uploadError } = await supabase.storage
@@ -107,20 +138,23 @@ Deno.serve(async (req) => {
     photoUrl = publicUrlData.publicUrl;
   }
 
+
+
+
+
   const { data, error } = await supabase
     .from("fault_reports")
-    .insert({
+    .insert(issueTypes.map((type) => ({
       user_id: userId,
       station_id: stationId,
-      issue_type: issueType,
+      issue_type: type,
       description: typeof description === "string" ? description : null,
       photo_url: photoUrl,
       lat,
       lng,
       status: "open",
-    })
-    .select()
-    .single();
+    })))
+    .select();
 
   if (error) return errorResponse(error.message, 500);
   return jsonResponse(data, 201);

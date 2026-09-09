@@ -68,10 +68,10 @@ class ReportsRepository {
 
 
 
-  Future<FaultReport> submitReport({
+  Future<List<FaultReport>> submitReport({
     required String? userId,
     required String stationId,
-    required ReportCategory category,
+    required List<ReportCategory> categories,
     String? description,
     Uint8List? photoBytes,
     String? photoFileName,
@@ -81,7 +81,7 @@ class ReportsRepository {
     try {
       final fields = <String, String>{
         'station_id': stationId,
-        'issue_type': category.issueType,
+        'issue_type': categories.map((c) => c.issueType).join(','),
         if (description != null) 'description': description,
         if (lat != null) 'lat': '$lat',
         if (lng != null) 'lng': '$lng',
@@ -96,7 +96,9 @@ class ReportsRepository {
         body: fields,
         files: files,
       );
-      return FaultReport.fromJson(data as Map<String, dynamic>);
+      return (data as List)
+          .map((row) => FaultReport.fromJson(row as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       throw Exception('Failed to submit report: $e');
     }

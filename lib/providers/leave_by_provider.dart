@@ -3,11 +3,13 @@ import '../services/leave_by_repository.dart';
 import '../services/mute_service.dart';
 import '../models/saved_route.dart';
 import '../services/notification_service.dart';
+import '../services/station_repository.dart';
 
 enum LoadStatus { initial, loading, loaded, error }
 
 class LeaveByProvider extends ChangeNotifier {
   final LeaveByRepository _repository;
+  final StationRepository _stationRepository = StationRepository();
   final String userId;
 
   LeaveByProvider({
@@ -19,6 +21,10 @@ class LeaveByProvider extends ChangeNotifier {
   String? errorMessage;
   List<SavedRoute> routes = [];
   final Map<String, LeaveByResult?> results = {};
+  final Map<String, String> _stationNames = {};
+
+  String stationName(String stationId) =>
+      _stationNames[stationId] ?? 'Unknown station';
 
   Future<void> loadAll() async {
     status = LoadStatus.loading;
@@ -28,6 +34,15 @@ class LeaveByProvider extends ChangeNotifier {
     try {
       routes = await _repository.getSavedRoutes(userId);
       results.clear();
+
+      try {
+        final stations = await _stationRepository.getAllStations();
+        _stationNames
+          ..clear()
+          ..addEntries(stations.map((s) => MapEntry(s.id, s.name)));
+      } catch (_) {
+        _stationNames.clear();
+      }
 
 
 
@@ -53,7 +68,7 @@ class LeaveByProvider extends ChangeNotifier {
             await NotificationService.scheduleLeaveByReminder(
               id: route.id.hashCode,
               leaveByTime: result.leaveByTime,
-              stationLabel: 'your route',
+              stationLabel: stationName(route.originStationId),
             );
           }
         } catch (_) {

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/friendly_error.dart';
 import '../../../models/fault_report.dart';
 import '../../../providers/reports_provider.dart';
 import '../../../services/reports_repository.dart';
 import '../../../services/auth_service.dart';
 import '../../../shared_widgets/app_empty_state.dart';
 import '../../../shared_widgets/app_error_state.dart';
+import '../../../shared_widgets/profile_action.dart';
 import '../widgets/report_card.dart';
 import 'report_detail_screen.dart';
 import 'report_issue_screen.dart';
@@ -35,7 +37,10 @@ class ReportsHomeScreen extends StatelessWidget {
       )..loadMyReports(),
       child: Builder(
         builder: (context) => Scaffold(
-          appBar: AppBar(title: const Text('Reports')),
+          appBar: AppBar(
+            title: const Text('Reports'),
+            actions: const [ProfileAction()],
+          ),
           body: const _ReportsHomeBody(),
           floatingActionButton: FloatingActionButton.extended(
             icon: const Icon(Icons.add),
@@ -119,7 +124,10 @@ class _ReportsHomeBody extends StatelessWidget {
 
         if (provider.status == LoadStatus.error) {
           return AppErrorState(
-            message: 'Failed to load: ${provider.errorMessage}',
+            message: friendlyErrorMessage(
+              provider.errorMessage,
+              fallback: 'Your reports could not be loaded.',
+            ),
             onRetry: provider.loadMyReports,
           );
         }

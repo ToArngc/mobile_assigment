@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/constants.dart';
+import '../../../core/friendly_error.dart';
 import '../../../services/auth_service.dart';
 import 'sign_up_screen.dart';
 
@@ -45,17 +47,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String _friendlyError(Object error) {
-    final message = error.toString().toLowerCase();
-    if (message.contains('socketexception') ||
-        message.contains('failed host lookup') ||
-        message.contains('network') ||
-        message.contains('timed out')) {
-      return 'Unable to connect. Check your internet connection and try again.';
-    }
-    if (message.contains('invalid login credentials')) {
+    if (error.toString().toLowerCase().contains('invalid login credentials')) {
       return 'Incorrect email or password. Please try again.';
     }
-    return 'Unable to log in right now. Please try again.';
+    return friendlyErrorMessage(
+      error,
+      fallback: 'Unable to log in right now. Please try again.',
+    );
   }
 
   @override
@@ -79,8 +77,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(labelText: 'Email'),
-                    validator: (value) =>
-                        (value == null || value.trim().isEmpty) ? 'Email is required' : null,
+                    validator: (value) {
+                      final email = value?.trim() ?? '';
+                      if (email.isEmpty) return 'Email is required';
+                      if (!emailPattern.hasMatch(email)) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 12),
                   TextFormField(

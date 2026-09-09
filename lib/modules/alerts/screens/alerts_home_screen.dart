@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/friendly_error.dart';
 import '../../../core/malaysia_time.dart';
 import '../../../core/theme.dart';
 import '../../../models/ride_log.dart';
@@ -10,8 +11,8 @@ import '../../../providers/alerts_provider.dart';
 import '../../../services/alerts_repository.dart';
 import '../../../services/auth_service.dart';
 import '../../../shared_widgets/app_empty_state.dart';
-import '../../../shared_widgets/app_error_state.dart';
 import '../../../shared_widgets/line_badge.dart';
+import '../../../shared_widgets/profile_action.dart';
 import '../../../shared_widgets/section_label.dart';
 import '../widgets/quick_mute_card.dart';
 import 'alert_rule_edit_screen.dart';
@@ -68,6 +69,7 @@ class _AlertsHomeScreen extends StatelessWidget {
               ),
             ],
           ),
+          const ProfileAction(),
         ],
       ),
       body: _AlertsHomeBody(provider: provider),
@@ -93,7 +95,12 @@ class _AlertsHomeBody extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Failed to load: ${provider.errorMessage}'),
+                Text(
+                  friendlyErrorMessage(
+                    provider.errorMessage,
+                    fallback: 'Your alerts could not be loaded.',
+                  ),
+                ),
                 const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: provider.loadAll,
@@ -246,89 +253,29 @@ class _AlertsHomeBody extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.provider});
-
-  final AlertsProvider provider;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'My alerts',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+void _handleAlertAction(
+  BuildContext context,
+  AlertsProvider provider,
+  _HeaderAction action,
+) {
+  switch (action) {
+    case _HeaderAction.mute:
+      showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (_) => ChangeNotifierProvider.value(
+          value: provider,
+          child: const SafeArea(child: QuickMuteCard()),
         ),
-        const SizedBox(height: 3),
-        const Text(
-          'Manage station notifications',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        if (provider.lastAlertCheckedAt != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            'Last checked: ${_formatCheckedTime(provider.lastAlertCheckedAt!)}',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
-          ),
-        ],
-        const SizedBox(height: 4),
-        PopupMenuButton<_HeaderAction>(
-          tooltip: 'Alert options',
-          onSelected: (action) => _handleAction(context, action),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.tune, size: 18),
-                SizedBox(width: 6),
-                Text('Alert options'),
-              ],
-            ),
-          ),
-          itemBuilder: (_) => const [
-            PopupMenuItem(
-              value: _HeaderAction.mute,
-              child: Text('Mute alerts'),
-            ),
-            PopupMenuItem(
-              value: _HeaderAction.summary,
-              child: Text('Weekly summary'),
-            ),
-            PopupMenuItem(
-              value: _HeaderAction.leaveBy,
-              child: Text('Leave-By planner'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  void _handleAction(BuildContext context, _HeaderAction action) {
-    switch (action) {
-      case _HeaderAction.mute:
-        showModalBottomSheet<void>(
-          context: context,
-          showDragHandle: true,
-          builder: (_) => ChangeNotifierProvider.value(
-            value: provider,
-            child: const SafeArea(child: QuickMuteCard()),
-          ),
-        );
-      case _HeaderAction.summary:
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const WeeklySummaryScreen()));
-      case _HeaderAction.leaveBy:
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const LeaveByScreen()));
-    }
+      );
+    case _HeaderAction.summary:
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const WeeklySummaryScreen()));
+    case _HeaderAction.leaveBy:
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const LeaveByScreen()));
   }
 }
 

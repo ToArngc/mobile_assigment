@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../models/fault_report.dart';
 import '../../../models/station.dart';
@@ -30,6 +31,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final _repository = ReportsRepository();
   final _stationRepository = StationRepository();
 
+  final _descriptionController = TextEditingController();
+
   Station? _station;
   final Set<ReportCategory> _categories = {};
   File? _photo;
@@ -44,6 +47,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   void initState() {
     super.initState();
     _detectNearestStation();
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
 
@@ -116,7 +125,14 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       MaterialPageRoute(builder: (_) => const PickReportStationScreen()),
     );
     if (result != null) {
-      setState(() => _station = result);
+      setState(() {
+        _station = result;
+
+
+
+        _lat = null;
+        _lng = null;
+      });
       _loadRecentReports();
     }
   }
@@ -187,17 +203,17 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
 
 
-      for (final category in _categories) {
-        await _repository.submitReport(
-          userId: userId,
-          stationId: _station!.id,
-          category: category,
-          photoBytes: photoBytes,
-          photoFileName: photoFileName,
-          lat: _lat,
-          lng: _lng,
-        );
-      }
+      final description = _descriptionController.text.trim();
+      await _repository.submitReport(
+        userId: userId,
+        stationId: _station!.id,
+        categories: _categories.toList(),
+        description: description.isEmpty ? null : description,
+        photoBytes: photoBytes,
+        photoFileName: photoFileName,
+        lat: _lat,
+        lng: _lng,
+      );
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -211,17 +227,10 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
   }
 
-  String _submissionErrorMessage(Object error) {
-    final details = error.toString().toLowerCase();
-    if (details.contains('invalid or expired session') ||
-        details.contains('authorization header')) {
-      return 'Your session has expired. Please log in again and retry.';
-    }
-    if (details.contains('status 0') || details.contains('socketexception')) {
-      return 'Couldn\'t reach the service. Check your connection and try again.';
-    }
-    return 'We couldn\'t submit your report. Please try again.';
-  }
+  String _submissionErrorMessage(Object error) => friendlyErrorMessage(
+        error,
+        fallback: 'We couldn\'t submit your report. Please try again.',
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -255,6 +264,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: ReportCategory.values.map((cat) {
               final selected = _categories.contains(cat);
               return FilterChip(
@@ -265,6 +275,23 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 }),
               );
             }).toList(),
+          ),
+          const Divider(height: 32),
+
+          Text('Description (optional)', style: Theme.of(context).textTheme.titleMedium),
+          const Text(
+            'Anything else that would help staff find the problem?',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _descriptionController,
+            maxLines: 3,
+            maxLength: 500,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'What is wrong, and where exactly?',
+            ),
           ),
           const Divider(height: 32),
 
@@ -321,7 +348,10 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 }
                 if (snapshot.hasError) {
                   return Text(
-                    'Failed to load: ${snapshot.error}',
+                    friendlyErrorMessage(
+                      snapshot.error,
+                      fallback: 'Recent reports could not be loaded.',
+                    ),
                     style: const TextStyle(color: AppColors.danger),
                   );
                 }
