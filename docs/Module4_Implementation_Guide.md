@@ -220,10 +220,10 @@ on-time percentage:
 on-time matched rides / all matched rides × 100
 
 average delay:
-average delay_minutes across matched rides
+average delay_minutes across matched rides that were late (`delay_minutes > 0`)
 ```
 
-If no ride has a matching train-status record, percentage and average delay are `null`, not zero. The UI displays “Not enough data yet” so it does not make a false claim that trains were on time.
+Early arrivals do not offset late trains in the displayed average. For example, delays of `8`, `10`, `-4` and `-3` minutes display an average delay of `9` minutes. If no ride has a matching train-status record, percentage and average delay are `null`, not zero. The UI displays “Not enough data yet” so it does not make a false claim that trains were on time.
 
 Weekly Summary lists station name, MYT date/time and delay. Tapping it opens Ride Detail. Weekly data is intentionally lightweight, so destination, duration and line can be unavailable in that detail view; Alerts Recent Ride History uses the full `ride_logs` query and can show more fields.
 
@@ -329,4 +329,3 @@ supabase/functions/compute-leave-by-time/index.ts
 ```
 
 Deploy those functions through the Supabase CLI or Supabase Dashboard when backend deployment access is available, so the production functions exactly match this branch.
-

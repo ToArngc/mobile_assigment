@@ -87,4 +87,21 @@ void main() {
     expect(summary.rides.single.stationName, 'Serdang');
     expect(summary.rides.single.delayMinutes, isNull);
   });
+
+  test('WeeklyRideSummary averages late trains without early arrivals offsetting them', () {
+    final summary = WeeklyRideSummary.fromJson({
+      'ride_count': 4,
+      'on_time_count': 2,
+      'on_time_percentage': 50,
+      'avg_delay_minutes': 0,
+      'rides': [
+        {'detected_at': '2026-09-09T02:00:00Z', 'delay_minutes': 8},
+        {'detected_at': '2026-09-09T03:00:00Z', 'delay_minutes': 10},
+        {'detected_at': '2026-09-09T04:00:00Z', 'delay_minutes': -4},
+        {'detected_at': '2026-09-09T05:00:00Z', 'delay_minutes': -3},
+      ],
+    });
+
+    expect(summary.averageDelayMinutes, 9);
+  });
 }
