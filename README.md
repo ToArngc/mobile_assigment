@@ -51,7 +51,7 @@ The Android manifest reads its Maps key from `android/secrets.properties`,
 which is gitignored and never committed. Create it from the example file:
 
 ```bash
-cp android/secrets.properties.example android/secrets.properties
+cp android/secrets.properties android/secrets.properties
 ```
 
 Then set the one key it expects:
