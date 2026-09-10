@@ -1,14 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { getReliabilityStats, ON_TIME_THRESHOLD_MINUTES } from "../_shared/reliability.ts";

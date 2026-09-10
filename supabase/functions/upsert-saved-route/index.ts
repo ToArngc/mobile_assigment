@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { requireUser } from "../_shared/auth.ts";
@@ -41,6 +33,16 @@ Deno.serve(async (req) => {
 
   if (!body.origin_station_id) {
     return errorResponse("origin_station_id is required", 400);
+  }
+
+  const walkingMinutes = body.walking_minutes;
+  if (walkingMinutes !== null && walkingMinutes !== undefined) {
+    if (!Number.isInteger(walkingMinutes) || walkingMinutes < 1 || walkingMinutes > 120) {
+      return errorResponse(
+        "walking_minutes must be a whole number between 1 and 120",
+        400,
+      );
+    }
   }
 
   const fields = {

@@ -9,9 +9,6 @@ class SavedStation {
   final bool enabled;
   final DateTime createdAt;
 
-
-
-
   final String? stationName;
   final String? stationLine;
 
@@ -49,22 +46,6 @@ class SavedStation {
       stationName: joinedStation?['name'] as String?,
       stationLine: joinedStation?['line'] as String?,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    final json = {
-      'id': id,
-      'user_id': userId,
-      'station_id': stationId,
-      'alert_delay_threshold': alertDelayThreshold,
-      'quiet_hours_start': quietHoursStart,
-      'quiet_hours_end': quietHoursEnd,
-      'active_days': activeDays,
-      'enabled': enabled,
-      'created_at': createdAt.toIso8601String(),
-    };
-    if (id.isEmpty) json.remove('id');
-    return json;
   }
 
   SavedStation copyWith({bool? enabled}) {

@@ -35,6 +35,6 @@ class AppEmptyState extends StatelessWidget {
       ],
     );
     final padded = Padding(padding: const EdgeInsets.all(24), child: content);
-    return wrapped ? Card(margin: EdgeInsets.zero, child: padded) : padded;
+    return wrapped ? Card(child: padded) : padded;
   }
 }

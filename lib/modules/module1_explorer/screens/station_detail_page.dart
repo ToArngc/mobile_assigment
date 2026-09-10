@@ -92,9 +92,6 @@ class _AccessibilityCardState extends State<_AccessibilityCard> {
           );
         }
 
-
-
-
         if (snapshot.hasError) {
           return Card(
             child: ListTile(
@@ -136,9 +133,6 @@ class _AccessibilityCardState extends State<_AccessibilityCard> {
       },
     );
   }
-
-
-
 
   String _issueLabel(String issueType) {
     switch (issueType) {
@@ -210,12 +204,23 @@ class _TimetableState extends State<_Timetable> {
               return ListTile(
                 leading: const Icon(Icons.departure_board_outlined),
                 title: Text(entry.scheduledTime.substring(0, 5)),
-                subtitle: Text('${entry.line} · ${entry.direction}'),
+                subtitle: Text('${entry.line} · ${_directionLabel(entry.direction)}'),
               );
             }).toList(),
           ),
         );
       },
     );
+  }
+
+  String _directionLabel(String direction) {
+    switch (direction) {
+      case '0':
+        return 'Northbound';
+      case '1':
+        return 'Southbound';
+      default:
+        return direction;
+    }
   }
 }

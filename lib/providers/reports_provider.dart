@@ -17,12 +17,6 @@ class ReportsProvider extends ChangeNotifier {
   String? errorMessage;
   List<FaultReport> myReports = [];
 
-
-
-
-
-
-
   Future<bool> resolveReport(String reportId) async {
     try {
       await _repository.markResolved(reportId);

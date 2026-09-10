@@ -1,18 +1,9 @@
-
-
-
-
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { requireUser } from "../_shared/auth.ts";
+
+const VALID_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const TIME_PATTERN = /^\d{2}:\d{2}(:\d{2})?$/;
 
 interface Body {
   id?: string;
@@ -47,6 +38,48 @@ Deno.serve(async (req) => {
   }
 
   if (!body.station_id) return errorResponse("station_id is required", 400);
+
+  const threshold = body.alert_delay_threshold;
+  if (threshold !== null && threshold !== undefined) {
+    if (!Number.isInteger(threshold) || threshold < 1 || threshold > 30) {
+      return errorResponse(
+        "alert_delay_threshold must be a whole number between 1 and 30",
+        400,
+      );
+    }
+  }
+
+  const quietStart = body.quiet_hours_start;
+  const quietEnd = body.quiet_hours_end;
+  if (quietStart !== null && quietStart !== undefined) {
+    if (typeof quietStart !== "string" || !TIME_PATTERN.test(quietStart)) {
+      return errorResponse("quiet_hours_start must be formatted as HH:MM or HH:MM:SS", 400);
+    }
+  }
+  if (quietEnd !== null && quietEnd !== undefined) {
+    if (typeof quietEnd !== "string" || !TIME_PATTERN.test(quietEnd)) {
+      return errorResponse("quiet_hours_end must be formatted as HH:MM or HH:MM:SS", 400);
+    }
+  }
+  if ((quietStart == null) !== (quietEnd == null)) {
+    return errorResponse(
+      "quiet_hours_start and quiet_hours_end must both be set or both be null",
+      400,
+    );
+  }
+
+  const activeDays = body.active_days;
+  if (activeDays !== null && activeDays !== undefined) {
+    if (!Array.isArray(activeDays) || activeDays.length === 0) {
+      return errorResponse("active_days must be a non-empty array", 400);
+    }
+    if (activeDays.some((day) => !VALID_DAYS.includes(day))) {
+      return errorResponse(
+        `active_days must only contain: ${VALID_DAYS.join(", ")}`,
+        400,
+      );
+    }
+  }
 
   const fields = {
     station_id: body.station_id,

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../models/station.dart';
 import '../../../models/saved_route.dart';
@@ -10,9 +11,6 @@ import '../../../services/auth_service.dart';
 import '../../../services/leave_by_repository.dart';
 import '../../../services/location_service.dart';
 import 'pick_station_screen.dart';
-
-
-
 
 class AddRouteScreen extends StatefulWidget {
   const AddRouteScreen({super.key});
@@ -24,8 +22,10 @@ class AddRouteScreen extends StatefulWidget {
 class _AddRouteScreenState extends State<AddRouteScreen> {
   final _repository = LeaveByRepository();
   Station? _station;
+  Station? _destinationStation;
   int _walkingMinutes = 10;
   bool _saving = false;
+  bool _gettingLocation = false;
   String _locationMessage = 'Choose a station to estimate your walk.';
 
   Future<void> _pickStation() async {
@@ -39,8 +39,19 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
     await _estimateWalkingTime(station);
   }
 
+  Future<void> _pickDestinationStation() async {
+    final station = await Navigator.of(context).push<Station>(
+      MaterialPageRoute(
+        builder: (_) => const PickStationScreen(title: 'Choose destination'),
+      ),
+    );
+    if (station == null) return;
+    setState(() => _destinationStation = station);
+  }
+
   Future<void> _estimateWalkingTime(Station station) async {
     setState(() {
+      _gettingLocation = true;
       _locationMessage = 'Getting your current location…';
     });
     LocationData? location;
@@ -49,12 +60,13 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
           .getCurrentLocation()
           .timeout(const Duration(seconds: 8));
     } catch (_) {
-      // The emulator can keep a GPS request pending. The user can still set a
-      // walking time manually while location is unavailable.
+      
+      
     }
     if (!mounted) return;
     if (location?.latitude == null || location?.longitude == null) {
       setState(() {
+        _gettingLocation = false;
         _locationMessage = 'Location unavailable. Set your walking time below.';
       });
       return;
@@ -67,6 +79,7 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
       station.lng,
     );
     setState(() {
+      _gettingLocation = false;
       _walkingMinutes = (meters / 75).ceil().clamp(1, 120).toInt();
       _locationMessage =
           'Using your current location · ${(meters / 1000).toStringAsFixed(1)} km away';
@@ -85,6 +98,7 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
         id: '',
         userId: userId,
         originStationId: _station!.id,
+        destinationStationId: _destinationStation?.id,
         walkingMinutes: _walkingMinutes,
         createdAt: DateTime.now(),
       ));
@@ -92,7 +106,14 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
+          SnackBar(
+            content: Text(
+              friendlyErrorMessage(
+                e,
+                fallback: 'This route could not be saved. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     } finally {
@@ -117,11 +138,36 @@ class _AddRouteScreenState extends State<AddRouteScreen> {
             subtitle: const Text('The station you want to catch a train from'),
             onTap: _pickStation,
           ),
+          const SizedBox(height: 12),
+          ListTile(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: Theme.of(context).dividerColor),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            leading: const Icon(Icons.location_on_outlined),
+            title: Text(_destinationStation?.name ?? 'Choose destination (optional)'),
+            subtitle: const Text('Where this route usually ends'),
+            onTap: _pickDestinationStation,
+          ),
           const Divider(height: 32),
           Text('From your current location', style: Theme.of(context).textTheme.titleMedium),
-          Text(
-            _locationMessage,
-            style: const TextStyle(color: AppColors.textSecondary),
+          Row(
+            children: [
+              if (_gettingLocation) ...[
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  _locationMessage,
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+            ],
           ),
           Row(
             children: [

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/friendly_error.dart';
+import '../../../core/malaysia_time.dart';
 import '../../../providers/alerts_provider.dart';
-
-
-
-
 
 class QuickMuteCard extends StatelessWidget {
   const QuickMuteCard({super.key});
@@ -37,7 +35,13 @@ class QuickMuteCard extends StatelessWidget {
                     await provider.unmute();
                   }
                   if (provider.errorMessage != null && context.mounted) {
-                    _showError(context, provider.errorMessage!);
+                    _showError(
+                      context,
+                      friendlyErrorMessage(
+                        provider.errorMessage,
+                        fallback: 'Your mute setting could not be updated.',
+                      ),
+                    );
                   }
                 },
               ),
@@ -57,7 +61,7 @@ class QuickMuteCard extends StatelessWidget {
   String _subtitleText(bool isMuted, DateTime? mutedUntil) {
     if (!isMuted) return 'You\'ll get delay and departure alerts as usual';
     if (mutedUntil == null) return 'Muted';
-    final today = DateTime.now();
+    final today = MalaysiaTime.now();
     final isToday = mutedUntil.year == today.year &&
         mutedUntil.month == today.month &&
         mutedUntil.day == today.day;
@@ -77,7 +81,7 @@ class QuickMuteCard extends StatelessWidget {
       BuildContext context,
       AlertsProvider provider,
       ) async {
-    final now = DateTime.now();
+    final now = MalaysiaTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: now.add(const Duration(days: 1)),
@@ -90,7 +94,13 @@ class QuickMuteCard extends StatelessWidget {
 
     await provider.muteUntilDate(picked);
     if (provider.errorMessage != null && context.mounted) {
-      _showError(context, provider.errorMessage!);
+      _showError(
+        context,
+        friendlyErrorMessage(
+          provider.errorMessage,
+          fallback: 'Your mute setting could not be updated.',
+        ),
+      );
     }
   }
 

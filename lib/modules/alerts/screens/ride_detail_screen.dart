@@ -12,6 +12,7 @@ class RideDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final autoDetected = ride.hasFullTripDetail;
     final detectedAt = MalaysiaTime.fromUtc(ride.detectedAt);
     final detectedLabel =
         '${detectedAt.day.toString().padLeft(2, '0')} '
@@ -25,7 +26,6 @@ class RideDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           Card(
-            margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
@@ -70,19 +70,21 @@ class RideDetailScreen extends StatelessWidget {
                     value: _available(ride.stationLine),
                   ),
                   const Divider(height: 28),
-                  const _DetailRow(
+                  _DetailRow(
                     icon: Icons.auto_awesome_outlined,
                     label: 'Source',
-                    value: 'Automatically detected',
+                    value: autoDetected ? 'Automatically detected' : 'Recorded',
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text(
-            'Ride details are read-only and come from foreground station proximity detection.',
-            style: TextStyle(color: AppColors.textSecondary),
+          Text(
+            autoDetected
+                ? 'Ride details are read-only and come from foreground station proximity detection.'
+                : 'Ride details are read-only.',
+            style: const TextStyle(color: AppColors.textSecondary),
           ),
         ],
       ),

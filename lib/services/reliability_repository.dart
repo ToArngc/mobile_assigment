@@ -1,9 +1,6 @@
 import '../models/train_status.dart';
 import 'edge_function_client.dart';
 
-
-
-
 class DailyOnTimeStat {
   final DateTime date;
   final int onTimeCount;
@@ -18,71 +15,52 @@ class DailyOnTimeStat {
   double get onTimePercent => totalCount == 0 ? 0 : onTimeCount / totalCount * 100;
 }
 
-
-
-
-
-
 class ReliabilityStatsSummary {
   final int daysOfData;
   final double? onTimePercentage;
   final double? averageDelayMinutes;
-  final int totalTrips;
   final bool insufficientData;
 
   ReliabilityStatsSummary({
     required this.daysOfData,
     this.onTimePercentage,
     this.averageDelayMinutes,
-    required this.totalTrips,
     required this.insufficientData,
   });
 }
 
 enum RouteReliabilityStatus { onTrack, delayed, unreliable, notEnoughData }
 
-
-
-
-
-
 class RouteSuggestion {
-  final String routeId;
   final String originStationName;
   final String originLine;
   final String destinationStationName;
   final int daysOfData;
   final double? weeklyOnTimePercent;
-  final int? liveDelayMinutes;
   final RouteReliabilityStatus status;
   final String? alternateLine;
   final double? alternateLineOnTimePercent;
 
   RouteSuggestion({
-    required this.routeId,
     required this.originStationName,
     required this.originLine,
     required this.destinationStationName,
     required this.daysOfData,
     this.weeklyOnTimePercent,
-    this.liveDelayMinutes,
     required this.status,
     this.alternateLine,
     this.alternateLineOnTimePercent,
   });
 
   factory RouteSuggestion.fromJson(Map<String, dynamic> json) {
-    final route = json['route'] as Map<String, dynamic>? ?? const {};
     final alternative = json['suggested_alternative'] as Map<String, dynamic>?;
     return RouteSuggestion(
-      routeId: route['id'] as String? ?? '',
       originStationName: json['origin_station_name'] as String? ?? 'Unknown station',
       originLine: json['origin_line'] as String? ?? '',
       destinationStationName:
           json['destination_station_name'] as String? ?? 'Unknown station',
       daysOfData: json['days_of_data'] as int? ?? 0,
       weeklyOnTimePercent: (json['weekly_on_time_percentage'] as num?)?.toDouble(),
-      liveDelayMinutes: json['live_delay_minutes'] as int?,
       status: _statusFromString(json['status'] as String?),
       alternateLine: alternative?['line'] as String?,
       alternateLineOnTimePercent:
@@ -107,37 +85,27 @@ class RouteSuggestion {
 
 class ReliabilityRepository {
 
-
-
-
-
-
-
-
-
-
-
   Future<ReliabilityStatsSummary> fetchReliabilitySummary({
     String? lineId,
     String? stationId,
     required int days,
   }) async {
-    final parameters = <String, String>{'days': '$days'};
-    if (stationId != null) parameters['station_id'] = stationId;
-    if (lineId != null) parameters['line'] = lineId;
     try {
       final data = await invokeFunction(
         lineId == null && stationId == null
             ? 'get-network-reliability-stats'
             : 'get-reliability-stats',
-        queryParameters: parameters,
+        queryParameters: {
+          if (stationId != null) 'station_id': stationId,
+          if (lineId != null) 'line': lineId,
+          'days': '$days',
+        },
       );
       final map = data as Map<String, dynamic>;
       return ReliabilityStatsSummary(
         daysOfData: map['days_of_data'] as int? ?? 0,
         onTimePercentage: (map['on_time_percentage'] as num?)?.toDouble(),
         averageDelayMinutes: (map['average_delay_minutes'] as num?)?.toDouble(),
-        totalTrips: map['total_trips'] as int? ?? 0,
         insufficientData: map['insufficient_data'] as bool? ?? true,
       );
     } catch (e) {
@@ -145,31 +113,19 @@ class ReliabilityRepository {
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
   Future<List<DailyOnTimeStat>> fetchOnTimeStats({
     String? lineId,
     String? stationId,
     required int days,
   }) async {
-    if (lineId == null && stationId == null) return [];
-    final parameters = <String, String>{'days': '$days'};
-    if (stationId != null) parameters['station_id'] = stationId;
-    if (lineId != null) parameters['line'] = lineId;
-
     try {
       final data = await invokeFunction(
         'get-reliability-trend',
-        queryParameters: parameters,
+        queryParameters: {
+          if (stationId != null) 'station_id': stationId,
+          if (lineId != null) 'line': lineId,
+          'days': '$days',
+        },
       );
 
       return (data as List).map((row) {
@@ -191,13 +147,14 @@ class ReliabilityRepository {
     String? stationId,
     int limit = 20,
   }) async {
-    final parameters = <String, String>{'limit': '$limit'};
-    if (stationId != null) parameters['station_id'] = stationId;
-    if (lineId != null) parameters['line'] = lineId;
     try {
       final data = await invokeFunction(
         'get-recent-train-delays',
-        queryParameters: parameters,
+        queryParameters: {
+          if (stationId != null) 'station_id': stationId,
+          if (lineId != null) 'line': lineId,
+          'limit': '$limit',
+        },
       );
       return (data as List)
           .map((row) => TrainStatus.fromJson(row as Map<String, dynamic>))
@@ -206,11 +163,6 @@ class ReliabilityRepository {
       throw Exception('Failed to load recent train delays: $e');
     }
   }
-
-
-
-
-
 
   Future<List<RouteSuggestion>> fetchRouteSuggestionCandidates(String userId) async {
     try {

@@ -98,7 +98,12 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
                       provider.errorMessage,
                       fallback: 'Reliability data could not be loaded.',
                     ),
-                    onRetry: () => provider.loadDashboard(provider.filter),
+                    onRetry: () {
+                      setState(() {
+                        _stationsFuture = _stationRepository.getAllStations();
+                      });
+                      return provider.loadDashboard(provider.filter);
+                    },
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const _RouteSuggestionEntry(),
@@ -106,7 +111,7 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
               else ...[
                 OnTimeSummaryCard(
                   onTimePercent: provider.currentOnTimePercent,
-                  windowDays: provider.actualDaysAvailable,
+                  windowDays: provider.windowDaysUsed,
                 ),
                 const SizedBox(height: 12),
                 if (provider.trendSeries.isEmpty)
@@ -140,8 +145,6 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
     );
   }
 
-  /// Chip row that both shows what the dashboard is currently scoped to and
-  /// opens the filter sheet, so the filter control carries a visible label.
   Widget _buildFilterBar(BuildContext context, ReliabilityProvider provider) {
     final filter = provider.filter;
     final chips = <Widget>[];
@@ -192,7 +195,23 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
   }
 
   Future<void> _openFilters(BuildContext context, ReliabilityProvider provider) async {
-    final stations = await _stationsFuture;
+    final List<Station> stations;
+    try {
+      stations = await _stationsFuture;
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            friendlyErrorMessage(
+              e,
+              fallback: 'Stations could not be loaded. Pull down to retry.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
     if (!context.mounted) return;
     final selected = await showModalBottomSheet<ReliabilityFilter>(
       context: context,
@@ -203,16 +222,12 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
   }
 }
 
-/// Labelled entry point to the route suggestions screen. Lives in the page
-/// flow rather than as a bare app bar icon so its purpose is readable.
 class _RouteSuggestionEntry extends StatelessWidget {
   const _RouteSuggestionEntry();
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppColors.cardBackground,
-      surfaceTintColor: Colors.transparent,
       child: ListTile(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -246,7 +261,7 @@ class _EmptyTrendState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const AppEmptyState(
         icon: Icons.show_chart,
-        title: 'No data yet for this line — check back once the pipeline has been running a bit longer.',
+        title: 'No arrival data yet — check back once the pipeline has been running a bit longer.',
         subtitle: null,
         wrapped: true,
       );

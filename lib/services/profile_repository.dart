@@ -6,18 +6,6 @@ import 'edge_function_client.dart';
 
 class ProfileRepository {
 
-
-
-  Future<Profile> getProfile(String userId) async {
-    final data = await invokeFunction('get-profile');
-    return Profile.fromJson(data as Map<String, dynamic>);
-  }
-
-
-
-
-
-
   Future<Profile> getOrCreateProfile({
     required String userId,
     required String fallbackUsername,
@@ -25,10 +13,6 @@ class ProfileRepository {
     final data = await invokeFunction('get-profile');
     return Profile.fromJson(data as Map<String, dynamic>);
   }
-
-
-
-
 
   Future<void> updateUsername(String userId, String username) async {
     await invokeFunction(

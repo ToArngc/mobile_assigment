@@ -12,11 +12,6 @@ import '../widgets/report_card.dart';
 import 'report_detail_screen.dart';
 import 'report_issue_screen.dart';
 
-
-
-
-
-
 class ReportsHomeScreen extends StatelessWidget {
   const ReportsHomeScreen({super.key});
 
@@ -50,9 +45,6 @@ class ReportsHomeScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const ReportIssueScreen()),
               );
 
-
-
-
               if (submitted == true && context.mounted) {
                 context.read<ReportsProvider>().loadMyReports();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -71,8 +63,6 @@ class ReportsHomeScreen extends StatelessWidget {
 
 class _ReportsHomeBody extends StatelessWidget {
   const _ReportsHomeBody();
-
-
 
   Future<void> _confirmResolve(
     BuildContext context,

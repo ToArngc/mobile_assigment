@@ -21,14 +21,6 @@ class Station {
         lng: (json['lng'] as num).toDouble(),
       );
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'line': line,
-        'lat': lat,
-        'lng': lng,
-      };
-
   List<String> get lines => line
       .split(RegExp(r'\s*(?:,|/|\||&| and )\s*', caseSensitive: false))
       .where((value) => value.trim().isNotEmpty)

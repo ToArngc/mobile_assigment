@@ -1,16 +1,6 @@
 import '../models/mute_settings.dart';
 import 'alerts_repository.dart';
 
-
-
-
-
-
-
-
-
-
-
 class MuteService {
   static final AlertsRepository _repository = AlertsRepository();
 

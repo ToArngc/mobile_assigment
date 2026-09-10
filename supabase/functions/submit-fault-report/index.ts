@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { requireUser } from "../_shared/auth.ts";
@@ -22,9 +12,10 @@ const VALID_ISSUE_TYPES = [
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_DESCRIPTION_LENGTH = 500;
 
-
-
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function safeFileName(name: string): string {
   const cleaned = name.replace(/[^A-Za-z0-9._-]/g, "_");
@@ -86,9 +77,21 @@ Deno.serve(async (req) => {
   if (typeof stationId !== "string" || !stationId) {
     return errorResponse("station_id is required", 400);
   }
+  if (!UUID_PATTERN.test(stationId)) {
+    return errorResponse("station_id must be a valid uuid", 400);
+  }
 
-
-
+  if (description !== null && description !== undefined && description !== "") {
+    if (typeof description !== "string") {
+      return errorResponse("description must be a string", 400);
+    }
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      return errorResponse(
+        `description must be ${MAX_DESCRIPTION_LENGTH} characters or fewer`,
+        400,
+      );
+    }
+  }
 
   const issueTypes = typeof issueType === "string"
     ? issueType.split(",").map((t) => t.trim()).filter(Boolean)
@@ -137,10 +140,6 @@ Deno.serve(async (req) => {
       .getPublicUrl(path);
     photoUrl = publicUrlData.publicUrl;
   }
-
-
-
-
 
   const { data, error } = await supabase
     .from("fault_reports")

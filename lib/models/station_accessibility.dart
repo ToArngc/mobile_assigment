@@ -1,9 +1,3 @@
-
-
-
-
-
-
 class StationAccessibility {
   final String issueType;
   final String status;

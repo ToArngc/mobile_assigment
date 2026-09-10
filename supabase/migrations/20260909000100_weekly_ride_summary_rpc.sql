@@ -1,20 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 create or replace function public.weekly_ride_summary(
   p_user_id uuid,
   p_since timestamptz,
@@ -55,8 +38,6 @@ as $$
     count(*)::integer as ride_count,
     (count(*) filter (where delay_minutes <= p_threshold))::integer
       as on_time_count,
-
-
 
     case when count(delay_minutes) = 0 then null
       else round(

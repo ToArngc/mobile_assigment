@@ -1,12 +1,10 @@
 import 'dart:typed_data';
 
+import 'package:http_parser/http_parser.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/fault_report.dart';
 import 'edge_function_client.dart';
-
-
-
 
 enum ReportCategory {
   liftBroken('Broken lift', 'lift_broken'),
@@ -19,12 +17,40 @@ enum ReportCategory {
   final String issueType;
   const ReportCategory(this.label, this.issueType);
 
-  static ReportCategory fromIssueType(String value) {
-    return ReportCategory.values.firstWhere(
-      (c) => c.issueType == value,
-      orElse: () => ReportCategory.overcrowding,
-    );
+  static ReportCategory? fromIssueType(String value) {
+    for (final category in ReportCategory.values) {
+      if (category.issueType == value) return category;
+    }
+    return null;
   }
+}
+
+/// The Content-Type of the `photo` part of a submit-fault-report request.
+///
+/// `MultipartFile.fromBytes` defaults to `application/octet-stream`, which the
+/// Edge Function rejects — it validates the part's declared type against
+/// image/jpeg, image/png and image/webp. The bytes are the source of truth
+/// here because `image_picker` keeps the original file extension when it
+/// re-encodes a picked image. Returning null for anything unrecognised leaves
+/// the rejection to the server, where it belongs.
+MediaType? _photoMediaType(Uint8List bytes) {
+  bool startsWith(List<int> signature, {int offset = 0}) {
+    if (bytes.length < offset + signature.length) return false;
+    for (var i = 0; i < signature.length; i++) {
+      if (bytes[offset + i] != signature[i]) return false;
+    }
+    return true;
+  }
+
+  if (startsWith([0xFF, 0xD8, 0xFF])) return MediaType('image', 'jpeg');
+  if (startsWith([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
+    return MediaType('image', 'png');
+  }
+  if (startsWith([0x52, 0x49, 0x46, 0x46]) &&
+      startsWith([0x57, 0x45, 0x42, 0x50], offset: 8)) {
+    return MediaType('image', 'webp');
+  }
+  return null;
 }
 
 class ReportsRepository {
@@ -44,9 +70,6 @@ class ReportsRepository {
     }
   }
 
-
-
-
   Future<List<FaultReport>> getMyReports(String userId, {int limit = 50}) async {
     try {
       final data = await invokeFunction(
@@ -60,13 +83,6 @@ class ReportsRepository {
       throw Exception('Failed to load your reports: $e');
     }
   }
-
-
-
-
-
-
-
 
   Future<List<FaultReport>> submitReport({
     required String? userId,
@@ -87,7 +103,14 @@ class ReportsRepository {
       if (lat != null) fields['lat'] = '$lat';
       if (lng != null) fields['lng'] = '$lng';
       final files = photoBytes != null && photoFileName != null
-          ? [MultipartFile.fromBytes('photo', photoBytes, filename: photoFileName)]
+          ? [
+              MultipartFile.fromBytes(
+                'photo',
+                photoBytes,
+                filename: photoFileName,
+                contentType: _photoMediaType(photoBytes),
+              )
+            ]
           : null;
 
       final data = await invokeFunction(
@@ -103,9 +126,6 @@ class ReportsRepository {
       throw Exception('Failed to submit report: $e');
     }
   }
-
-
-
 
   Future<void> markResolved(String reportId) async {
     try {

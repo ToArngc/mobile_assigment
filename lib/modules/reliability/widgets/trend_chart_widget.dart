@@ -3,10 +3,6 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme.dart';
 import '../../../services/reliability_repository.dart';
 
-
-
-
-
 class TrendChartWidget extends StatelessWidget {
   final List<DailyOnTimeStat> stats;
 

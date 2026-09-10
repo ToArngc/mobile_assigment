@@ -1,9 +1,3 @@
-
-
-
-
-
-
 export const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":

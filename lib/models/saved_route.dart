@@ -57,17 +57,4 @@ class SavedRoute {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    final json = {
-      'id': id,
-      'user_id': userId,
-      'origin_station_id': originStationId,
-      if (destinationStationId != null)
-        'destination_station_id': destinationStationId,
-      'walking_minutes': walkingMinutes,
-      'created_at': createdAt.toIso8601String(),
-    };
-    if (id.isEmpty) json.remove('id');
-    return json;
-  }
 }

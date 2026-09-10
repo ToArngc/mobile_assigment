@@ -1,8 +1,3 @@
-
-
-
-
-
 import { SupabaseClient, User } from "jsr:@supabase/supabase-js@2";
 import { errorResponse } from "./cors.ts";
 

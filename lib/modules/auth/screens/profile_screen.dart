@@ -47,8 +47,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _save() async {
-    if (_usernameController.text.trim().isEmpty) {
+    final username = _usernameController.text.trim();
+    if (username.isEmpty) {
       setState(() => _error = 'Username is required.');
+      return;
+    }
+    if (username.length < 3) {
+      setState(() => _error = 'Username must be at least 3 characters');
+      return;
+    }
+    if (!usernamePattern.hasMatch(username)) {
+      setState(() => _error = 'Use letters, numbers, spaces, . _ or - only');
       return;
     }
     setState(() {
@@ -139,7 +148,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SectionLabel('Account details'),
                 const SizedBox(height: 8),
                 Card(
-                  margin: EdgeInsets.zero,
                   child: Padding(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Column(
@@ -172,6 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const Divider(height: 28),
                         TextField(
                           controller: _usernameController,
+                          maxLength: 24,
                           textCapitalization: TextCapitalization.words,
                           decoration: const InputDecoration(
                             labelText: 'Username',

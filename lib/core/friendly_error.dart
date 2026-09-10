@@ -1,6 +1,3 @@
-/// Maps a raw exception onto something a rider can act on, so screens never
-/// print a Dart exception verbatim. Extracted from the login screen, which
-/// keeps its own credential-specific branch on top of this.
 String friendlyErrorMessage(Object? error, {required String fallback}) {
   final message = error.toString().toLowerCase();
   if (message.contains('socketexception') ||

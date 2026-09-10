@@ -22,19 +22,6 @@ void main() {
       expect(route.walkingMinutes, 12);
     });
 
-    test('serialises an optional destination only when it exists', () {
-      final route = SavedRoute(
-        id: '',
-        userId: 'user-1',
-        originStationId: 'station-1',
-        walkingMinutes: 10,
-        createdAt: DateTime.utc(2026, 9, 9),
-      );
-
-      expect(route.toJson(), isNot(contains('id')));
-      expect(route.toJson(), isNot(contains('destination_station_id')));
-    });
-
     test('skips malformed saved-route records instead of crashing a list', () {
       expect(
         SavedRoute.tryFromJson({

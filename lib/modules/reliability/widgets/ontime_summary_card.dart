@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/constants.dart';
 import '../../../core/theme.dart';
 
-
-
 class OnTimeSummaryCard extends StatelessWidget {
   final double? onTimePercent;
   final int windowDays;
@@ -34,8 +32,6 @@ class OnTimeSummaryCard extends StatelessWidget {
                 ? 'Minor delays'
                 : 'Major delays';
     return Card(
-      color: AppColors.cardBackground,
-      surfaceTintColor: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(

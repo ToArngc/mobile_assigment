@@ -1,24 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 create extension if not exists pgcrypto;
 
 create table if not exists public.stations (
@@ -56,9 +35,6 @@ create table if not exists public.train_status (
     foreign key (station_id) references public.stations(id)
 );
 
-
-
-
 create table if not exists public.ride_logs (
   id uuid not null default gen_random_uuid(),
   user_id uuid,
@@ -92,8 +68,6 @@ create table if not exists public.saved_stations (
   constraint saved_stations_station_id_fkey
     foreign key (station_id) references public.stations(id)
 );
-
-
 
 create table if not exists public.saved_routes (
   id uuid not null default gen_random_uuid(),
@@ -147,22 +121,13 @@ create table if not exists public.profiles (
   constraint profiles_id_fkey foreign key (id) references auth.users(id)
 );
 
-
-
-
-
 create or replace view public.station_accessibility as
 select distinct on (station_id, issue_type)
   station_id, issue_type, status, created_at
 from public.fault_reports
 order by station_id, issue_type, created_at desc;
 
-
-
 alter view public.station_accessibility set (security_invoker = true);
-
-
-
 
 insert into storage.buckets (id, name, public)
 values ('report-photos', 'report-photos', true)

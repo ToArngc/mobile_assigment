@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants.dart';
+import '../../../core/malaysia_time.dart';
 import '../../../core/theme.dart';
 import '../../../models/train_status.dart';
-
-
-
 
 class TrainDelayListTile extends StatelessWidget {
   final TrainStatus status;
@@ -14,7 +12,7 @@ class TrainDelayListTile extends StatelessWidget {
   String get _label => status.tripId ?? 'Train ${status.id.substring(0, 8)}';
 
   String get _timeLabel {
-    final time = (status.actualTime ?? status.scheduledTime).toLocal();
+    final time = MalaysiaTime.fromUtc(status.actualTime ?? status.scheduledTime);
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 

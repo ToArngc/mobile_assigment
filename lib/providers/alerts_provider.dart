@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../core/malaysia_time.dart';
 import '../services/alerts_repository.dart';
 import '../services/delay_alert_service.dart';
 import '../services/leave_by_repository.dart';
@@ -12,19 +13,15 @@ enum LoadStatus { initial, loading, loaded, error }
 
 class AlertsProvider extends ChangeNotifier {
   final AlertsRepository _repository;
-  final WeeklySummaryRepository _ridesRepository;
+  final WeeklySummaryRepository _ridesRepository = WeeklySummaryRepository();
   final DelayAlertService _delayAlertService;
-  final LeaveByRepository _leaveByRepository;
+  final LeaveByRepository _leaveByRepository = LeaveByRepository();
   final String userId;
 
   AlertsProvider({
     required AlertsRepository repository,
     required this.userId,
-    WeeklySummaryRepository? ridesRepository,
-    LeaveByRepository? leaveByRepository,
   })  : _repository = repository,
-        _ridesRepository = ridesRepository ?? WeeklySummaryRepository(),
-        _leaveByRepository = leaveByRepository ?? LeaveByRepository(),
         _delayAlertService = DelayAlertService.instance {
     _delayAlertService.lastCheckedAt.addListener(notifyListeners);
   }
@@ -67,11 +64,8 @@ class AlertsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
-
-
   Future<void> muteToday() async {
-    final today = DateTime.now();
+    final today = MalaysiaTime.now();
     await _setMute(DateTime(today.year, today.month, today.day));
   }
 
@@ -99,24 +93,6 @@ class AlertsProvider extends ChangeNotifier {
     }
   }
 
-
-
-  Future<void> saveAlertRule(SavedStation station) async {
-    try {
-      final saved = await _repository.upsertSavedStation(station);
-      final index = savedStations.indexWhere((s) => s.id == saved.id);
-      if (index >= 0) {
-        savedStations[index] = saved;
-      } else {
-        savedStations.add(saved);
-      }
-      notifyListeners();
-    } catch (e) {
-      errorMessage = e.toString();
-      notifyListeners();
-    }
-  }
-
   Future<void> removeAlertRule(String savedStationId) async {
     try {
       await _repository.deleteSavedStation(savedStationId);
@@ -127,8 +103,6 @@ class AlertsProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-
 
   Future<void> toggleStationEnabled(String savedStationId, bool enabled) async {
     final index = savedStations.indexWhere((s) => s.id == savedStationId);

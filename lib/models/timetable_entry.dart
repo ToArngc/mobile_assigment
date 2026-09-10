@@ -23,13 +23,4 @@ class TimetableEntry {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'station_id': stationId,
-      'line': line,
-      'scheduled_time': scheduledTime,
-      'direction': direction,
-    };
-  }
 }

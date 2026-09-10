@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/friendly_error.dart';
 import '../../../services/station_repository.dart';
 import '../../../models/station.dart';
-
-
+import '../../../shared_widgets/app_error_state.dart';
 
 class PickStationScreen extends StatefulWidget {
   final String title;
@@ -57,6 +57,16 @@ class _PickStationScreenState extends State<PickStationScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return AppErrorState(
+              message: friendlyErrorMessage(
+                snapshot.error,
+                fallback: 'Stations could not be loaded.',
+              ),
+              onRetry: () async =>
+                  setState(() => _stationsFuture = _repository.getAllStations()),
+            );
           }
           final stations = snapshot.data ?? [];
           if (stations.isEmpty) {

@@ -5,16 +5,9 @@ class RideLog {
   final DateTime detectedAt;
   final int? delayMinutes;
 
-
-
-
   final String? destinationStationId;
 
-
-
   final int? durationMinutes;
-
-
 
   final String? stationName;
   final String? stationLine;
@@ -50,20 +43,6 @@ class RideLog {
       destinationStationName: joinedDestination?['name'] as String?,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'user_id': userId,
-      'station_id': stationId,
-      'detected_at': detectedAt.toIso8601String(),
-      'delay_minutes': delayMinutes,
-      'destination_station_id': destinationStationId,
-      'duration_minutes': durationMinutes,
-    };
-  }
-
-
 
   bool get hasFullTripDetail => destinationStationId != null;
 }

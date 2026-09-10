@@ -2,14 +2,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/mute_settings.dart';
 import '../models/saved_station.dart';
-import '../models/train_status.dart';
 import 'edge_function_client.dart';
 
 class AlertsRepository {
-
-
-
-
 
   Future<List<SavedStation>> getSavedStations(String userId) async {
     try {
@@ -22,9 +17,6 @@ class AlertsRepository {
     }
   }
 
-
-
-
   Future<void> setEnabled(String id, bool enabled) async {
     try {
       await invokeFunction(
@@ -36,10 +28,6 @@ class AlertsRepository {
       throw Exception('Failed to update alert rule: $e');
     }
   }
-
-
-
-
 
   Future<SavedStation> upsertSavedStation(SavedStation station) async {
     try {
@@ -75,27 +63,6 @@ class AlertsRepository {
     }
   }
 
-
-
-  Future<TrainStatus?> getLatestTrainStatus(String stationId) async {
-    try {
-      final data = await invokeFunction(
-        'get-latest-train-status',
-        queryParameters: {'station_id': stationId},
-      );
-      return data == null
-          ? null
-          : TrainStatus.fromJson(data as Map<String, dynamic>);
-    } catch (e) {
-      throw Exception('Failed to load latest train status: $e');
-    }
-  }
-
-
-
-
-
-
   Future<MuteSettings?> getMuteSettings(String userId) async {
     try {
       final data = await invokeFunction('get-mute-settings');
@@ -106,9 +73,6 @@ class AlertsRepository {
       throw Exception('Failed to load mute settings: $e');
     }
   }
-
-
-
 
   Future<MuteSettings> setMute(String userId, DateTime? mutedUntil) async {
     try {

@@ -3,15 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edge_function_client.dart';
 import 'supabase_service.dart';
 
-
-
-
-
-
-
-
-
-
 class AuthService {
   static SupabaseClient get _client => SupabaseService.client;
 
@@ -26,8 +17,6 @@ class AuthService {
   }) {
     return _client.auth.signInWithPassword(email: email, password: password);
   }
-
-
 
   static Future<bool> signUp({
     required String email,
@@ -44,10 +33,6 @@ class AuthService {
       throw Exception('Sign up failed — please try again.');
     }
 
-
-
-
-
     if (user.identities?.isEmpty ?? false) {
       throw Exception(
         'An account with this email already exists. Please log in.',
@@ -55,12 +40,6 @@ class AuthService {
     }
 
     final needsEmailConfirmation = response.session == null;
-
-
-
-
-
-
 
     if (!needsEmailConfirmation) {
       await invokeFunction(

@@ -6,16 +6,6 @@ import '../../../models/saved_station.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/alerts_repository.dart';
 
-
-
-
-
-
-
-
-
-
-
 class AlertRuleEditScreen extends StatefulWidget {
   final String stationId;
   final String stationName;
@@ -85,9 +75,6 @@ class _AlertRuleEditScreenState extends State<AlertRuleEditScreen> {
   Future<void> _save() async {
     final userId = AuthService.currentUserId;
     if (userId == null) return;
-
-
-
 
     if ((_quietStart == null) != (_quietEnd == null)) {
       _showMessage('Set both a start and an end time for quiet hours, or clear both.');

@@ -6,9 +6,6 @@ import 'edge_function_client.dart';
 
 class WeeklySummaryRepository {
 
-
-
-
   Future<WeeklyRideSummary> getWeeklySummary(String userId) async {
     try {
       final data = await invokeFunction('get-weekly-rides');
@@ -17,10 +14,6 @@ class WeeklySummaryRepository {
       throw Exception('Failed to load ride logs: $e');
     }
   }
-
-
-
-
 
   Future<List<RideLog>> getRecentRides(String userId, {int limit = 10}) async {
     try {
@@ -35,9 +28,6 @@ class WeeklySummaryRepository {
       throw Exception('Failed to load ride history: $e');
     }
   }
-
-
-
 
   Future<void> logRide({
     required String userId,

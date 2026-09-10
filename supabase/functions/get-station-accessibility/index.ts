@@ -1,18 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
@@ -43,8 +28,6 @@ Deno.serve(async (req) => {
     .order("created_at", { ascending: false });
 
   if (error) return errorResponse(error.message, 500);
-
-
 
   return jsonResponse(data ?? []);
 });

@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 import { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 export const ON_TIME_THRESHOLD_MINUTES = 5;
@@ -113,13 +104,6 @@ interface RawDailyStatsRow {
   on_time_percentage: number | string;
   average_delay_minutes: number | string;
 }
-
-
-
-
-
-
-
 
 export async function getDailyReliabilityStats(
   supabase: SupabaseClient,

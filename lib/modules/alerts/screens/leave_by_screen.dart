@@ -103,6 +103,7 @@ class _LeaveByBody extends StatelessWidget {
               return _LeaveByCard(
                 route: route,
                 result: result,
+                failed: provider.failedRouteIds.contains(route.id),
                 onDelete: () => _confirmRemoveRoute(
                   context,
                   provider,
@@ -150,11 +151,13 @@ class _LeaveByCard extends StatelessWidget {
   const _LeaveByCard({
     required this.route,
     required this.result,
+    required this.failed,
     required this.onDelete,
   });
 
   final SavedRoute route;
   final LeaveByResult? result;
+  final bool failed;
   final VoidCallback onDelete;
 
   @override
@@ -200,7 +203,15 @@ class _LeaveByCard extends StatelessWidget {
             ),
             const Divider(height: 24),
             if (result == null)
-              const Text('No upcoming scheduled train found today.')
+              Text(
+                failed
+                    ? friendlyErrorMessage(
+                        null,
+                        fallback: 'Leave-by time could not be calculated. '
+                            'Check your connection and pull to refresh.',
+                      )
+                    : 'No upcoming scheduled train found today.',
+              )
             else ...[
               _InfoRow(label: 'Next scheduled train', value: departureTime!),
               _InfoRow(

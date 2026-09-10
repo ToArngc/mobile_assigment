@@ -1,17 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 create or replace function public.reliability_stats(
   p_station_id uuid default null,
   p_line text default null,
@@ -44,11 +30,6 @@ as $$
     and (p_line is null or line = p_line)
 $$;
 
-
-
-
-
-
 create or replace function public.reliability_stats_by_station(
   p_station_ids uuid[],
   p_days int default 7
@@ -77,9 +58,6 @@ as $$
     and t.station_id = any(p_station_ids)
   group by t.station_id
 $$;
-
-
-
 
 create or replace function public.reliability_stats_by_station_line(
   p_station_ids uuid[],
@@ -111,10 +89,6 @@ as $$
     and t.station_id = any(p_station_ids)
   group by t.station_id, t.line
 $$;
-
-
-
-
 
 create or replace function public.avg_recent_delay_minutes(
   p_station_id uuid,

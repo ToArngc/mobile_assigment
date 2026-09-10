@@ -3,10 +3,9 @@ import 'package:provider/provider.dart';
 import '../../../providers/reliability_provider.dart';
 import '../../../services/reliability_repository.dart';
 import '../../../services/auth_service.dart';
+import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../widgets/route_suggestion_card.dart';
-
-
 
 class RouteSuggestionScreen extends StatelessWidget {
   const RouteSuggestionScreen({super.key});
@@ -49,7 +48,12 @@ class _RouteSuggestionBody extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Failed to load: ${provider.routeErrorMessage}'),
+                Text(
+                  friendlyErrorMessage(
+                    provider.routeErrorMessage,
+                    fallback: 'Route suggestions could not be loaded.',
+                  ),
+                ),
                 const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: provider.loadRouteSuggestions,

@@ -1,20 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
@@ -72,9 +55,6 @@ Deno.serve(async (req) => {
     seen.add(row.station_id);
     latestPerStation.push(row);
   }
-
-
-
 
   return jsonResponse(latestPerStation);
 });

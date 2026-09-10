@@ -40,18 +40,4 @@ class TrainStatus {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'station_id': stationId,
-      'line': line,
-      'trip_id': tripId,
-      'lat': lat,
-      'lng': lng,
-      'scheduled_time': scheduledTime.toIso8601String(),
-      'actual_time': actualTime?.toIso8601String(),
-      'delay_minutes': delayMinutes,
-      'recorded_at': recordedAt.toIso8601String(),
-    };
-  }
 }

@@ -2,7 +2,7 @@ name: Poll GTFS realtime
 
 on:
   schedule:
-    - cron: '*/15 0-15,22-23 * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 jobs:
