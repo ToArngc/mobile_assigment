@@ -73,7 +73,7 @@ class _WeeklySummaryBody extends StatelessWidget {
               padding: EdgeInsets.all(24),
               child: Text(
                 'No commute records yet this week. Rides are logged when '
-                    'the app is open near a saved station during commute hours.',
+                    'the app is open near a station during commute hours.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -173,8 +173,8 @@ class _RideHistoryTile extends StatelessWidget {
     final delayLabel = delay == null
         ? 'Delay unavailable'
         : isOnTime
-            ? 'On time · ${delay} min delay'
-            : '${delay} min delay';
+            ? 'On time · $delay min delay'
+            : '$delay min delay';
 
     return ListTile(
       onTap: () => Navigator.of(context).push(

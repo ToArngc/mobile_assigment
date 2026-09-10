@@ -100,6 +100,7 @@ class _ReportsHomeBody extends StatelessWidget {
       ),
     );
     if (confirmed != true) return;
+    if (!context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
     final succeeded = await provider.resolveReport(report.id);
