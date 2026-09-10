@@ -2,12 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'supabase_service.dart';
 
-
-
-
-
-
-
 Future<dynamic> invokeFunction(
   String functionName, {
   HttpMethod method = HttpMethod.get,

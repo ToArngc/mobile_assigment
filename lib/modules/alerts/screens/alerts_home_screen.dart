@@ -72,15 +72,13 @@ class _AlertsHomeScreen extends StatelessWidget {
           const ProfileAction(),
         ],
       ),
-      body: _AlertsHomeBody(provider: provider),
+      body: const _AlertsHomeBody(),
     ),
   );
 }
 
 class _AlertsHomeBody extends StatelessWidget {
-  const _AlertsHomeBody({required this.provider});
-
-  final AlertsProvider provider;
+  const _AlertsHomeBody();
 
   @override
   Widget build(BuildContext context) {
@@ -425,8 +423,6 @@ class _AlertStatusCard extends StatelessWidget {
     final enabledCount = provider.savedStations.where((station) => station.enabled).length;
     final color = muted ? AppColors.warning : AppColors.success;
     return Card(
-      color: AppColors.cardBackground,
-      surfaceTintColor: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -487,7 +483,8 @@ class _EmptyRideHistory extends StatelessWidget {
           Text('No rides logged yet'),
           SizedBox(height: 4),
           Text(
-            'Your completed rides will appear here.',
+            'Rides are detected automatically while the app is open and you '
+            'pass a station between 07:00–10:00 or 17:00–20:00.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary),
           ),
@@ -589,7 +586,7 @@ class _RideHistoryCard extends StatelessWidget {
 }
 
 String _formatCheckedTime(DateTime time) {
-  final local = time.toLocal();
+  final local = MalaysiaTime.fromUtc(time);
   final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
   final minute = local.minute.toString().padLeft(2, '0');
   final period = local.hour >= 12 ? 'PM' : 'AM';

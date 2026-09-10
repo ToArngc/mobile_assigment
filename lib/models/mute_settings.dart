@@ -1,3 +1,4 @@
+import '../core/malaysia_time.dart';
 
 class MuteSettings {
   final String userId;
@@ -20,19 +21,9 @@ class MuteSettings {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'user_id': userId,
-      'muted_until': mutedUntil?.toIso8601String().split('T').first,
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
-
-
-
   bool get isMutedNow {
     if (mutedUntil == null) return false;
-    final now = DateTime.now();
+    final now = MalaysiaTime.now();
     final endOfMutedDay = DateTime(
       mutedUntil!.year,
       mutedUntil!.month,

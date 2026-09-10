@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/saved_route.dart';
 import 'edge_function_client.dart';
-import 'supabase_service.dart';
 
 
 class LeaveByResult {
@@ -34,21 +33,9 @@ class LeaveByResult {
 
 class LeaveByRepository {
 
-
-
   Future<List<SavedRoute>> getSavedRoutes(String userId) async {
     try {
-      // Read from the table so saved routes are available even while an older
-      // version of the Edge Function is still deployed. The query remains
-      // scoped to the signed-in user.
-      final data = await SupabaseService.client
-          .from('saved_routes')
-          .select(
-            '*, origin_station:stations!saved_routes_origin_station_id_fkey(name, line)',
-          )
-          .eq('user_id', userId)
-          .not('origin_station_id', 'is', null)
-          .order('created_at', ascending: false);
+      final data = await invokeFunction('get-saved-routes');
       return (data as List)
           .whereType<Map>()
           .map((row) => SavedRoute.tryFromJson(
@@ -92,12 +79,6 @@ class LeaveByRepository {
       throw Exception('Failed to remove route: $e');
     }
   }
-
-
-
-
-
-
 
   Future<LeaveByResult?> computeLeaveByTime(SavedRoute route) async {
     try {

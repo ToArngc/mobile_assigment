@@ -3,13 +3,8 @@ import '../../../core/theme.dart';
 import '../../../models/fault_report.dart';
 import '../../../services/reports_repository.dart' show ReportCategory;
 
-
-
-
-
 class ReportCard extends StatelessWidget {
   final FaultReport report;
-  final String? stationName;
 
   final VoidCallback? onResolve;
   final VoidCallback? onTap;
@@ -17,12 +12,13 @@ class ReportCard extends StatelessWidget {
   const ReportCard({
     super.key,
     required this.report,
-    this.stationName,
     this.onResolve,
     this.onTap,
   });
 
-  String get _title => ReportCategory.fromIssueType(report.issueType).label;
+  String get _title =>
+      ReportCategory.fromIssueType(report.issueType)?.label ??
+      report.issueType.replaceAll('_', ' ');
 
   IconData get _categoryIcon => switch (report.issueType) {
         'lift_broken' => Icons.elevator_outlined,
@@ -44,9 +40,8 @@ class ReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final open = report.status == FaultStatus.open;
-    final subtitleParts = <String>[
-      ?stationName,
-      ?report.description,
+    final subtitleParts = [
+      if (report.description != null) report.description!,
       _relativeTime,
     ];
 

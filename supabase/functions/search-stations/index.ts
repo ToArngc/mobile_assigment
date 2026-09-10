@@ -1,6 +1,3 @@
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 
@@ -13,11 +10,6 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const q = url.searchParams.get("q");
   if (!q) return errorResponse("q query param is required", 400);
-
-
-
-
-
 
   const escaped = q.replace(/[\\%_]/g, (c) => `\\${c}`);
 

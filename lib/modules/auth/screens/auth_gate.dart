@@ -5,8 +5,6 @@ import '../../../services/auth_service.dart';
 import '../../../shared_widgets/app_shell.dart';
 import 'login_screen.dart';
 
-
-
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 

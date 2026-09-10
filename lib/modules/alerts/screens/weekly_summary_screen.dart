@@ -4,12 +4,10 @@ import '../../../core/constants.dart';
 import '../../../core/friendly_error.dart';
 import '../../../core/malaysia_time.dart';
 import '../../../core/theme.dart';
-import '../../../models/ride_log.dart';
 import '../../../providers/weekly_summary_provider.dart';
 import '../../../models/weekly_ride_summary.dart';
 import '../../../services/weekly_summary_repository.dart';
 import '../../../services/auth_service.dart';
-import 'ride_detail_screen.dart';
 
 class WeeklySummaryScreen extends StatelessWidget {
   const WeeklySummaryScreen({super.key});
@@ -27,7 +25,7 @@ class WeeklySummaryScreen extends StatelessWidget {
         userId: userId,
       )..loadSummary(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('This week')),
+        appBar: AppBar(title: const Text('Last 7 days')),
         body: const _WeeklySummaryBody(),
       ),
     );
@@ -72,8 +70,9 @@ class _WeeklySummaryBody extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.all(24),
               child: Text(
-                'No commute records yet this week. Rides are logged when '
-                    'the app is open near a station during commute hours.',
+                'No commute records in the last 7 days. Rides are detected '
+                    'automatically while the app is open and you pass a station '
+                    'between 07:00–10:00 or 17:00–20:00.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -101,6 +100,10 @@ class _WeeklySummaryBody extends StatelessWidget {
                       value: provider.onTimePercent != null
                           ? '${provider.onTimePercent!.round()}%'
                           : '—',
+                      caption: provider.matchedRideCount == null
+                          ? null
+                          : '${provider.summary.onTimeCount} of '
+                              '${provider.matchedRideCount} matched',
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -173,54 +176,34 @@ class _RideHistoryTile extends StatelessWidget {
     final delayLabel = delay == null
         ? 'Delay unavailable'
         : isOnTime
-            ? 'On time · $delay min delay'
-            : '$delay min delay';
+            ? 'On time · ${delay} min delay'
+            : '${delay} min delay';
 
     return ListTile(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => RideDetailScreen(
-            ride: RideLog(
-              id: '',
-              userId: '',
-              stationId: '',
-              stationName: ride.stationName,
-              detectedAt: ride.detectedAt,
-              delayMinutes: ride.delayMinutes,
-            ),
-          ),
-        ),
-      ),
       leading: Icon(
         delay == null
             ? Icons.help_outline
             : isOnTime
                 ? Icons.check_circle_outline
-                : Icons.warning_amber_outlined,
+                : Icons.error_outline,
         color: delay == null
             ? null
             : isOnTime
                 ? AppColors.success
-                : AppColors.warning,
+                : AppColors.danger,
       ),
       title: Text(ride.stationName ?? 'Station'),
       subtitle: Text('$dateLabel · $time'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            delayLabel,
-            textAlign: TextAlign.end,
-            style: TextStyle(
-              color: delay == null
-                  ? AppColors.neutral
-                  : isOnTime
-                      ? AppColors.success
-                      : AppColors.warning,
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-        ],
+      trailing: Text(
+        delayLabel,
+        textAlign: TextAlign.end,
+        style: TextStyle(
+          color: delay == null
+              ? AppColors.neutral
+              : isOnTime
+                  ? AppColors.success
+                  : AppColors.danger,
+        ),
       ),
     );
   }
@@ -229,8 +212,9 @@ class _RideHistoryTile extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
+  final String? caption;
 
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({required this.label, required this.value, this.caption});
 
   @override
   Widget build(BuildContext context) {
@@ -242,6 +226,17 @@ class _StatCard extends StatelessWidget {
             Text(value, style: Theme.of(context).textTheme.displaySmall),
             const SizedBox(height: 4),
             Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+            if (caption != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                caption!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ],
         ),
       ),

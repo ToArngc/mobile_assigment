@@ -1,13 +1,3 @@
--- The reliability RPCs used `recorded_at >= now() - '<p_days> days'::interval`,
--- a rolling timestamp window. With p_days = 7 that cutoff lands mid-afternoon
--- eight calendar days ago in Asia/Kuala_Lumpur, so `days_of_data` (a count of
--- distinct local dates) reported 8 for a 7-day window and the daily trend
--- returned 8 buckets.
---
--- Anchor the cutoff to local midnight, p_days - 1 days back, so the window
--- covers exactly p_days calendar days including today.
-
-
 create or replace function public.reliability_stats(
   p_station_id uuid default null,
   p_line text default null,

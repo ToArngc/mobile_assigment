@@ -1,21 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { requireUser } from "../_shared/auth.ts";
@@ -29,8 +11,6 @@ import {
 const DAYS_WINDOW = 7;
 const UNRELIABLE_THRESHOLD_PERCENT = 70;
 const LIVE_DELAY_STALE_MINUTES = 60;
-
-
 
 function splitLines(line: string): string[] {
   return line
@@ -80,6 +60,10 @@ Deno.serve(async (req) => {
       .from("train_status")
       .select("station_id, delay_minutes, recorded_at")
       .in("station_id", stationIds)
+      .gte(
+        "recorded_at",
+        new Date(Date.now() - LIVE_DELAY_STALE_MINUTES * 60 * 1000).toISOString(),
+      )
       .order("recorded_at", { ascending: false });
     if (recentError) return errorResponse(recentError.message, 500);
 

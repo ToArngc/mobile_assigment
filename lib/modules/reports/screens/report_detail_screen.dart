@@ -1,25 +1,42 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/malaysia_time.dart';
 import '../../../core/theme.dart';
 import '../../../models/fault_report.dart';
 import '../../../models/station.dart';
 import '../../../services/reports_repository.dart';
 import '../../../services/station_repository.dart';
 
-class ReportDetailScreen extends StatelessWidget {
+class ReportDetailScreen extends StatefulWidget {
   const ReportDetailScreen({required this.report, super.key});
 
   final FaultReport report;
 
   @override
+  State<ReportDetailScreen> createState() => _ReportDetailScreenState();
+}
+
+class _ReportDetailScreenState extends State<ReportDetailScreen> {
+  final StationRepository _repository = StationRepository();
+  late Future<Station?> _stationFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _stationFuture = _repository.getStationById(widget.report.stationId);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final report = widget.report;
     final open = report.status == FaultStatus.open;
-    final category = ReportCategory.fromIssueType(report.issueType);
+    final categoryLabel = ReportCategory.fromIssueType(report.issueType)?.label ??
+        report.issueType.replaceAll('_', ' ');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Report details')),
       body: FutureBuilder<Station?>(
-        future: StationRepository().getStationById(report.stationId),
+        future: _stationFuture,
         builder: (context, snapshot) {
           final station = snapshot.data;
           return ListView(
@@ -40,7 +57,7 @@ class ReportDetailScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(category.label, style: Theme.of(context).textTheme.titleLarge),
+                            Text(categoryLabel, style: Theme.of(context).textTheme.titleLarge),
                             const SizedBox(height: 3),
                             Text(open ? 'Open report' : 'Resolved report'),
                           ],
@@ -108,7 +125,7 @@ class ReportDetailScreen extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    final local = date.toLocal();
+    final local = MalaysiaTime.fromUtc(date);
     final hour = local.hour == 0 ? 12 : (local.hour > 12 ? local.hour - 12 : local.hour);
     final minute = local.minute.toString().padLeft(2, '0');
     final suffix = local.hour >= 12 ? 'PM' : 'AM';

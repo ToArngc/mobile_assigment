@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 import '../../../services/reliability_repository.dart';
 
-
-
 class RouteSuggestionCard extends StatelessWidget {
   final RouteSuggestion suggestion;
 
@@ -14,9 +12,9 @@ class RouteSuggestionCard extends StatelessWidget {
       case RouteReliabilityStatus.onTrack:
         return ('On Track', AppColors.success);
       case RouteReliabilityStatus.delayed:
-        return ('Delayed', AppColors.danger);
+        return ('Delayed', AppColors.warning);
       case RouteReliabilityStatus.unreliable:
-        return ('Unreliable', AppColors.warning);
+        return ('Unreliable', AppColors.danger);
       case RouteReliabilityStatus.notEnoughData:
         return ('Not enough data yet', AppColors.neutral);
     }

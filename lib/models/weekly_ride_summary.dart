@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 class WeeklyRideSummary {
   final int rideCount;
   final int onTimeCount;
@@ -49,8 +39,6 @@ class WeeklyRideSummary {
       rides: parsedRides,
     );
   }
-
-
 
   bool get hasDelayData => onTimePercentage != null;
 

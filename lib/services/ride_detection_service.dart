@@ -10,15 +10,9 @@ import 'weekly_summary_repository.dart';
 import 'location_service.dart';
 
 class RideDetectionService {
-  RideDetectionService({
-    StationRepository? stationRepository,
-    WeeklySummaryRepository? weeklySummaryRepository,
-  }) : _stationRepository = stationRepository ?? StationRepository(),
-       _weeklySummaryRepository =
-           weeklySummaryRepository ?? WeeklySummaryRepository();
-
-  final StationRepository _stationRepository;
-  final WeeklySummaryRepository _weeklySummaryRepository;
+  final StationRepository _stationRepository = StationRepository();
+  final WeeklySummaryRepository _weeklySummaryRepository =
+      WeeklySummaryRepository();
 
   static const double _proximityThresholdMeters = 150;
 

@@ -1,16 +1,6 @@
 import 'dart:async';
 import 'package:location/location.dart';
 
-
-
-
-
-
-
-
-
-
-
 class LocationService {
   LocationService._internal();
   static final LocationService instance = LocationService._internal();
@@ -18,10 +8,6 @@ class LocationService {
   final Location _location = Location();
   Stream<LocationData>? _positionStream;
   bool _configured = false;
-
-
-
-
 
   Future<bool> ensurePermission() async {
     var serviceEnabled = await _location.serviceEnabled();
@@ -44,16 +30,6 @@ class LocationService {
     if (!await ensurePermission()) return null;
     return _location.getLocation();
   }
-
-
-
-
-
-
-
-
-
-
 
   Stream<LocationData> get positionStream {
     if (!_configured) {

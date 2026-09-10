@@ -42,8 +42,6 @@ class FaultReport {
     );
   }
 
-
-
   FaultReport copyWithResolved() => FaultReport(
         id: id,
         userId: userId,
@@ -57,18 +55,4 @@ class FaultReport {
         createdAt: createdAt,
       );
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'user_id': userId,
-      'station_id': stationId,
-      'issue_type': issueType,
-      'description': description,
-      'photo_url': photoUrl,
-      'lat': lat,
-      'lng': lng,
-      'status': status == FaultStatus.resolved ? 'resolved' : 'open',
-      'created_at': createdAt.toIso8601String(),
-    };
-  }
 }

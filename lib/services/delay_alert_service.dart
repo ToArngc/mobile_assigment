@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../core/malaysia_time.dart';
 import '../models/saved_station.dart';
 import '../models/train_status.dart';
 import 'alerts_repository.dart';
@@ -10,16 +11,11 @@ import 'mute_service.dart';
 import 'notification_service.dart';
 import 'reliability_repository.dart';
 
-
-
-
-
-
 class DelayAlertService {
   DelayAlertService._();
 
   static final DelayAlertService instance = DelayAlertService._();
-  static const _pollInterval = Duration(minutes: 1);
+  static const _pollInterval = Duration(minutes: 5);
   static const _maxStatusAge = Duration(minutes: 15);
 
   final AlertsRepository _repository = AlertsRepository();
@@ -55,8 +51,6 @@ class DelayAlertService {
       for (final rule in savedStations) {
         if (!_isRuleActiveNow(rule)) continue;
 
-
-
         final recentStatuses = await _reliabilityRepository
             .fetchRecentTrainDelays(stationId: rule.stationId, limit: 1);
         final status = recentStatuses.isEmpty ? null : recentStatuses.first;
@@ -80,7 +74,7 @@ class DelayAlertService {
 
   bool _isRuleActiveNow(SavedStation rule) {
     if (!rule.enabled) return false;
-    final now = DateTime.now();
+    final now = MalaysiaTime.now();
     final activeDays = rule.activeDays;
 
 

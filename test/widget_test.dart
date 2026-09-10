@@ -92,6 +92,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Live train positions'));
+    await tester.pumpAndSettle();
+
     expect(mappedLine, 'Port Klang Line');
     expect(
       mappedStations.map((station) => station.id),
@@ -99,8 +102,6 @@ void main() {
     );
     expect(mappedStations, hasLength(2));
 
-    await tester.tap(find.text('Live train positions'));
-    await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Seremban Line').last);

@@ -299,7 +299,6 @@ class _LivePositionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    margin: EdgeInsets.zero,
     clipBehavior: Clip.antiAlias,
     child: Column(
       children: [
@@ -338,9 +337,8 @@ class _LivePositionsSection extends StatelessWidget {
             ),
           ),
         ),
-        AnimatedCrossFade(
-          firstChild: const SizedBox.shrink(),
-          secondChild: Padding(
+        if (expanded)
+          Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Column(
               children: [
@@ -384,11 +382,6 @@ class _LivePositionsSection extends StatelessWidget {
               ],
             ),
           ),
-          crossFadeState: expanded
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 200),
-        ),
       ],
     ),
   );
@@ -407,7 +400,6 @@ class _LineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        margin: EdgeInsets.zero,
         child: ListTile(
           leading: const Icon(Icons.train_outlined, color: AppColors.accent),
           title: Text(line),
@@ -426,7 +418,6 @@ class _StationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,

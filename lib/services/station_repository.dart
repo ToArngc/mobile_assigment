@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/station.dart';
 import '../models/station_accessibility.dart';
 import '../models/train_status.dart';
@@ -6,12 +10,35 @@ import 'edge_function_client.dart';
 
 
 class StationRepository {
+  static const _cacheKey = 'stations_cache_v1';
+  static const _cacheAtKey = 'stations_cache_at_v1';
+  static const _cacheMaxAge = Duration(hours: 24);
+
   Future<List<Station>> getAllStations() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString(_cacheKey);
+    final cachedAt = DateTime.tryParse(prefs.getString(_cacheAtKey) ?? '');
+    if (cached != null &&
+        cachedAt != null &&
+        DateTime.now().toUtc().difference(cachedAt.toUtc()) < _cacheMaxAge) {
+      try {
+        return _parseStations(jsonDecode(cached) as List);
+      } catch (_) {
+        await prefs.remove(_cacheKey);
+        await prefs.remove(_cacheAtKey);
+      }
+    }
+
     final data = await invokeFunction('get-stations');
-    return (data as List)
-        .map((row) => Station.fromJson(row as Map<String, dynamic>))
-        .toList();
+    final stations = _parseStations(data as List);
+    await prefs.setString(_cacheKey, jsonEncode(data));
+    await prefs.setString(_cacheAtKey, DateTime.now().toUtc().toIso8601String());
+    return stations;
   }
+
+  List<Station> _parseStations(List rows) => rows
+      .map((row) => Station.fromJson(row as Map<String, dynamic>))
+      .toList();
 
   Future<List<Station>> searchStations(String query) async {
     final data = await invokeFunction(
@@ -32,21 +59,9 @@ class StationRepository {
       return Station.fromJson(data as Map<String, dynamic>);
     } on Exception catch (e) {
 
-
-
       if (e.toString() == 'Exception: Station not found') return null;
       rethrow;
     }
-  }
-
-  Future<List<Station>> getStationsByLine(String line) async {
-    final data = await invokeFunction(
-      'get-stations-by-line',
-      queryParameters: {'line': line},
-    );
-    return (data as List)
-        .map((row) => Station.fromJson(row as Map<String, dynamic>))
-        .toList();
   }
 
   Future<List<TimetableEntry>> getTimetableForStation(String stationId) async {
@@ -59,9 +74,6 @@ class StationRepository {
         .toList();
   }
 
-
-
-
   Future<List<StationAccessibility>> getStationAccessibility(
       String stationId) async {
     final data = await invokeFunction(
@@ -73,10 +85,6 @@ class StationRepository {
             StationAccessibility.fromJson(row as Map<String, dynamic>))
         .toList();
   }
-
-
-
-
 
   Future<List<TrainStatus>> getLiveTrainStatusForLine(String line) async {
     final data = await invokeFunction(

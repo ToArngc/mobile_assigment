@@ -6,12 +6,6 @@ import '../services/weekly_summary_repository.dart';
 
 enum LoadStatus { initial, loading, loaded, error }
 
-
-
-
-
-
-
 class WeeklySummaryProvider extends ChangeNotifier {
   final WeeklySummaryRepository _repository;
   final String userId;
@@ -25,12 +19,6 @@ class WeeklySummaryProvider extends ChangeNotifier {
   String? errorMessage;
   WeeklyRideSummary summary = WeeklyRideSummary.empty();
 
-
-
-
-
-
-
   static final Set<String> _notifiedUserIds = <String>{};
 
   int get tripCount => summary.rideCount;
@@ -39,14 +27,25 @@ class WeeklySummaryProvider extends ChangeNotifier {
 
   double? get averageDelayMinutes => summary.averageDelayMinutes;
 
-
-
-
   bool get hasDelayData => summary.hasDelayData;
+
+  int? get matchedRideCount {
+    if (summary.rides.isEmpty) return null;
+    return summary.rides.where((ride) => ride.delayMinutes != null).length;
+  }
+
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   Future<void> loadSummary() async {
     status = LoadStatus.loading;
     errorMessage = null;
+    if (_disposed) return;
     notifyListeners();
 
     try {
@@ -57,6 +56,7 @@ class WeeklySummaryProvider extends ChangeNotifier {
       errorMessage = e.toString();
       status = LoadStatus.error;
     }
+    if (_disposed) return;
     notifyListeners();
   }
 

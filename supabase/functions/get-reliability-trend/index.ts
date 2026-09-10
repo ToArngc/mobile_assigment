@@ -1,24 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { getDailyReliabilityStats } from "../_shared/reliability.ts";
@@ -35,9 +14,6 @@ Deno.serve(async (req) => {
   const daysParam = url.searchParams.get("days");
   const days = daysParam ? parseInt(daysParam, 10) : 7;
 
-  if (!stationId && !line) {
-    return errorResponse("station_id and/or line is required", 400);
-  }
   if (Number.isNaN(days) || days <= 0) {
     return errorResponse("days must be a positive integer", 400);
   }

@@ -16,10 +16,6 @@ import '../../../services/station_repository.dart';
 import '../widgets/report_card.dart';
 import 'pick_report_station_screen.dart';
 
-
-
-
-
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
 
@@ -39,6 +35,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   double? _lat;
   double? _lng;
 
+  static const double _proximityThresholdMeters = 150;
+
   bool _locating = false;
   bool _saving = false;
   Future<List<FaultReport>>? _recentReportsFuture;
@@ -54,12 +52,6 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     _descriptionController.dispose();
     super.dispose();
   }
-
-
-
-
-
-
 
   Future<void> _detectNearestStation() async {
     setState(() => _locating = true);
@@ -100,7 +92,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         bestDist = d;
       }
     }
-    return best;
+    return bestDist > _proximityThresholdMeters ? null : best;
   }
 
   double _distanceMeters(double lat1, double lng1, double lat2, double lng2) {
@@ -128,17 +120,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       setState(() {
         _station = result;
 
-
-
         _lat = null;
         _lng = null;
       });
       _loadRecentReports();
     }
   }
-
-
-
 
   Future<void> _pickPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
@@ -162,9 +149,6 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       ),
     );
     if (source == null) return;
-
-
-
 
     try {
       final picker = ImagePicker();
@@ -201,8 +185,6 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         photoFileName = _photo!.uri.pathSegments.last;
       }
 
-
-
       final description = _descriptionController.text.trim();
       await _repository.submitReport(
         userId: userId,
@@ -219,18 +201,20 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_submissionErrorMessage(e))),
+          SnackBar(
+            content: Text(
+              friendlyErrorMessage(
+                e,
+                fallback: 'We couldn\'t submit your report. Please try again.',
+              ),
+            ),
+          ),
         );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
-
-  String _submissionErrorMessage(Object error) => friendlyErrorMessage(
-        error,
-        fallback: 'We couldn\'t submit your report. Please try again.',
-      );
 
   @override
   Widget build(BuildContext context) {

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/friendly_error.dart';
 import '../../../services/station_repository.dart';
 import '../../../models/station.dart';
 import 'alert_rule_edit_screen.dart';
-
-
 
 class SelectStationScreen extends StatefulWidget {
   const SelectStationScreen({super.key});
@@ -66,7 +65,14 @@ class _SelectStationScreenState extends State<SelectStationScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Failed to load stations: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                friendlyErrorMessage(
+                  snapshot.error,
+                  fallback: 'Stations could not be loaded.',
+                ),
+              ),
+            );
           }
           final stations = snapshot.data ?? [];
           if (stations.isEmpty) {
@@ -89,8 +95,6 @@ class _SelectStationScreenState extends State<SelectStationScreen> {
                       ),
                     ),
                   );
-
-
 
                   if (saved == true && context.mounted) {
                     Navigator.of(context).pop(true);

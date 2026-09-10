@@ -1,7 +1,3 @@
-
-
-
-
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { requireUser } from "../_shared/auth.ts";
@@ -36,6 +32,16 @@ Deno.serve(async (req) => {
   }
 
   if (!body.station_id) return errorResponse("station_id is required", 400);
+
+  const durationMinutes = body.duration_minutes;
+  if (durationMinutes !== null && durationMinutes !== undefined) {
+    if (!Number.isInteger(durationMinutes) || durationMinutes < 0 || durationMinutes > 1440) {
+      return errorResponse(
+        "duration_minutes must be a whole number between 0 and 1440",
+        400,
+      );
+    }
+  }
 
   const { data, error } = await supabase
     .from("ride_logs")

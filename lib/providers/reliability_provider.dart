@@ -4,8 +4,6 @@ import '../models/train_status.dart';
 
 enum LoadStatus { initial, loading, loaded, error }
 
-
-
 class ReliabilityFilter {
   final String? lineId;
   final String? stationId;
@@ -24,8 +22,6 @@ class ReliabilityProvider extends ChangeNotifier {
     required this.userId,
   }) : _repository = repository;
 
-
-
   LoadStatus status = LoadStatus.initial;
   String? errorMessage;
 
@@ -34,16 +30,7 @@ class ReliabilityProvider extends ChangeNotifier {
   List<DailyOnTimeStat> trendSeries = [];
   List<TrainStatus> recentDelays = [];
   int actualDaysAvailable = 0;
-
-
-
-  int get trendWindowDays => trendSeries.length;
-
-
-
-
-
-
+  int windowDaysUsed = 0;
 
   static const _probeWindowDays = 90;
 
@@ -51,15 +38,22 @@ class ReliabilityProvider extends ChangeNotifier {
   String? routeErrorMessage;
   List<RouteSuggestion> routeSuggestions = [];
 
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   Future<void> loadDashboard(ReliabilityFilter newFilter) async {
     filter = newFilter;
     status = LoadStatus.loading;
     errorMessage = null;
+    if (_disposed) return;
     notifyListeners();
 
     try {
-
-
 
       final probe = await _repository.fetchReliabilitySummary(
         lineId: filter.lineId,
@@ -68,18 +62,10 @@ class ReliabilityProvider extends ChangeNotifier {
       );
       actualDaysAvailable = probe.daysOfData;
 
-
-
-
       final windowDays = actualDaysAvailable <= 0
           ? 1
           : (actualDaysAvailable > 7 ? 7 : actualDaysAvailable);
-
-
-
-
-
-
+      windowDaysUsed = windowDays;
 
       final summary = await _repository.fetchReliabilitySummary(
         lineId: filter.lineId,
@@ -105,12 +91,14 @@ class ReliabilityProvider extends ChangeNotifier {
       errorMessage = e.toString();
       status = LoadStatus.error;
     }
+    if (_disposed) return;
     notifyListeners();
   }
 
   Future<void> loadRouteSuggestions() async {
     routeStatus = LoadStatus.loading;
     routeErrorMessage = null;
+    if (_disposed) return;
     notifyListeners();
 
     try {
@@ -120,6 +108,7 @@ class ReliabilityProvider extends ChangeNotifier {
       routeErrorMessage = e.toString();
       routeStatus = LoadStatus.error;
     }
+    if (_disposed) return;
     notifyListeners();
   }
 

@@ -1,20 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 create or replace function public.get_daily_reliability_stats(
   p_station_id uuid default null,
   p_line text default null,
