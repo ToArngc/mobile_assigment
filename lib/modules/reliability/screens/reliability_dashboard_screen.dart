@@ -135,7 +135,10 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
                   )
                 else
                   ...provider.recentDelays.map(
-                    (status) => TrainDelayListTile(status: status),
+                    (status) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: TrainDelayListTile(status: status),
+                    ),
                   ),
               ],
             ],

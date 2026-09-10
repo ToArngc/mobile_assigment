@@ -29,6 +29,11 @@ class TrainDelayListTile extends StatelessWidget {
 
     return Card(
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        horizontalTitleGap: AppSpacing.md,
         leading: Icon(
           noData
               ? Icons.help_outline
@@ -38,7 +43,10 @@ class TrainDelayListTile extends StatelessWidget {
           color: color,
         ),
         title: Text(_label),
-        subtitle: Text('${status.line} · $_timeLabel'),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: Text('${status.line} · $_timeLabel'),
+        ),
         trailing: Chip(
           label: Text(delay == null ? 'No data' : '${delay > 0 ? '+' : ''}$delay min'),
           labelStyle: TextStyle(
