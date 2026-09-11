@@ -31,6 +31,23 @@ class TrendChartWidget extends StatelessWidget {
                   minY: 0,
                   maxY: 100,
                   gridData: const FlGridData(drawVerticalLine: false),
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (touchedSpot) => AppColors.textPrimary,
+                      getTooltipItems: (touchedSpots) => touchedSpots
+                          .map(
+                            (spot) => LineTooltipItem(
+                              '${spot.y.toStringAsFixed(0)}%',
+                              const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
                   titlesData: FlTitlesData(
                     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
