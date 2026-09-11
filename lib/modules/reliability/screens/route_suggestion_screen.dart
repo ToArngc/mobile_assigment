@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../providers/reliability_provider.dart';
 import '../../../services/reliability_repository.dart';
 import '../../../services/auth_service.dart';
@@ -24,11 +25,55 @@ class RouteSuggestionScreen extends StatelessWidget {
         userId: userId,
       )..loadRouteSuggestions(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Route Suggestions')),
+        appBar: AppBar(
+          title: const Text('Route Suggestions'),
+          actions: [
+            Consumer<ReliabilityProvider>(
+              builder: (context, provider, _) => IconButton(
+                icon: const Icon(Icons.share_outlined),
+                tooltip: 'Share suggestions',
+                onPressed: provider.routeSuggestions.isEmpty
+                    ? null
+                    : () => _shareRouteSuggestions(provider.routeSuggestions),
+              ),
+            ),
+          ],
+        ),
         body: const _RouteSuggestionBody(),
       ),
     );
   }
+}
+
+String _statusLabel(RouteReliabilityStatus status) {
+  switch (status) {
+    case RouteReliabilityStatus.onTrack:
+      return 'On Track';
+    case RouteReliabilityStatus.delayed:
+      return 'Delayed';
+    case RouteReliabilityStatus.unreliable:
+      return 'Unreliable';
+    case RouteReliabilityStatus.notEnoughData:
+      return 'Not enough data yet';
+  }
+}
+
+void _shareRouteSuggestions(List<RouteSuggestion> suggestions) {
+  final lines = suggestions.map((suggestion) {
+    final percent = suggestion.weeklyOnTimePercent;
+    final onTimeText = percent == null
+        ? 'no on-time history yet'
+        : '${percent.toStringAsFixed(0)}% on-time (last ${suggestion.daysOfData} day${suggestion.daysOfData == 1 ? '' : 's'})';
+    return '${suggestion.originStationName} → ${suggestion.destinationStationName}: '
+        '${_statusLabel(suggestion.status)} · $onTimeText';
+  });
+
+  SharePlus.instance.share(
+    ShareParams(
+      text: 'My OnJejak route reliability:\n\n${lines.join('\n')}',
+      subject: 'OnJejak route reliability',
+    ),
+  );
 }
 
 class _RouteSuggestionBody extends StatelessWidget {

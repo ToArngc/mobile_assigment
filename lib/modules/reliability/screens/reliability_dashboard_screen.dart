@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants.dart';
@@ -7,6 +12,7 @@ import '../../../core/theme.dart';
 import '../../../models/station.dart';
 import '../../../providers/reliability_provider.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/location_service.dart';
 import '../../../services/reliability_repository.dart';
 import '../../../services/station_repository.dart';
 import '../../../shared_widgets/app_empty_state.dart';
@@ -51,6 +57,22 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
   late Future<List<Station>> _stationsFuture;
   List<Station> _stations = const [];
 
+  // Proactive connectivity signal — deliberately separate from LoadStatus in
+  // ReliabilityProvider, which only reflects whether the last API call
+  // succeeded. This banner reports device-level connectivity before a call
+  // is even attempted, and leaves the existing friendly_error.dart /
+  // AppErrorState failure-path messaging untouched.
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  bool _offline = false;
+
+  // Transient one-shot GPS resolution, modelled the same way
+  // AddRouteScreen._gettingLocation is — not part of LoadStatus. Unlike
+  // AddRouteScreen this doesn't drive any visible UI: the first load stays
+  // unfiltered and immediate, and the resolved line (if any) is applied
+  // afterward through the screen's normal loadDashboard() call.
+  bool _resolvingLocation = false;
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +83,101 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
       },
       onError: (_) {},
     );
+
+    _connectivity.checkConnectivity().then((results) {
+      if (mounted) setState(() => _offline = _isOffline(results));
+    });
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+      if (mounted) setState(() => _offline = _isOffline(results));
+    });
+
+    unawaited(_resolveNearestLine());
   }
+
+  // Reuses LocationService.instance.getCurrentLocation() exactly as
+  // AddRouteScreen (lib/modules/alerts/screens/add_route_screen.dart) does —
+  // same singleton, same permission gate, same 8-second timeout, same
+  // "fail silently and fall back" behaviour for every non-success outcome
+  // (permission denied, denied forever, GPS unavailable, timeout).
+  //
+  // Known edge case: RideDetectionService already requests location
+  // permission right after login (services/ride_detection_service.dart
+  // start()), so in the common case LocationService.ensurePermission()
+  // here sees an already-resolved status (granted or deniedForever) and
+  // shows no dialog at all. A second OS permission prompt can only appear
+  // if the login-time prompt was answered "deny" without "don't ask
+  // again" — a re-askable `denied` status. That's standard Android
+  // re-prompt behaviour, not a bug in this feature, and is left as-is
+  // rather than worked around.
+  Future<void> _resolveNearestLine() async {
+    if (_resolvingLocation) return;
+    _resolvingLocation = true;
+    LocationData? location;
+    try {
+      location = await LocationService.instance
+          .getCurrentLocation()
+          .timeout(const Duration(seconds: 8));
+    } catch (_) {
+      // Falls through to the silent-fallback checks below, same as
+      // AddRouteScreen._estimateWalkingTime.
+    }
+    _resolvingLocation = false;
+    if (!mounted) return;
+    if (location?.latitude == null || location?.longitude == null) return;
+
+    final provider = context.read<ReliabilityProvider>();
+    if (!provider.filter.isEmpty) return;
+
+    final List<Station> stations;
+    try {
+      stations = await _stationsFuture;
+    } catch (_) {
+      return;
+    }
+    if (!mounted || stations.isEmpty) return;
+    if (!provider.filter.isEmpty) return;
+
+    final nearest = _nearestStation(location!.latitude!, location.longitude!, stations);
+    if (nearest == null || nearest.lines.isEmpty) return;
+
+    await provider.loadDashboard(ReliabilityFilter(lineId: nearest.lines.first));
+  }
+
+  Station? _nearestStation(double lat, double lng, List<Station> stations) {
+    Station? best;
+    var bestDistance = double.infinity;
+    for (final station in stations) {
+      final distance = _distanceMeters(lat, lng, station.lat, station.lng);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = station;
+      }
+    }
+    return best;
+  }
+
+  double _distanceMeters(double lat1, double lng1, double lat2, double lng2) {
+    const earthRadiusMeters = 6371000.0;
+    final dLat = _degToRad(lat2 - lat1);
+    final dLng = _degToRad(lng2 - lng1);
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_degToRad(lat1)) *
+            math.cos(_degToRad(lat2)) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
+    return earthRadiusMeters * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  }
+
+  double _degToRad(double deg) => deg * (math.pi / 180);
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
+  }
+
+  bool _isOffline(List<ConnectivityResult> results) =>
+      results.isEmpty || results.every((result) => result == ConnectivityResult.none);
 
   String _stationLabel(String stationId) {
     for (final station in _stations) {
@@ -83,6 +199,10 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              if (_offline) ...[
+                _buildOfflineBanner(),
+                const SizedBox(height: AppSpacing.md),
+              ],
               _buildFilterBar(context, provider),
               const SizedBox(height: AppSpacing.md),
               if (provider.status == LoadStatus.loading ||
@@ -144,6 +264,32 @@ class _ReliabilityDashboardScaffoldState extends State<_ReliabilityDashboardScaf
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.wifi_off, color: AppColors.warning, size: 20),
+          SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              "You're offline. Reliability data may be outdated.",
+              style: TextStyle(color: AppColors.warning),
+            ),
+          ),
+        ],
       ),
     );
   }
