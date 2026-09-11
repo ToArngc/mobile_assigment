@@ -71,8 +71,7 @@ class _WeeklySummaryBody extends StatelessWidget {
               padding: EdgeInsets.all(24),
               child: Text(
                 'No commute records in the last 7 days. Rides are detected '
-                    'automatically while the app is open and you pass a station '
-                    'between 07:00–10:00 or 17:00–20:00.',
+                    'automatically while the app is open and you pass a station ',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
