@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/constants.dart';
 import '../../../core/friendly_error.dart';
 import '../../../core/theme.dart';
 import '../../../models/fault_report.dart';
@@ -346,7 +347,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                     style: TextStyle(color: AppColors.textSecondary),
                   );
                 }
-                return Column(children: reports.map((r) => ReportCard(report: r)).toList());
+                return Column(
+                  children: reports
+                      .map(
+                        (r) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: ReportCard(report: r),
+                        ),
+                      )
+                      .toList(),
+                );
               },
             ),
           ],
