@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants.dart';
 import '../../../core/friendly_error.dart';
 import '../../../models/fault_report.dart';
 import '../../../providers/reports_provider.dart';
@@ -148,12 +149,15 @@ class _ReportsHomeBody extends StatelessWidget {
             itemCount: provider.myReports.length,
             itemBuilder: (context, index) {
               final report = provider.myReports[index];
-              return ReportCard(
-                report: report,
-                onResolve: () => _confirmResolve(context, provider, report),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => ReportDetailScreen(report: report),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: ReportCard(
+                  report: report,
+                  onResolve: () => _confirmResolve(context, provider, report),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ReportDetailScreen(report: report),
+                    ),
                   ),
                 ),
               );
